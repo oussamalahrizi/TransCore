@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+import rest_framework
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,8 +35,10 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.staticfiles',
     'rest_framework',
-    'auth_users'
+    'auth_users',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [
@@ -44,15 +48,31 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-     'DEFAULT_RENDERER_CLASSES': [
-          'rest_framework.renderers.JSONRenderer',
+     'DEFAULT_RENDERER_CLASSES':
+     [
+     	'rest_framework.renderers.JSONRenderer',
+      	'rest_framework.renderers.BrowsableAPIRenderer',
      ],
 }
 
 
 ROOT_URLCONF = 'core.urls'
 
-TEMPLATES = []
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
@@ -73,6 +93,7 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = []
 
+STATIC_URL = "static/"
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -84,6 +105,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+AUTH_USER_MODEL = "auth_users.User"
 
 
 # Static files (CSS, JavaScript, Images)

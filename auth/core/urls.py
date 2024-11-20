@@ -16,8 +16,7 @@ Including another URLconf
 """
 from django.urls import path, include
 
-import rest_framework.urls
 
 urlpatterns = [
-    path('', include('rest_framework.urls')),
+    path('auth/', include('auth_users.urls'), name='auth'),
 ]
