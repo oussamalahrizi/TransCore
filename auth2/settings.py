@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 
 import os, datetime
+from dotenv import load_dotenv
+
+load_dotenv('.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -89,18 +92,18 @@ DATABASES = {
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    # {
-    #     'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    # },
-    # {
-    #     'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    # },
-    # {
-    #     'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    # },
-    # {
-    #     'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    # },
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 
@@ -132,8 +135,8 @@ AUTH_USER_MODEL = "auth_users.User"
 
 # JWT settings
 JWT_ALGORITHM = 'RS256'
-JWT_PRIVATE_KEY = os.getenv('JWT_PRIVATE_KEY', '')
-JWT_PUBLIC_KEY = os.getenv('JWT_PUBLIC_KEY', '')
+JWT_PRIVATE_KEY = os.getenv('JWT_PRIVATE_KEY', '').replace('\\n', '\n')
+JWT_PUBLIC_KEY = os.getenv('JWT_PUBLIC_KEY', '').replace('\\n', '\n')
 
 JWT_ACCESS_TOKEN_LIFETIME = datetime.timedelta(minutes=15)
 JWT_REFRESH_TOKEN_LIFETIME = datetime.timedelta(days=1)
@@ -146,5 +149,6 @@ SWAGGER_SETTINGS = {
             'in': 'header'
       }
    },
-   'USE_SESSION_AUTH' : False
+   'USE_SESSION_AUTH' : False,
+   'DISPLAY_OPERATION_ID' : False
 }

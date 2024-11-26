@@ -18,12 +18,15 @@ class JWTAuthentication(authentication.BaseAuthentication):
 		if parts[0].decode('utf-8') != 'Bearer':
 			return None
 		if len(parts) != 2:
-			raise exceptions.AuthenticationFailed('bad authorization code')
+			raise exceptions.AuthenticationFailed('bad authorization value')
 		return self.authenticate_credentials(parts[1])
 
 	def authenticate_credentials(self, token):
 		try:
-			payload = jwt.decode(token, settings.JWT_PRIVATE_KEY, algorithms=settings.JWT_ALGORITHM)
+			payload = jwt.decode(token, settings.JWT_PUBLIC_KEY, algorithms=settings.JWT_ALGORITHM)
+			type = payload.get('typ')
+			if type is None or type != 'Bearer':
+				raise exceptions.AuthenticationFailed("bad token payload")
 		except jwt.ExpiredSignatureError:
 			raise exceptions.AuthenticationFailed('token expired')
 		except jwt.InvalidTokenError:

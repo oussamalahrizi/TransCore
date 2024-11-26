@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import RegisterGeneric, GetUser, ListUsers, UpdateUserInfo
+from .views import RegisterGeneric, GetUser, ListUsers, UpdateUserInfo, LoginView, RefreshToken
 from django.urls import path, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -16,6 +16,8 @@ schema_view = get_schema_view(
 )
 urlpatterns = [
     path('register/', RegisterGeneric.as_view(), name='register-email'),
+    path('login/', LoginView.as_view(), name='login-email'),
+    path('refresh/', RefreshToken.as_view(), name='refresh-token'),
     path('users/', ListUsers.as_view(), name='list-users'),
     path('users/<str:username>/', GetUser.as_view(), name='user-info'),
     path('users/<str:username>/update/', UpdateUserInfo.as_view(), name='update'),

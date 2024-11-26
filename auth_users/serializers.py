@@ -66,7 +66,7 @@ class InputSerializer(serializers.ModelSerializer):
 	
 	def create(self, validated_data):
 		try:
-			user = User.objects.create_user(validated_data['email'], 
+			user : User = User.objects.create_user(validated_data['email'], 
 				validated_data['username'],
 				validated_data['password'])
 		except ValueError as e :
@@ -123,23 +123,18 @@ class UpdateUserSerializer(serializers.ModelSerializer):
 		return instance
 
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 
-class UserLogin(serializers.ModelSerializer):
-	class Meta:
-		model = User
-		fields = ['email', 'password']
-		extra_kwargs = {
-			'password' : 'write_only'
-		}
-	
+class UserLogin(serializers.Serializer):
+	email = serializers.EmailField(required=True)
+	password = serializers.CharField(write_only=True, required=True)
+
 	def validate(self, attrs):
 		email = attrs.get('email')
 		password = attrs.get('password')
-		
-		if not email or not password:
-			raise serializers.ValidationError({'detail' :'email or password missing'})
-		user = get_object_or_404(User, email=email)
-		if user is None:
+		try:
+			user = get_object_or_404(User, email=email)
+		except Http404:
 			raise serializers.ValidationError({'detail' : 'user not found'})
 		if not check_password(password, user.password):
 			raise serializers.ValidationError({'detail' : 'wrong password'})

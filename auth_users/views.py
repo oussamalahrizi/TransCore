@@ -2,31 +2,30 @@
 
 import datetime
 from rest_framework import serializers
+from rest_framework import generics
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from .models import AuthProvider, User
 from rest_framework.generics import CreateAPIView, DestroyAPIView, RetrieveAPIView, ListAPIView, UpdateAPIView
-from .serializers import InputSerializer, UserDetailSerializer, UpdateUserSerializer
+from .serializers import InputSerializer, UserDetailSerializer, UpdateUserSerializer, UserLogin
 from rest_framework.response import Response
 from rest_framework import status
 import jwt
 from django.conf import settings
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .utils import GenerateTokenPair, RefreshBearer, CheckUserAauthenticated
+from django.urls import reverse
 
-
-def GenerateTokenPair(user_id):
-	exp_refresh = datetime.datetime.utcnow() + datetime.timedelta(days=1)
-	exp_access = datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
-
-	payload = {
-		'user_id' : user_id,
-		'exp' : exp_access,
-		'iat' : datetime.datetime.utcnow()
-	}
-	access = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
-	payload['exp'] = exp_refresh
-	refresh = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
-	return access, refresh
+class RefreshToken(APIView):
+	@property
+	def allowed_methods(self):
+		return ['GET']
+	def get(self, request: Request, *args, **kwargs):
+		refresh = request.COOKIES.get('refresh_token')
+		if refresh is None:
+			return Response({"detail" : "Missing refresh token."}, status=status.HTTP_400_BAD_REQUEST)
+		response = RefreshBearer(refresh)
+		return response
 
 class RegisterGeneric(CreateAPIView):
 	serializer_class = InputSerializer
@@ -36,9 +35,38 @@ class RegisterGeneric(CreateAPIView):
 		serializer.is_valid(raise_exception=True)
 		self.perform_create(serializer)
 		headers = self.get_success_headers(serializer.data)
-		access, refresh = GenerateTokenPair(serializer.instance.id)
+		try:
+			access, refresh = GenerateTokenPair(serializer.instance.id)
+		except Exception as e:
+			serializer.instance.delete()
+			return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		return Response({"access_token" : access, "refresh_token" : refresh},
 					status=status.HTTP_201_CREATED, headers=headers)
+
+
+
+
+class LoginView(generics.RetrieveAPIView):
+	serializer_class = UserLogin
+	permission_classes = [AllowAny]
+	@property
+	def allowed_methods(self):
+		return ['POST']
+	def get(self, request, *args, **kwargs):
+		return Response({"detail": "Method \"GET\" not allowed."},
+				status=status.HTTP_405_METHOD_NOT_ALLOWED)
+	
+	def post(self, request):
+		# redirect logged in users
+		if request.user.is_authenticated:
+			profile_url = reverse('user-info', kwargs={'username': request.user.username})
+			return Response(status=status.HTTP_302_FOUND, headers={'Location': profile_url})
+		serializer = self.get_serializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		user = serializer.validated_data['user']
+		access, refresh = GenerateTokenPair(str(user.id))
+		return Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_200_OK)
+
 
 class UpdateUserInfo(UpdateAPIView):
 	serializer_class = UpdateUserSerializer
@@ -72,7 +100,6 @@ class UpdateUserInfo(UpdateAPIView):
 		}
 		return Response(response)
 
-from .serializers import UserLogin
 
 class GetUser(RetrieveAPIView):
 	serializer_class = UserDetailSerializer
@@ -90,15 +117,5 @@ class ListUsers(ListAPIView):
 # 	def post(self, request):
 # 		return Response(request)
 
-def check_user_authenticated
 
-class LoginView(APIView):
-	def post(self, request: Request):
-		if request.user.is_authenticated:
-			response = Response(
-				data={"detail" : "already logged in redirecting..."},
-				status=status.HTTP_302_FOUND,
-			)
-			response['Location'] = f'/auth/users/{request.user.username}/'
-			return response
-		
+
