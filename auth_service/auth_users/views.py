@@ -44,17 +44,9 @@ class RegisterGeneric(CreateAPIView):
 					status=status.HTTP_201_CREATED, headers=headers)
 
 
-
-
-class LoginView(generics.RetrieveAPIView):
+class LoginView(generics.CreateAPIView):
 	serializer_class = UserLogin
-	permission_classes = [AllowAny]
-	@property
-	def allowed_methods(self):
-		return ['POST']
-	def get(self, request, *args, **kwargs):
-		return Response({"detail": "Method \"GET\" not allowed."},
-				status=status.HTTP_405_METHOD_NOT_ALLOWED)
+	
 	
 	def post(self, request):
 		# redirect logged in users
@@ -65,21 +57,28 @@ class LoginView(generics.RetrieveAPIView):
 		serializer.is_valid(raise_exception=True)
 		user = serializer.validated_data['user']
 		access, refresh = GenerateTokenPair(str(user.id))
-		return Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_200_OK)
+		return Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_202_ACCEPTED)
 
+
+from rest_framework.permissions import BasePermission
+
+class IsSameUser(BasePermission):
+
+	def has_object_permission(self, request, view, obj : User):
+		return request.user.is_authenticated \
+			and request.user.username == obj.username
 
 class UpdateUserInfo(UpdateAPIView):
 	serializer_class = UpdateUserSerializer
 	queryset = User.objects.all()
 	lookup_field = 'username'
 	http_method_names = ['patch']
+	permission_classes = [IsSameUser]
 	
-	def patch(self, request, *args, **kwargs):
+	def patch(self, request, *agrs, **kwargs):
 		if not request.data:
-			return Response(
-				{"detail" : "empty request data"},
-				status.HTTP_400_BAD_REQUEST
-			)
+			return Response({"detail" : "empty request data"},
+							status.HTTP_400_BAD_REQUEST)
 		partial = True
 		instance = self.get_object()
 		serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -91,8 +90,8 @@ class UpdateUserInfo(UpdateAPIView):
 		self.perform_update(serializer)
 		# just copied it from original function, ignore it 
 		if getattr(instance, '_prefetched_objects_cache', None):
-		     # If 'prefetch_related' has been applied to a queryset, we need to
-		     # forcibly invalidate the prefetch cache on the instance.
+			 # If 'prefetch_related' has been applied to a queryset, we need to
+			 # forcibly invalidate the prefetch cache on the instance.
 			instance._prefetched_objects_cache = {}
 		response = {
 			"detail" : "update successful",
@@ -110,12 +109,7 @@ class GetUser(RetrieveAPIView):
 class ListUsers(ListAPIView):
 	serializer_class = UserDetailSerializer
 	queryset = User.objects.all()
-	
-# class UserDeleteView(APIView):
-# 	permission_classes = [IsAuthenticated]
-	
-# 	def post(self, request):
-# 		return Response(request)
+
 
 
 
