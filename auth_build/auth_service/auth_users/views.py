@@ -44,19 +44,20 @@ class RegisterGeneric(CreateAPIView):
 					status=status.HTTP_201_CREATED, headers=headers)
 
 
+
 class LoginView(generics.CreateAPIView):
 	serializer_class = UserLogin
 	
-	
 	def post(self, request):
 		# redirect logged in users
-		if request.user.is_authenticated:
-			profile_url = reverse('user-info', kwargs={'username': request.user.username})
-			return Response(status=status.HTTP_302_FOUND, headers={'Location': profile_url})
+		# 
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		user = serializer.validated_data['user']
 		access, refresh = GenerateTokenPair(str(user.id))
+		response = Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_202_ACCEPTED)
+		response.set_cookie("access_token", access, httponly=True)
+		response.set_cookie("refresh_token", refresh, httponly=True)
 		return Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_202_ACCEPTED)
 
 
@@ -109,7 +110,4 @@ class GetUser(RetrieveAPIView):
 class ListUsers(ListAPIView):
 	serializer_class = UserDetailSerializer
 	queryset = User.objects.all()
-
-
-
 

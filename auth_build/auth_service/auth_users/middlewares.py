@@ -3,6 +3,8 @@ from django.conf import settings
 from rest_framework import authentication, exceptions
 from django.contrib.auth.models import  auth
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 
 User  = get_user_model()
 
@@ -26,14 +28,14 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			payload = jwt.decode(token, settings.JWT_PUBLIC_KEY, algorithms=settings.JWT_ALGORITHM)
 			type = payload.get('typ')
 			if type is None or type != 'Bearer':
-				raise exceptions.AuthenticationFailed("bad token payload")
+				raise exceptions.AuthenticationFailed("Invalid token.", code=401)
+			user = get_object_or_404(User, id=payload['user_id'])
+			if not user.is_active:
+				raise exceptions.AuthenticationFailed('User is not active.', code=401)
 		except jwt.ExpiredSignatureError:
-			raise exceptions.AuthenticationFailed('token expired')
+			raise exceptions.AuthenticationFailed('Token expired.', code=401)
 		except jwt.InvalidTokenError:
-			raise exceptions.AuthenticationFailed('invalid token')
-		user = User.objects.get(id=payload['user_id'])
-		if user is None:
-			raise exceptions.AuthenticationFailed("user not found")
-		if not user.is_active:
-			raise exceptions.AuthenticationFailed('user is banned')
+			raise exceptions.AuthenticationFailed('Invalid token.', code=401)
+		except Http404:
+			raise exceptions.AuthenticationFailed('User not found', code=401)
 		return (user, token)

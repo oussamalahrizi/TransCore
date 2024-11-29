@@ -1,6 +1,7 @@
 import jwt
 from django.conf import settings
 import datetime
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -56,3 +57,15 @@ def CheckUserAauthenticated(request):
 		response['Location'] = "f'/auth/users/{request.user.username}/"
 		return response
 	return None
+	
+def ValidateToken(token, token_type) -> bool:
+	try:
+		payload = jwt.decode(token, settings.JWT_PUBLIC_KEY, algorithms=settings.JWT_ALGORITHM)
+		type = payload.get('typ')
+		if type is None or type != token_type:
+			return False
+	except jwt.ExpiredSignatureError:
+		return False
+	except jwt.InvalidTokenError:
+		return False
+	return True

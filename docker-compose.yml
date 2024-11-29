@@ -1,0 +1,57 @@
+networks:
+  TransNetwork:
+    name: "TransNetwork"
+
+volumes:
+  users-data:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "/goinfre/olahrizi/users_data"
+
+services:
+  users_db:
+    image: postgres
+    container_name: users_db
+    networks:
+      - TransNetwork
+    volumes:
+      - users-data:/var/lib/postgresql/data
+    env_file:
+      - "auth_build/build/conf/.env"
+
+  auth_service:
+    build: "auth_build/."
+    pull_policy: build
+    image: auth_service:latest
+    container_name: auth_service
+    networks:
+      - TransNetwork
+    depends_on:
+      - users_db
+    env_file:
+      - "auth_build/build/conf/.env" 
+
+  nginx:
+    image: nginx:latest
+    pull_policy: build
+    build: "nginx/."
+    container_name: nginx_reverse
+    ports:
+      - 8000:80
+    depends_on:
+      - auth_service
+      - adminer
+    networks:
+      - TransNetwork
+
+  adminer:
+    image: adminer
+    container_name: adminer_inspect
+    networks:
+      - TransNetwork
+    depends_on:
+      - users_db
+    env_file:
+     - adminer/.env
