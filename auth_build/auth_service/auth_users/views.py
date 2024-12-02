@@ -47,17 +47,21 @@ class RegisterGeneric(CreateAPIView):
 
 class LoginView(generics.CreateAPIView):
 	serializer_class = UserLogin
-	
+
 	def post(self, request):
-		# redirect logged in users
-		# 
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		user = serializer.validated_data['user']
+		"""
+			- go fetch user data and refresh in cache
+			- if already there prevent login from another device
+			- user is held in cache until his refresh token expires
+			- users logged in from a device and want to login from a new device
+				can automatically logout from that device by simply removing the user data from cache
+				and move their refresh token to the blacklist cache until it expires
+		"""
+		
 		access, refresh = GenerateTokenPair(str(user.id))
-		response = Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_202_ACCEPTED)
-		response.set_cookie("access_token", access, httponly=True)
-		response.set_cookie("refresh_token", refresh, httponly=True)
 		return Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_202_ACCEPTED)
 
 

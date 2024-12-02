@@ -1,3 +1,2 @@
-venv/
-__pycache__/
+auth_build/auth_service/venv/
 users_data/

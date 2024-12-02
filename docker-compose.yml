@@ -8,7 +8,7 @@ volumes:
     driver_opts:
       o: "bind"
       type: "none"
-      device: "/goinfre/olahrizi/users_data"
+      device: "/tmp/users_data"
 
 services:
   users_db:
@@ -30,6 +30,7 @@ services:
       - TransNetwork
     depends_on:
       - users_db
+      - redis-cache1
     env_file:
       - "auth_build/build/conf/.env" 
 
@@ -55,3 +56,11 @@ services:
       - users_db
     env_file:
      - adminer/.env
+  
+  redis-cache1:
+    build: "redis_cache1"
+    pull_policy: build
+    image: redis_cache1_image
+    container_name: redis_cache1
+    networks:
+      - TransNetwork

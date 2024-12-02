@@ -41,13 +41,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'auth_users',
-    'drf_yasg'
+    'drf_yasg',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 REST_FRAMEWORK = {
@@ -137,6 +139,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # set user model
 AUTH_USER_MODEL = "auth_users.User"
 
+# cores settings
+CORS_ALLOW_ALL_ORIGINS =  True
+
+# change this to frontend container
+"""
+CORS_ALLOWED_ORIGINS = [
+    "http://host.docker.internal:3000",  # For host machine access
+    "http://localhost:3000",             # Local React/frontend dev server
+]
+"""
+
+
 # JWT settings
 JWT_ALGORITHM = 'RS256'
 JWT_PRIVATE_KEY = os.getenv('JWT_PRIVATE_KEY', '').replace('\\n', '\n')
@@ -154,5 +168,6 @@ SWAGGER_SETTINGS = {
       }
    },
    'USE_SESSION_AUTH' : False,
-   'DISPLAY_OPERATION_ID' : False
+   'DISPLAY_OPERATION_ID' : False,
+   'DEFAULT_API_URL' : "http://localhost:8000"
 }
