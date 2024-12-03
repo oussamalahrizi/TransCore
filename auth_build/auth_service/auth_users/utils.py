@@ -1,3 +1,5 @@
+from _typeshed import Self
+from pickle import NONE
 import jwt
 from django.conf import settings
 import datetime
@@ -47,7 +49,6 @@ def GenerateTokenPair(user_id):
 	refresh = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
 	return access, refresh
 
-
 def CheckUserAauthenticated(request):
 	if request.user.is_authenticated:
 		response = Response(
@@ -69,3 +70,21 @@ def ValidateToken(token, token_type) -> bool:
 	except jwt.InvalidTokenError:
 		return False
 	return True
+	
+from redis import Redis
+from datetime import datetime, timedelta
+
+class AuthCache():
+	redis = NONE
+	def __init__(self):
+		self.redis = Redis(host="redis-cache1", port=6380, decode_responses=True)
+	
+	def store_token(self, username: str, token: str):
+		pass
+	
+	def get_user_token(self, username: str):
+		pass
+	
+	def blacklist_token(self, token: str):
+		pass
+	

@@ -13,7 +13,7 @@ from rest_framework import status
 import jwt
 from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .utils import GenerateTokenPair, RefreshBearer, CheckUserAauthenticated
+from .utils import GenerateTokenPair, RefreshBearer, CheckUserAauthenticated, ValidateToken
 from django.urls import reverse
 
 class RefreshToken(APIView):
@@ -44,23 +44,25 @@ class RegisterGeneric(CreateAPIView):
 					status=status.HTTP_201_CREATED, headers=headers)
 
 
-
 class LoginView(generics.CreateAPIView):
 	serializer_class = UserLogin
-
-	def post(self, request):
+	permission_classes = [AllowAny]
+	
+	def post(self, request: Request):
+		refresh_cookie = request.COOKIES.get("refresh_token")
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		user = serializer.validated_data['user']
 		"""
 			- go fetch user data and refresh in cache
 			- if already there prevent login from another device
+				unless the refresh from cache is same as the refresh in cookies
+				should redirect to profile
 			- user is held in cache until his refresh token expires
 			- users logged in from a device and want to login from a new device
 				can automatically logout from that device by simply removing the user data from cache
 				and move their refresh token to the blacklist cache until it expires
 		"""
-		
 		access, refresh = GenerateTokenPair(str(user.id))
 		return Response({"access_token" : access, "refresh_token" : refresh}, status=status.HTTP_202_ACCEPTED)
 
