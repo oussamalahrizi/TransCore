@@ -67,11 +67,13 @@ class User(AbstractBaseUser):
 	is_superuser = models.BooleanField(default=False)
 	is_active = models.BooleanField(default=True)
 	created_at = models.DateTimeField(auto_now_add=True)
+	two_factor_enabled = models.BooleanField(default=False)
+	two_factor_secret = models.TextField(null=True)
 
 	USERNAME_FIELD = "email"
 	REQUIRED_FIELDS = ["username"]
 
-	objects = UserManager()
+	objects :UserManager = UserManager()
 
 	def __str__(self):
 		return self.username

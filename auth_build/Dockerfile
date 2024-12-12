@@ -5,16 +5,17 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /var/app
 
-COPY auth_service/ .
-
 COPY build/conf/requirements.txt .
-
-RUN pip install -r requirements.txt
 
 COPY build/tools/init.sh .
 
 
 RUN chmod +x init.sh
+
+RUN pip install -r requirements.txt
+
+COPY auth_service/ .
+
 
 ENTRYPOINT ["./init.sh"]
 

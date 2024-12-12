@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from .models import AuthProvider, User
 
-from django.contrib.auth import get_user_model
+from .utils import _AuthCache
 
 """
 	use different serializer as you can depending on the task
@@ -126,18 +126,37 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 
 class UserLogin(serializers.Serializer):
+
 	email = serializers.EmailField(required=True)
 	password = serializers.CharField(write_only=True, required=True)
+	force_logout = serializers.BooleanField(required=False, default=False)
 
 	def validate(self, attrs):
 		email = attrs.get('email')
 		password = attrs.get('password')
-		logout = attrs.get('force_logout')
 		try:
-			user = get_object_or_404(User, email=email)
+			user : User = get_object_or_404(User, email=email)
 		except Http404:
 			raise serializers.ValidationError({'detail' : 'user not found'})
 		if not check_password(password, user.password):
 			raise serializers.ValidationError({'detail' : 'wrong password'})
 		attrs['user'] = user
 		return attrs
+
+
+class UserTwoFactorSerial(serializers.ModelSerializer):
+	class Meta:
+		model = User
+		fields = ['username', "two_factor_enabled", "two_factor_secret"]
+	
+	def update(self, instance, validated_data):
+		for attr, value in validated_data.items():
+			setattr(instance, attr, value)
+		instance.save()
+		return instance
+
+# class UserVerifyOTP(serializers.ModelSerializer):
+# 	code = serializers.IntegerField(max_length=6, required=True)
+# 	class Meta:
+# 		model = User
+#		fields = ['username']

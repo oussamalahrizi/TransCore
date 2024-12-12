@@ -1,6 +1,20 @@
 from django.urls import path, include
-from .views import RegisterGeneric, GetUser, ListUsers, UpdateUserInfo, LoginView, RefreshToken
-from django.urls import path, re_path
+from .views import (
+   GetUser,
+   ListUsers,
+   UpdateUserInfo,
+)
+
+from .authViews import (
+	RegisterEmail,
+	LoginView,
+	LogoutView,
+	RefreshToken,
+	JWK,
+	EnableOTP,
+	VerifyOTP
+)
+from django.urls import path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -15,11 +29,15 @@ schema_view = get_schema_view(
    permission_classes=(permissions.AllowAny,)
 )
 urlpatterns = [
-    path('register/', RegisterGeneric.as_view(), name='register-email'),
-    path('login/', LoginView.as_view(), name='login-email'),
-    path('refresh/', RefreshToken.as_view(), name='refresh-token'),
-    path('users/', ListUsers.as_view(), name='list-users'),
-    path('users/<str:username>/', GetUser.as_view(), name='user-info'),
-    path('users/<str:username>/update/', UpdateUserInfo.as_view(), name='update'),
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   path('register/', RegisterEmail.as_view(), name='register-email'),
+   path('login/', LoginView.as_view(), name='login-email'),
+   path('logout/', LogoutView.as_view(), name='logout'),
+   path('refresh/', RefreshToken.as_view(), name='refresh-token'),
+   path('jwk/', JWK.as_view(), name='jwk'),
+   path('users/', ListUsers.as_view(), name='list-users'),
+   path('users/<str:username>/', GetUser.as_view(), name='user-info'),
+   path('users/<str:username>/update/', UpdateUserInfo.as_view(), name='update'),
+   path('users/<str:username>/enable-2fa/', EnableOTP.as_view(), name='enable-2fa'),
+   path('users/<str:username>/verify-2fa/', VerifyOTP.as_view(), name='verify-2fa'),
+   path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

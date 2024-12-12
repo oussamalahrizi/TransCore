@@ -39,3 +39,4 @@ class JWTAuthentication(authentication.BaseAuthentication):
 		except Http404:
 			raise exceptions.AuthenticationFailed('User not found', code=401)
 		return (user, token)
+

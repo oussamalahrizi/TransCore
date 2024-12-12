@@ -9,6 +9,18 @@ volumes:
       o: "bind"
       type: "none"
       device: "/tmp/users_data"
+  redis_cache1_aof:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "/tmp/redis_cache1_aof"
+  redisinsight_data:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "/tmp/redisinsight"
 
 services:
   users_db:
@@ -20,6 +32,7 @@ services:
       - users-data:/var/lib/postgresql/data
     env_file:
       - "auth_build/build/conf/.env"
+  
 
   auth_service:
     build: "auth_build/."
@@ -32,7 +45,7 @@ services:
       - users_db
       - redis-cache1
     env_file:
-      - "auth_build/build/conf/.env" 
+      - "auth_build/build/conf/.env"
 
   nginx:
     image: nginx:latest
@@ -64,3 +77,17 @@ services:
     container_name: redis_cache1
     networks:
       - TransNetwork
+    volumes:
+      - "redis_cache1_aof:/data"
+
+  redisinsight:
+    container_name: redisinsight
+    image: redis/redisinsight:latest
+    networks:
+      - TransNetwork
+    ports:
+      - 5540:5540
+    depends_on:
+      - redis-cache1
+    volumes:
+      - "redisinsight_data:/data"
