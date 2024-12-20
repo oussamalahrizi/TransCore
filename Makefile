@@ -9,6 +9,7 @@ fclean:
 	@docker compose -f ./docker-compose.yml down --volumes --rmi all
 	@sudo rm -rf /tmp/users_data
 	@sudo rm -rf /tmp/redis_cache1_aof
+	@docker system prune -a
 re: down up
 
 build: fclean up

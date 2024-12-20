@@ -68,7 +68,7 @@ class User(AbstractBaseUser):
 	is_active = models.BooleanField(default=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	two_factor_enabled = models.BooleanField(default=False)
-	two_factor_secret = models.TextField(null=True)
+	two_factor_secret = models.TextField(null=True, blank=True)
 
 	USERNAME_FIELD = "email"
 	REQUIRED_FIELDS = ["username"]

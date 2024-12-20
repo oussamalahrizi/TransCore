@@ -98,6 +98,7 @@ import pyotp
 class AuthCache:
 	redis = None
 	logger = _logger
+
 	def __init__(self):
 		self.redis = Redis(host="redis-cache1", port=6380, decode_responses=True, db=0)
 
@@ -149,6 +150,7 @@ class AuthCache:
 		if value is not None:
 			return True
 		return False
+
 	#2FA
 	def didUserRequest(self, username: str) -> bool:
 		value = self.redis.get(f"execution:{username}")

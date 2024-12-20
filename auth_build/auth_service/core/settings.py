@@ -159,6 +159,8 @@ JWT_PUBLIC_KEY = os.getenv('JWT_PUBLIC_KEY', '').replace('\\n', '\n')
 JWT_ACCESS_TOKEN_LIFETIME = datetime.timedelta(minutes=15)
 JWT_REFRESH_TOKEN_LIFETIME = datetime.timedelta(days=1)
 
+BASE_URL = "http://localhost:8000"
+
 SWAGGER_SETTINGS = {
    'SECURITY_DEFINITIONS': {
       'Bearer': {
@@ -169,5 +171,15 @@ SWAGGER_SETTINGS = {
    },
    'USE_SESSION_AUTH' : False,
    'DISPLAY_OPERATION_ID' : False,
-   'DEFAULT_API_URL' : "http://localhost:8000"
+   'DEFAULT_API_URL' : BASE_URL
 }
+
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI = f"{BASE_URL}/auth/google_callback/"
+
+
+INTRA_CLIENT_ID = os.getenv("INTRA_CLIENT_ID", "")
+INTRA_CLIENT_SECRET = os.getenv("INTRA_CLIENT_SECRET", "")
+INTRA_REDIRECT_URI = f"{BASE_URL}/auth/intra_callback/"

@@ -21,6 +21,12 @@ volumes:
       o: "bind"
       type: "none"
       device: "/tmp/redisinsight"
+  frontend-volume:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "./frontend/public"
 
 services:
   users_db:
@@ -57,6 +63,7 @@ services:
     depends_on:
       - auth_service
       - adminer
+      - frontend
     networks:
       - TransNetwork
 
@@ -91,3 +98,15 @@ services:
       - redis-cache1
     volumes:
       - "redisinsight_data:/data"
+
+  frontend:
+    container_name: frontend
+    build : "frontend/."
+    image: frontend:latest
+    pull_policy: build
+    networks:
+      - TransNetwork
+    depends_on:
+      - auth_service
+    volumes:
+      - "frontend-volume:/app/src"

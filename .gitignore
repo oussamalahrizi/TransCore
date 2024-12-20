@@ -1,2 +1,2 @@
 auth_build/auth_service/venv/
-users_data/
+auth_build/build/conf/.env
