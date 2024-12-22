@@ -1,17 +1,16 @@
-
-
-/** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./**/*.{html,js}"],
+  content: [
+    "./public/**/*.{html,js}",
+  ],
   theme: {
     extend: {
-      colors: {
-        'game-dark': '#1a1a2e',
-        'game-accent': '#16213e',
-        'game-highlight': '#0f3460',
-        'game-button': '#e94560',
-      }
-    },
+      backgroundImage: {
+        'global-bg': "url('/img/maptexture2.webp'), linear-gradient(var(--gray-950), var(--gray-900))",
+      },
+      backgroundBlendMode: {
+        'overlay': 'overlay',
+      },
+    }
   },
   plugins: [],
 }

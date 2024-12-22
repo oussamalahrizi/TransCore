@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#root {
+	@apply h-full w-full bg-transparent text-white flex flex-col;
+  }

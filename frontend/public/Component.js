@@ -1,7 +1,6 @@
-class ReactiveElement extends HTMLElement {
+export class ReactiveElement extends HTMLElement {
     constructor() {
         super();
-        this.attachShadow({ mode: 'open' });
         this._state = {};
         this._renderScheduled = false;
         this._events = [];
@@ -32,7 +31,7 @@ class ReactiveElement extends HTMLElement {
     }
 
     bind_event(id, type, callback) {
-        const el = this.shadowRoot.querySelector("#" + id);
+        const el = this.querySelector("#" + id);
         if (el) {
             const boundCallback = callback.bind(this);
             el.addEventListener(type, boundCallback);
@@ -51,7 +50,7 @@ class ReactiveElement extends HTMLElement {
     disconnectedCallback() {
         // Cleanup events
         this._events.forEach(event => {
-            const el = this.shadowRoot.querySelector("#" + event.id);
+            const el = this.querySelector("#" + event.id);
             el?.removeEventListener(event.type, event.callback);
         });
         this._events = [];
@@ -66,13 +65,12 @@ class ReactiveElement extends HTMLElement {
     // Default render method
     render() {
         // Should be overridden in child class
-        this.shadowRoot.innerHTML = `
+        this.innerHTML = `
             <div>Override render() method</div>
         `;
     }
 }
 
-export { ReactiveElement };
 
 class MyComponent extends ReactiveElement {
     constructor() {
@@ -109,7 +107,8 @@ class MyComponent extends ReactiveElement {
         const usersEl = this.shadowRoot.querySelector("#users");
         
         if (countEl) countEl.textContent = `Count: ${this._state.count}`;
-        if (usersEl) {
+        if (usersEl)
+        {
             usersEl.innerHTML = this._state.users
                 .map(user => `<div class="user-item">${user.email}</div>`)
                 .join('');

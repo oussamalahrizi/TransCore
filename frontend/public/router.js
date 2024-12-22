@@ -1,44 +1,60 @@
-import "./UserList.js";
+import { AuthPage } from "./pages/Auth.js";
 
 const routes = new Map();
+const root = document.querySelector("#root");
 
-export function addRoute(path, component) {
-  routes.set(path, component);
-}
+export const Router = {
+  init() {
+    // Handle initial load
+    this.handleLocation();
 
-addRoute("/", "user-list");
+    // Handle browser back/forward
+    window.addEventListener("popstate", () => {
+      this.handleLocation();
+    });
 
-export function navigateTo(path) {
-  window.history.pushState({}, path, window.location.origin + path);
-  renderRoute();
-}
+    // Handle clicks on links
+    document.addEventListener("click", (e) => {
+      if (e.target.matches("[data-link]")) {
+        e.preventDefault();
+        this.navigateTo(e.target.href);
+      }
+    });
+  },
 
-function renderRoute() {
-  const path = window.location.pathname;
+  addRoute(path, component) {
+    routes.set(path, component);
+  },
 
-  const component = routes.get(path);
-  if (component) {
-    const container = document.getElementById("root");
-    container.innerHTML = "";
-    const element = document.createElement(component);
-    console.log(element);
+  navigateTo(url) {
+    history.pushState(null, null, url);
+    this.handleLocation();
+  },
 
-    container.appendChild(element);
-  } else {
-    const container = document.getElementById("root");
-    container.innerHTML = "404 not found";
-  }
-}
+  async handleLocation() {
+    const path = window.location.pathname;
+    const component = routes.get(path) || routes.get("/404");
 
-window.onpopstate = () => {
-  document.addEventListener("click", (e) => {
-    e.preventDefault();
-  });
-  renderRoute();
+    if (typeof component === "function") {
+      // Handle web component class
+      const tagName = component.name.toLowerCase();
+      // Ensure component is registered
+      if (!customElements.get(`${tagName}-comp`)) {
+        console.log(`${tagName}-comp`);
+        customElements.define(`${tagName}-comp`, component);
+      }
+      const comp = document.createElement(`${tagName}-comp`)
+    //   root.appendChild() = `<${tagName}-comp></${tagName}-comp>`;
+      root.appendChild(comp);
+    }
+  },
 };
 
-export function initRouter() {
-  renderRoute();
-}
+// Default 404 route
+Router.addRoute("/404", "<h1>404 Not Found</h1>");
 
-initRouter();
+// Add routes
+Router.addRoute("/", AuthPage);
+
+// Initialize router
+Router.init();
