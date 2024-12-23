@@ -11,8 +11,9 @@ from django.core.exceptions import ValidationError
 class AuthProvider(models.Model):
 	name = models.CharField(
          max_length=50,
-         choices=[('email', 'Email'), ('google', 'Google'), ('intra', 'Intra')],
-         default='email', unique=True)
+         choices=[('Email', 'email'), ('Google', 'google'), ('Intra', 'intra')],
+         default='Email', unique=True)
+
 
 	def __str__(self):
 		return str(self.name)
@@ -23,7 +24,7 @@ class UserManager(BaseUserManager):
 		self, email,
           username,
           password=None,
-          auth_provider="email",
+          auth_provider="Email",
           **extra_fields
 	):
 		if not email:
@@ -32,21 +33,21 @@ class UserManager(BaseUserManager):
 			raise ValueError("username required")
 		if auth_provider == "email" and not password:
 			raise ValueError("password required if auth_provider is email")
+		auth_obj, created = AuthProvider.objects.get_or_create(name=auth_provider)
 		user = self.model(email=email,
 			username=username,
 			password=password,
 			**extra_fields)
-		if auth_provider == "email":
+		if auth_provider == "Email":
 			user.set_password(password)
 		user.save()
-		auth_obj, created = AuthProvider.objects.get_or_create(name=auth_provider)
 		user.auth_provider.add(auth_obj)
 		return user
 	
 	def create_superuser(self, email,
           username,
           password=None,
-          auth_provider="email",
+          auth_provider="Email",
           **extra_fields):
           extra_fields.setdefault("is_superuser", True)
           return self.create_user(email, username, password, auth_provider, **extra_fields)
@@ -57,11 +58,7 @@ class User(AbstractBaseUser):
 	username = models.CharField(max_length=255, unique=True)
 	email = models.EmailField(max_length=255, unique=True)
 	
-	auth_provider = models.ManyToManyField(
-        AuthProvider,
-        related_name='users',
-        blank=False,
-    )
+	auth_provider = models.ManyToManyField(AuthProvider, related_name="users")
 	icon_url = models.URLField(blank=True, null=True)
 	password = models.CharField(max_length=128, blank=True, null=True)
 	is_superuser = models.BooleanField(default=False)

@@ -33,7 +33,7 @@ export const Router = {
 
   async handleLocation() {
     const path = window.location.pathname;
-    const component = routes.get(path) || routes.get("/404");
+    const component = routes.get(path) || routes.get("/404");    
 
     if (typeof component === "function") {
       // Handle web component class
@@ -43,10 +43,10 @@ export const Router = {
         console.log(`${tagName}-comp`);
         customElements.define(`${tagName}-comp`, component);
       }
-      const comp = document.createElement(`${tagName}-comp`)
-    //   root.appendChild() = `<${tagName}-comp></${tagName}-comp>`;
-      root.appendChild(comp);
+      root.innerHTML = `<${tagName}-comp></${tagName}-comp>`;
     }
+    else if (typeof component === "string")
+      root.innerHTML = component
   },
 };
 

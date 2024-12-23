@@ -136,6 +136,8 @@ class UserLogin(serializers.Serializer):
 		password = attrs.get('password')
 		try:
 			user : User = get_object_or_404(User, email=email)
+			if user.auth_provider.filter(name="Email").exists() is False:
+				raise serializers.ValidationError({"detail" : "user doesn't have an Email Auth Provider"})
 		except Http404:
 			raise serializers.ValidationError({'detail' : 'user not found'})
 		if not check_password(password, user.password):

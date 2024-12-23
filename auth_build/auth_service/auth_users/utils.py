@@ -40,11 +40,11 @@ def RefreshBearer(refresh):
 		payload = jwt.decode(refresh, settings.JWT_PUBLIC_KEY, algorithms=settings.JWT_ALGORITHM)
 		type = payload.get('typ')
 		if type is None or type != 'Refresh':
-			response = Response({"detail" : "Invalid refresh token."})
+			response = Response({"detail" : "Invalid refresh token."}, status=status.HTTP_400_BAD_REQUEST)
 		exp_access = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5)
 		user_id = payload.get('user_id')
 		if user_id is None:
-			response = Response({"detail" : "Invalid refresh token."})
+			response = Response({"detail" : "Invalid refresh token."}, status=status.HTTP_400_BAD_REQUEST)
 		payload = {
 			'user_id' : str(user_id),
 			'exp' : exp_access,

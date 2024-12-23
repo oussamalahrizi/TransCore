@@ -3,7 +3,10 @@ from .utils import _AuthCache, GenerateTokenPair
 from rest_framework.response import Response
 from rest_framework import status
 from django.urls import reverse
-from .models import User
+from .models import User, AuthProvider
+from django.http.response import Http404
+from django.shortcuts import get_object_or_404
+
 
 class LoginMixin:
 	cache = _AuthCache
@@ -18,10 +21,10 @@ class LoginMixin:
 			return response
 		return None
 
-	def _handle_logged_user(self, username, refresh_cookie=None, force_logout=False):
+	def _handle_logged_user(self, user : User, refresh_cookie=None, force_logout=False):
 		"""Handle already logged in user scenarios"""
-		if self.cache.isUserLogged(username):
-			cache_token = self.cache.get_user_token(username=username)
+		if self.cache.isUserLogged(user.username):
+			cache_token = self.cache.get_user_token(username=user.username)
 			
 			if refresh_cookie:
 				if cache_token != refresh_cookie:
@@ -34,8 +37,9 @@ class LoginMixin:
 
 			if not force_logout:
 				return Response(data={"detail": "User already logged in from another device"})
-				
-			self.cache.blacklist_token(cache_token, username)
+			elif not user.two_factor_enabled:
+				return Response(data={"detail" : "You cannot force logout if 2FA is not enabled"})
+			self.cache.blacklist_token(cache_token, user.username)
 		return None
 
 	def _handle_2fa(self, user : User):
@@ -61,3 +65,40 @@ class LoginMixin:
 			expires=token_pair["exp_refresh"]
 		)
 		return response
+	
+class GoogleMixin(LoginMixin):
+
+	def getUser(self, user_data) -> User :
+		username = user_data["given_name"]
+		email = user_data["email"]
+
+		try:
+			user = get_object_or_404(User, email=email)
+			provider = user.auth_provider.filter(name="Google").exists()
+			if provider is False:
+				obj, created = AuthProvider.objects.get_or_create(name="Google")
+				user.auth_provider.add(obj)
+				user.save()
+			return user
+		except Http404:
+			user = User.objects.create_user(email=email, username=username, auth_provider="Google")
+			return user
+
+
+class IntraMixin(LoginMixin):
+
+	def getUser(self, user_data) -> User :
+		username = user_data["login"]
+		email = user_data["email"]
+
+		try:
+			user = get_object_or_404(User, email=email)
+			provider = user.auth_provider.filter(name="Intra").exists()
+			if provider is False:
+				obj, created = AuthProvider.objects.get_or_create(name="Intra")
+				user.auth_provider.add(obj)
+				user.save()
+			return user
+		except Http404:
+			user = User.objects.create_user(email=email, username=username, auth_provider="Intra")
+			return user

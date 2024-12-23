@@ -1,7 +1,16 @@
+
+
+:root {
+  --gray-950: #121620;
+  --gray-900: #181b26;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-#root {
-	@apply h-full w-full bg-transparent text-white flex flex-col;
+@layer utilities {
+  .bg-image-blue {
+    @apply bg-blue-pattern bg-cover bg-blend-overlay;
   }
+}

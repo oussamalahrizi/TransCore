@@ -1,2 +1,3 @@
 auth_build/auth_service/venv/
 auth_build/build/conf/.env
+frontend/public/node_modules

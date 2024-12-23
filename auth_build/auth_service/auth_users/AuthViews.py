@@ -22,7 +22,13 @@ from django.http.response import Http404
 import pyotp, qrcode
 from io import BytesIO
 from base64 import b64encode
-from .AuthMixins import LoginMixin
+from .AuthMixins import (
+	LoginMixin,
+	GoogleMixin,
+	IntraMixin)
+from httpx import AsyncClient
+from asgiref.sync import async_to_sync, sync_to_async
+
 
 class RegisterEmail(LoginMixin, CreateAPIView):
 	serializer_class = InputSerializer
@@ -41,7 +47,6 @@ class RegisterEmail(LoginMixin, CreateAPIView):
 		response = Response(status=status.HTTP_201_CREATED, data={"detail : User created successfully"})
 		response["Location"] = reverse("login-email")
 		return response
-
 
 
 class LoginView(LoginMixin, CreateAPIView):
@@ -122,7 +127,9 @@ class RefreshToken(APIView):
 	def get(self, request: Request, *args, **kwargs):
 		refresh = request.COOKIES.get('refresh_token')
 		if refresh is None:
-			return Response({"detail" : "Missing refresh token."}, status=status.HTTP_400_BAD_REQUEST)
+			response = Response({"detail" : "Missing refresh token."}, status=status.HTTP_302_FOUND)
+			response.headers["Location"] = f"{settings.BASE_URL}/"
+			return response
 		if self.cache.isTokenBlacklisted(refresh):
 				response = Response(status=status.HTTP_403_FORBIDDEN,
 					data={"detail: Cookie token is blacklisted."})
@@ -230,29 +237,28 @@ class VerifyOTP(CreateAPIView):
 		response["Location"] = f"/auth/login/?username={user.username}&execution={sec}"
 		return response
 
-from httpx import AsyncClient
 
-class ExternalAPIView(APIView):
-	async def get(self, request):
-		async with AsyncClient() as client:
-			# Make GET request
-			response = await client.get('https://api.example.com/endpoint')
-			
-			# Make POST request with data
-			data = {"key": "value"}
-			response = await client.post('https://api.example.com/endpoint', json=data)
-			
-			if response.status_code == 200:
-				return Response(response.json())
-			return Response(status=response.status_code)
-
-from asgiref.sync import async_to_sync
-
-class GoogleCallback(APIView):
+class GoogleCallback(GoogleMixin, APIView):
 
 	permission_classes = [AllowAny]
 	cache = _AuthCache
-	
+
+	@sync_to_async
+	def cleanup(self, user_data, request):
+		user : User = self.getUser(user_data)
+		refresh_cookie = request.COOKIES.get("refresh_token")
+		cookie_response = self._handle_refresh_cookie(refresh_cookie)
+		if cookie_response:
+			return cookie_response
+		logged_response = self._handle_logged_user(user.	username, refresh_cookie, force_logout=False)
+		if logged_response:
+			return logged_response
+		twofa_response = self._handle_2fa(user)
+		if twofa_response:
+			return twofa_response
+		return self.Helper(user)
+
+
 	@async_to_sync
 	async def get(self, request : Request):
 		
@@ -286,10 +292,26 @@ class GoogleCallback(APIView):
 				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "Failed to get user info"})
 
 			user_data = userinfo_response.json()
-			return Response(user_data)
+			response = await self.cleanup(user_data, request)
+			return response
 
-class IntraCallback(APIView):
+class IntraCallback(IntraMixin, APIView):
 	permission_classes = [AllowAny]
+
+	@sync_to_async
+	def cleanup(self, user_data, request):
+		user : User = self.getUser(user_data)
+		refresh_cookie = request.COOKIES.get("refresh_token")
+		cookie_response = self._handle_refresh_cookie(refresh_cookie)
+		if cookie_response:
+			return cookie_response
+		logged_response = self._handle_logged_user(user.username, refresh_cookie, force_logout=False)
+		if logged_response:
+			return logged_response
+		twofa_response = self._handle_2fa(user)
+		if twofa_response:
+			return twofa_response
+		return self.Helper(user)
 
 	@async_to_sync
 	async def get(self, request : Request):
@@ -320,4 +342,5 @@ class IntraCallback(APIView):
 			if userinfo_response.status_code != 200:
 				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "Failed to get user info"})
 			user_data = userinfo_response.json()
-			return Response(data=user_data)
+			response = await self.cleanup(user_data, request)
+			return response

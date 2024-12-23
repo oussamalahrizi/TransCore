@@ -11,7 +11,7 @@ export class AuthPage extends ReactiveElement {
     this.updated = this.updated.bind(this);
 
     this.google_id =
-      "100809627397-i5v37uvc8gu7f72qcmmb4apq80u6vcej.apps.googleusercontent.com";
+      "497827531703-p9gdfs3jsnjm8hld9ot1uilao6lk1vup.apps.googleusercontent.com";
     this.intra_id =
       "u-s4t2ud-bb8bb45d805dea5d561774903f1d1899c73b0ac051410cd7cae382331781f8cf";
   }
@@ -22,11 +22,27 @@ export class AuthPage extends ReactiveElement {
   }
 
   handleGoogle() {
-    alert("login with google");
+    const params = {
+      client_id: this.google_id,
+      redirect_uri: 'http://localhost:8000/auth/google_callback/',
+      response_type: 'code',
+      scope: 'email profile',
+      access_type: 'offline',
+      prompt: 'consent'
+    };
+
+    const queryString = new URLSearchParams(params).toString();
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${queryString}`;
   }
 
   handleIntra() {
-    alert("login with intra 42");
+    const params = {
+      client_id: this.intra_id,
+      redirect_uri: 'http://localhost:8000/auth/intra_callback/',
+      response_type: 'code'
+    };
+    const queryString = new URLSearchParams(params).toString();
+    window.location.href = `https://api.intra.42.fr/oauth/authorize?${queryString}`;
   }
 
   updated() {}
@@ -34,13 +50,12 @@ export class AuthPage extends ReactiveElement {
   
   connectedCallback() {
     super.connectedCallback();
-    this.handleLoggedIn(); // Fixed typo in method name
   }
 
   render() {
     this.innerHTML = `
-      <div class=" flex flex-col items-center justify-center min-h-screen w-full bg-gray-100">
-        <div class="p-8 bg-white rounded-lg shadow-md">
+      <div class="flex justify-center items-center h-full">
+        <div class="p-8 ">
           <h1 class="mb-6 text-2xl font-bold text-center">Login</h1>
           <div class="space-y-4">
             <button
@@ -57,7 +72,7 @@ export class AuthPage extends ReactiveElement {
             </button>
           </div>
         </div>
-      </div>
+        </div>
     `;
   }
 }
