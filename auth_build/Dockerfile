@@ -5,18 +5,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /var/app
 
-COPY build/conf/requirements.txt .
+COPY build/conf/requirements.txt /var
 
-COPY build/tools/init.sh .
+COPY build/tools/init.sh /var	
 
+RUN chmod +x /var/init.sh
 
-RUN chmod +x init.sh
+RUN pip install -r /var/requirements.txt
 
-RUN pip install -r requirements.txt
+ENTRYPOINT ["../init.sh"]
 
-COPY auth_service/ .
-
-
-ENTRYPOINT ["./init.sh"]
-
-CMD ["./manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["./manage.py", "runserver", "0.0.0.0:80"]

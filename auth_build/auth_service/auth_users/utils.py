@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from redis import Redis
 import random
-
+import uuid
 
 class Logger:
     DEBUG = "DEBUG"
@@ -36,20 +36,24 @@ _logger = Logger()
 
 def RefreshBearer(refresh):
 	response = None
+	cache = _AuthCache
 	try:
 		payload = jwt.decode(refresh, settings.JWT_PUBLIC_KEY, algorithms=settings.JWT_ALGORITHM)
 		type = payload.get('typ')
 		if type is None or type != 'Refresh':
 			response = Response({"detail" : "Invalid refresh token."}, status=status.HTTP_400_BAD_REQUEST)
-		exp_access = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5)
+		exp_access = datetime.datetime.now(datetime.timezone.utc) + settings.JWT_ACCESS_TOKEN_LIFETIME
 		user_id = payload.get('user_id')
 		if user_id is None:
 			response = Response({"detail" : "Invalid refresh token."}, status=status.HTTP_400_BAD_REQUEST)
+		# store new session id in cache
+		sess_id = cache.store_access_session(user_id=user_id, exp=exp_access)
 		payload = {
 			'user_id' : str(user_id),
 			'exp' : exp_access,
 			'iat' : datetime.datetime.now(datetime.timezone.utc),
-			'typ' : 'Bearer'
+			'typ' : 'Bearer',
+			'session_state' : sess_id
 		}
 		access = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
 		response = Response({"acess_token" : access})
@@ -61,18 +65,26 @@ def RefreshBearer(refresh):
 
 
 def GenerateTokenPair(user_id):
-	exp_refresh = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
-	exp_access = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5)
 
+	"""
+		Generate a fresh token pair (refresh and access tokens) for user_id
+	"""
+	cache = _AuthCache
+	exp_refresh = datetime.datetime.now(datetime.timezone.utc) + settings.JWT_REFRESH_TOKEN_LIFETIME
+	exp_access = datetime.datetime.now(datetime.timezone.utc) + settings.JWT_ACCESS_TOKEN_LIFETIME
+	# generate session id and store in cache
+	sess_id = cache.store_access_session(user_id=user_id, exp=exp_access)
 	payload = {
 		'user_id' : str(user_id),
 		'exp' : exp_access,
 		'iat' : datetime.datetime.now(datetime.timezone.utc),
-		'typ' : 'Bearer'
+		'typ' : 'Bearer',
+		'session_state' : sess_id
 	}
 	access = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
 	payload['exp'] = exp_refresh
 	payload['typ'] = 'Refresh'
+	del payload["session_state"]
 	refresh = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
 	res = {
 		"access" : access,
@@ -96,12 +108,17 @@ def ValidateToken(token, token_type) -> bool:
 import pyotp
 
 class AuthCache:
+	"""
+		Class for managing user auth in auth-redis
+		Features :
+			- single device login by tracking refresh token of the user by username
+			- handling 2fa logging for storing verification code for a short time during the demand
+	"""
 	redis = None
 	logger = _logger
 
 	def __init__(self):
-		self.redis = Redis(host="redis-cache1", port=6380, decode_responses=True, db=0)
-
+		self.redis = Redis(host="auth_redis", port=6380, decode_responses=True, db=0)
 
 	#AUTH
 	def store_token(self, username: str, token: str, exp):
@@ -109,13 +126,12 @@ class AuthCache:
 		ttl = exp - now
 		ttl_seconds = int(ttl.total_seconds())
 		if ttl_seconds > 0:
-			self.redis.setex(f"auth:{username}", ttl_seconds, token)
+			self.redis.setex(f"auth:{username}:refresh", ttl_seconds, token)
 		else:
 			raise Exception("token already expired")
 	
-	
 	def get_user_token(self, username: str):
-		value = self.redis.get(f"auth:{username}")
+		value = self.redis.get(f"auth:{username}:refresh")
 		if value is None:
 			raise Exception(f"token for {username} not found")
 		return value
@@ -127,7 +143,7 @@ class AuthCache:
 		ttl = exp - now
 		ttl_seconds = int(ttl.total_seconds())
 		if ttl_seconds > 0:
-			res = self.redis.delete(f"auth:{username}")
+			res = self.redis.delete(f"auth:{username}:refresh")
 			self.redis.setex(token, ttl_seconds, "blacklisted")
 			self.logger.log(Logger.DEBUG, message=f"deleted key {username} with return status : {res}")
 			self.logger.log(Logger.DEBUG, message=f"black listed token for {username}")
@@ -178,5 +194,17 @@ class AuthCache:
 			return actions[action](username)
 		else:
 			raise Exception("invalid action")
+	
+	def store_access_session(self, user_id: str, exp):
+		sess_id = uuid.uuid4().__str__()
+		now = datetime.datetime.now(datetime.timezone.utc)
+		ttl = exp - now
+		ttl_seconds = int(ttl.total_seconds())
+		self.redis.setex(f"auth:{user_id}:access", value=sess_id, time=ttl_seconds)
+		return sess_id
+	
+	def get_access_session(self, user_id):
+		value = self.redis.get(f"auth:{user_id}:access")
+		return value
 
 _AuthCache = AuthCache()

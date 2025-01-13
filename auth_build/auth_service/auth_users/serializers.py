@@ -85,7 +85,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 	auth_provider = AuthProviderSerializer(many=True, read_only=True)
 	class Meta:
 		model = User
-		exclude = ['password','last_login']
+		exclude = ['password']
 
 
 # serializer to update common user info

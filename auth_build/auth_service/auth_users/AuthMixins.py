@@ -65,7 +65,7 @@ class LoginMixin:
 			expires=token_pair["exp_refresh"]
 		)
 		return response
-	
+
 class GoogleMixin(LoginMixin):
 
 	def getUser(self, user_data) -> User :

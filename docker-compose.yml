@@ -9,12 +9,12 @@ volumes:
       o: "bind"
       type: "none"
       device: "/tmp/users_data"
-  redis_cache1_aof:
+  auth_redis_data:
     driver: local
     driver_opts:
       o: "bind"
       type: "none"
-      device: "/tmp/redis_cache1_aof"
+      device: "/tmp/auth_redis_data"
   redisinsight_data:
     driver: local
     driver_opts:
@@ -27,9 +27,15 @@ volumes:
       o: "bind"
       type: "none"
       device: "./frontend/public"
+  auth-service-code:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "./auth_build/auth_service"
 
 services:
-  users_db:
+  users-db:
     image: postgres
     container_name: users_db
     networks:
@@ -40,7 +46,7 @@ services:
       - "auth_build/build/conf/.env"
   
 
-  auth_service:
+  auth-service:
     build: "auth_build/."
     pull_policy: build
     image: auth_service:latest
@@ -48,10 +54,29 @@ services:
     networks:
       - TransNetwork
     depends_on:
-      - users_db
-      - redis-cache1
+      - users-db
+      - auth-redis
+      - api-service
     env_file:
       - "auth_build/build/conf/.env"
+    volumes:
+      - "auth-service-code:/var/app"
+
+  api-service:
+    build: "api_build/."
+    pull_policy: build
+    image: api_service:latest
+    container_name: api_service
+    networks:
+      - TransNetwork
+
+  api-redis:
+    build: "api_redis"
+    pull_policy: build
+    image: api_redis
+    container_name: api_redis
+    networks:
+      - TransNetwork
 
   nginx:
     image: nginx:latest
@@ -61,9 +86,9 @@ services:
     ports:
       - 8000:80
     depends_on:
-      - auth_service
+      - auth-service
+      - api-service
       - adminer
-      - frontend
     networks:
       - TransNetwork
 
@@ -73,19 +98,19 @@ services:
     networks:
       - TransNetwork
     depends_on:
-      - users_db
+      - users-db
     env_file:
      - adminer/.env
   
-  redis-cache1:
-    build: "redis_cache1"
+  auth-redis:
+    build: "auth_redis"
     pull_policy: build
-    image: redis_cache1_image
-    container_name: redis_cache1
+    image: auth_redis_image
+    container_name: auth_redis
     networks:
       - TransNetwork
     volumes:
-      - "redis_cache1_aof:/data"
+      - "auth_redis_data:/data"
 
   redisinsight:
     container_name: redisinsight
@@ -95,7 +120,7 @@ services:
     ports:
       - 5540:5540
     depends_on:
-      - redis-cache1
+      - auth-redis
     volumes:
       - "redisinsight_data:/data"
 
@@ -106,7 +131,8 @@ services:
     pull_policy: build
     networks:
       - TransNetwork
+    init : true # handle correctly signals for node js container
     depends_on:
-      - auth_service
+      - auth-service
     volumes:
       - "frontend-volume:/app/src"

@@ -30,7 +30,8 @@ SECRET_KEY = 'django-insecure-u&ht8p=(4n_ergov6(gzymafd4el=!6#v)g_=*h6$jixuy95s9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["auth-service", '*']
+
 
 
 # Application definition
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders'
 ]
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,6 +58,7 @@ REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES' : [
 		'auth_users.middlewares.JWTAuthentication'
 	],
+	'EXCEPTION_HANDLER': 'auth_users.exception_handlers.custom_exception_handler'
 }
 
 ROOT_URLCONF = 'core.urls'
@@ -128,7 +131,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = 'api/static/'
+MEDIA_URL = 'api/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -152,7 +156,7 @@ CORS_ALLOWED_ORIGINS = [
 
 
 # JWT settings
-JWT_ALGORITHM = 'RS256'
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', '')
 JWT_PRIVATE_KEY = os.getenv('JWT_PRIVATE_KEY', '').replace('\\n', '\n')
 JWT_PUBLIC_KEY = os.getenv('JWT_PUBLIC_KEY', '').replace('\\n', '\n')
 
@@ -177,9 +181,9 @@ SWAGGER_SETTINGS = {
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-GOOGLE_REDIRECT_URI = f"{BASE_URL}/auth/google_callback/"
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "")
 
 
 INTRA_CLIENT_ID = os.getenv("INTRA_CLIENT_ID", "")
 INTRA_CLIENT_SECRET = os.getenv("INTRA_CLIENT_SECRET", "")
-INTRA_REDIRECT_URI = f"{BASE_URL}/auth/intra_callback/"
+INTRA_REDIRECT_URI = os.getenv("INTRA_REDIRECT_URI", "")

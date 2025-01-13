@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.generics import (
 	CreateAPIView,
 	RetrieveAPIView)
@@ -14,7 +15,6 @@ from rest_framework import serializers
 from .serializers import (
 	UserLogin,
 	InputSerializer)
-import requests
 from .models import User
 from .views import IsSameUser
 from django.shortcuts import get_object_or_404
@@ -33,6 +33,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 class RegisterEmail(LoginMixin, CreateAPIView):
 	serializer_class = InputSerializer
 	permission_classes = [AllowAny]
+	authentication_classes = []
 	cache = _AuthCache
 
 	def post(self, request: Request):
@@ -52,6 +53,7 @@ class RegisterEmail(LoginMixin, CreateAPIView):
 class LoginView(LoginMixin, CreateAPIView):
 	serializer_class = UserLogin
 	permission_classes = [AllowAny]
+	authentication_classes = []
 
 	def get(self, request : Request):
 		execution = request.query_params.get("execution")
@@ -84,7 +86,7 @@ class LoginView(LoginMixin, CreateAPIView):
 		force_logout = serializer.validated_data["force_logout"]
 
 		# Handle logged in user
-		logged_response = self._handle_logged_user(user.username, refresh_cookie, force_logout)
+		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout)
 		if logged_response:
 			return logged_response
 
@@ -120,6 +122,7 @@ class LogoutView(APIView):
 class RefreshToken(APIView):
 	cache = _AuthCache
 	permission_classes = [AllowAny]
+	authentication_classes = []
 
 	@property
 	def allowed_methods(self):
@@ -127,27 +130,29 @@ class RefreshToken(APIView):
 	def get(self, request: Request, *args, **kwargs):
 		refresh = request.COOKIES.get('refresh_token')
 		if refresh is None:
-			response = Response({"detail" : "Missing refresh token."}, status=status.HTTP_302_FOUND)
-			response.headers["Location"] = f"{settings.BASE_URL}/"
+			response = Response({"detail" : "Missing refresh token."}, status=status.HTTP_400_BAD_REQUEST)
 			return response
 		if self.cache.isTokenBlacklisted(refresh):
-				response = Response(status=status.HTTP_403_FORBIDDEN,
-					data={"detail: Cookie token is blacklisted."})
-				response.delete_cookie("refresh_token")
+			response = Response(status=status.HTTP_403_FORBIDDEN,
+				data={
+						"detail: Cookie token is blacklisted.",
+						"action: Deleted cookie."
+					})
+			response.delete_cookie("refresh_token")
+			return response
 		response = RefreshBearer(refresh)
 		return response
 
-from django.conf import settings
-
 class JWK(APIView):
 	permission_classes = [AllowAny]
+	authentication_classes = []
 	
 	@property
 	def allowed_methods(self):
 		return ["GET"]
 	def get(self, request):
 		data = {
-			"public_key" : settings.JWT_PUBLIC_KEY,
+			"public_key" : str(settings.JWT_PUBLIC_KEY).replace("\n", ""),
 			"algorithm" : settings.JWT_ALGORITHM
 		}
 		return Response(data=data)
@@ -219,9 +224,10 @@ class VerifyOTP(CreateAPIView):
 	queryset = User.objects.all()
 	cache = _AuthCache
 	serializer_class = OTPSerializer
+	authentication_classes = []
 
 	def post(self, request, *args, **kwargs):
-		user = self.get_object()
+		user : User = self.get_object()
 		if self.cache.didUserRequest(user.username) is False:
 			return Response({f"detail : {user.username} did not request a code; the incident will be reported."},
 				   				status=status.HTTP_403_FORBIDDEN)
@@ -234,13 +240,14 @@ class VerifyOTP(CreateAPIView):
 			return Response(data={"detail : invalid OTP code."}, status=status.HTTP_403_FORBIDDEN)
 		sec = self.cache.execution_2fa_action(user.username, "get")
 		response = Response(status=status.HTTP_302_FOUND)
-		response["Location"] = f"/auth/login/?username={user.username}&execution={sec}"
+		response["Location"] = f"/api/auth/login/?username={user.username}&execution={sec}"
 		return response
 
 
 class GoogleCallback(GoogleMixin, APIView):
 
 	permission_classes = [AllowAny]
+	authentication_classes = []
 	cache = _AuthCache
 
 	@sync_to_async
@@ -297,6 +304,7 @@ class GoogleCallback(GoogleMixin, APIView):
 
 class IntraCallback(IntraMixin, APIView):
 	permission_classes = [AllowAny]
+	authentication_classes = []
 
 	@sync_to_async
 	def cleanup(self, user_data, request):

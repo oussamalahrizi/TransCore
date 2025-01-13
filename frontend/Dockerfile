@@ -12,4 +12,4 @@ RUN mkdir -p /app/src
 RUN npm init -y && \
 npm install express
 
-CMD ["node", "src/server.js"]
+ENTRYPOINT [ "node", "src/server.js" ]
