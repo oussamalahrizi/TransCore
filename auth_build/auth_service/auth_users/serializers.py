@@ -157,8 +157,42 @@ class UserTwoFactorSerial(serializers.ModelSerializer):
 		instance.save()
 		return instance
 
-# class UserVerifyOTP(serializers.ModelSerializer):
-# 	code = serializers.IntegerField(max_length=6, required=True)
-# 	class Meta:
-# 		model = User
-#		fields = ['username']
+
+class SessionSerializer(serializers.Serializer):
+	user_id = serializers.UUIDField(required=True)
+
+		
+	def validate(self, attrs):
+		try:
+			user_id = attrs["user_id"]
+			print(f"id in serializer : {user_id}")
+			user = get_object_or_404(User, id=user_id)
+			return attrs
+		except Http404:
+			raise serializers.ValidationError({"detail" : "user not found http404"})
+
+
+"""
+	TODO : DONE
+		- password serialized
+		- password length should be at least 8 chars
+		- just call instance.set_password(new_password) to update it 
+"""
+class UpdatePasswordSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = User
+		fields = ['password']
+		kwagrs = {
+			"password" : {"required" : True}
+		}
+
+	def validate_password(self, value):
+		if len(value) < 8:
+			raise serializers.ValidationError("password too short")
+		return value
+
+	def update(self, instance : User, validated_data):
+		password = validated_data["password"]
+		instance.set_password(password)
+		instance.save()
+		return instance

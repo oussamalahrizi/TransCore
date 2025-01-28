@@ -77,9 +77,12 @@ const Router = {
 		{
 			a.forEach(tag => {
 				tag.addEventListener("click", e => {
-					// const external = /^(http|https|mailto|ftp):/.test(tag.getAttribute("href"))
-					e.preventDefault()
-					Router.navigate(e.target.getAttribute("href"))
+					const external = /^(http|https|mailto|ftp):/.test(tag.getAttribute("href"))
+					if (!external)
+					{
+						e.preventDefault()
+						Router.navigate(e.target.getAttribute("href"))
+					}
 				})
 			})
 		}

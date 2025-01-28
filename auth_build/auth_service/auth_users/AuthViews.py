@@ -14,7 +14,8 @@ from rest_framework.views import APIView
 from rest_framework import serializers
 from .serializers import (
 	UserLogin,
-	InputSerializer)
+	InputSerializer,
+	SessionSerializer)
 from .models import User
 from .views import IsSameUser
 from django.shortcuts import get_object_or_404
@@ -28,19 +29,23 @@ from .AuthMixins import (
 	IntraMixin)
 from httpx import AsyncClient
 from asgiref.sync import async_to_sync, sync_to_async
+from .permissions import IsAllowedHost
+from rest_framework.exceptions import PermissionDenied
 
 
 class RegisterEmail(LoginMixin, CreateAPIView):
-	serializer_class = InputSerializer
 	permission_classes = [AllowAny]
 	authentication_classes = []
 	cache = _AuthCache
+	serializer_class = InputSerializer
+	queryset = User.objects.all()
 
 	def post(self, request: Request):
 		refresh_cookie = request.COOKIES.get("refresh_token")
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
+
 
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
@@ -112,7 +117,7 @@ class LogoutView(APIView):
 		
 		# Blacklist the refresh token
 		self.cache.blacklist_token(refresh_token, request.user.username)
-		
+		self.cache.delete_access_session(request.user.id)
 		# Delete from cookies
 		response = Response({"detail": "Logout successful."}, status=status.HTTP_200_OK)
 		response.delete_cookie('refresh_token')
@@ -157,9 +162,31 @@ class JWK(APIView):
 		}
 		return Response(data=data)
 
-class EnableOTP(RetrieveAPIView):
-	lookup_field = "username"
-	queryset = User.objects.all()
+class SessionState(APIView):
+	permission_classes = [IsAllowedHost]
+	authentication_classes = []
+	cache = _AuthCache
+
+	def permission_denied(self, request, message=None, code=None):
+		raise PermissionDenied(detail="Host not allowed.")
+
+	def post(self, request, *args, **kwargs):
+		try:
+			print(request.data)
+			serializer = SessionSerializer(data=request.data)
+			print("before")
+			serializer.is_valid(raise_exception=True)
+			print(f"user id after: {serializer.data["user_id"]}")
+			session = self.cache.get_access_session(serializer.data["user_id"])
+			if session is None:
+				raise serializers.ValidationError
+			return Response(data={"session_state" : session})
+		except serializers.ValidationError as e:
+			print(f"reason : {e}")
+			return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "user not found or not logged in"})
+
+
+class EnableOTP(APIView):
 	permission_classes = [IsSameUser]
 
 	def _generate_url(self, user : User):
@@ -181,38 +208,42 @@ class EnableOTP(RetrieveAPIView):
 		return Response(img_str)
 
 	def get(self, request, *args, **kwargs):
-		user = self.get_object()
-		if user.two_factor_enabled is True:
-			return Response(data={f"detail : {user.username} already enabled 2FA."})
-		# generate secret and update attributes
-		secret = pyotp.random_base32()
-		data = {
-            "two_factor_enabled": True,
-            "two_factor_secret": secret
-        }
-		for key, value in data.items():
-			setattr(user, key, value)
-		user.save()
-		# generate url
-		return self._generate_url(user)
+		try:
+			user = get_object_or_404(User, username=kwargs.get("username"))
+			if user.two_factor_enabled is True:
+				return Response(data={f"detail : {user.username} already enabled 2FA."})
+			# generate secret and update attributes
+			secret = pyotp.random_base32()
+			data = {
+				"two_factor_enabled": True,
+				"two_factor_secret": secret
+			}
+			for key, value in data.items():
+				setattr(user, key, value)
+			user.save()
+			# generate url
+			return self._generate_url(user)
+		except Http404:
+			return Response(data={"detail" : "User Not Found."}, status=status.HTTP_404_NOT_FOUND)
 
-class DisableOTP(RetrieveAPIView):
-	lookup_field = "username"
-	queryset = User.objects.all()
+class DisableOTP(APIView):
 	permission_classes = [IsSameUser]
 
 	def get(self, request, *args, **kwargs):
-		user : User = self.get_object()
-		if not user.two_factor_enabled:
-			return Response(data={f"detail : {user.username} already disabled."})
-		data = {
-            "two_factor_enabled": False,
-            "two_factor_secret": ""
-        }
-		for key, value in data.items():
-			setattr(user, key, value)
-		user.save()
-		return Response(data={"detail : Updated successfully."})
+		try:
+			user = get_object_or_404(User, username=kwargs.get("username"))
+			if not user.two_factor_enabled:
+				return Response(data={f"detail : {user.username} already disabled."})
+			data = {
+				"two_factor_enabled": False,
+				"two_factor_secret": ""
+			}
+			for key, value in data.items():
+				setattr(user, key, value)
+			user.save()
+			return Response(data={"detail : Updated successfully."})
+		except Http404:
+			return Response(data={"detail" : "User Not Found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class VerifyOTP(CreateAPIView):

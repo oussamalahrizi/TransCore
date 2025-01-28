@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sleep 2
+sleep 3
 ./manage.py makemigrations
 ./manage.py migrate
 exec "$@"

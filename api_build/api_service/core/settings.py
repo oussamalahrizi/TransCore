@@ -45,6 +45,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+REST_FRAMEWORK = {
+
+    'DEFAULT_RENDERER_CLASSES': [
+            'rest_framework.renderers.JSONRenderer',
+            'rest_framework.renderers.BrowsableAPIRenderer',
+        ],
+    'DEFAULT_AUTHENTICATION_CLASSES' : [
+		'api_core.jwtMiddleware.JWTAuthentication'
+	],
+    'EXCEPTION_HANDLER': 'api_core.exception_handlers.custom_exception_handler'
+
+}
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
@@ -113,7 +125,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/api/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

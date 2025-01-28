@@ -1,6 +1,8 @@
-from django.urls import re_path
-from . import Consumers
+from django.urls import path
 
-websocket_urlpatterns = [
-	re_path(r'ws/', Consumers.TestConsumer.as_asgi()),
+from .views import GetUserData, Debug
+
+urlpatterns = [
+    path("user/", GetUserData.as_view(), name='user-data'),
+    path("user/<str:username>/<int:some_id>/update/", Debug.as_view(), name='debug')
 ]

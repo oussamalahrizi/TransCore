@@ -11,7 +11,6 @@ USERINFO_URL = "http://auth-service/auth/api_users"
 class jwtmiddleware(BaseMiddleware):
     """
     Custom JWT middleware for Django Channels.
-    Demonstrates an async approach when closing the WebSocket connection.
     """
 
     async def __call__(self, scope, receive, send):

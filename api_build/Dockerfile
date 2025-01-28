@@ -5,16 +5,15 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /var/app
 
-COPY build/conf/requirements.txt .
+COPY build/conf/requirements.txt /var
 
-COPY build/tools/init.sh .
+COPY build/tools/init.sh /var
 
-RUN chmod +x init.sh
+RUN chmod +x /var/init.sh
 
-RUN pip install -r requirements.txt
+RUN pip install -r /var/requirements.txt
 
-COPY api_service/ .
 
-ENTRYPOINT ["./init.sh"]
+ENTRYPOINT ["../init.sh"]
 
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000" ,"core.asgi:application"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8000" ,"core.asgi:application", "--lifespan", "on", "--reload"]

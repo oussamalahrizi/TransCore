@@ -15,6 +15,12 @@ volumes:
       o: "bind"
       type: "none"
       device: "/tmp/auth_redis_data"
+  api_redis_data:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "/tmp/api_redis_data"
   redisinsight_data:
     driver: local
     driver_opts:
@@ -33,6 +39,12 @@ volumes:
       o: "bind"
       type: "none"
       device: "./auth_build/auth_service"
+  api-service-code:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "./api_build/api_service"
 
 services:
   users-db:
@@ -45,7 +57,6 @@ services:
     env_file:
       - "auth_build/build/conf/.env"
   
-
   auth-service:
     build: "auth_build/."
     pull_policy: build
@@ -69,12 +80,28 @@ services:
     container_name: api_service
     networks:
       - TransNetwork
+    depends_on:
+      - rabbitmq
+      - api-redis
+    volumes:
+      - "api-service-code:/var/app/"
 
   api-redis:
     build: "api_redis"
     pull_policy: build
     image: api_redis
     container_name: api_redis
+    networks:
+      - TransNetwork
+    volumes:
+      - "api_redis_data:/data"
+
+  rabbitmq:
+    image: rabbitmq:4.0.5-management
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
     networks:
       - TransNetwork
 
@@ -87,8 +114,8 @@ services:
       - 8000:80
     depends_on:
       - auth-service
-      - api-service
       - adminer
+      - api-service
     networks:
       - TransNetwork
 

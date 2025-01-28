@@ -1,5 +1,7 @@
 const WebSocket = require('ws');
 
+const token = ""
+
 const wsUrl = `ws://api-service/ws`;
 
 const ws = new WebSocket(wsUrl);

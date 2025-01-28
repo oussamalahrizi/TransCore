@@ -7,7 +7,7 @@ class TestConsumer(AsyncWebsocketConsumer):
 		if error:
 			await self.send(error, close=True)
 			return
-		user  = self.scope["user"]
+		user = self.scope["user"]
 		self.send(text_data=f"Welcome {user["username"]}")
 
 

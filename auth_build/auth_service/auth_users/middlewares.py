@@ -15,14 +15,14 @@ class JWTAuthentication(authentication.BaseAuthentication):
 	def authenticate(self, request):
 		auth_header = authentication.get_authorization_header(request)
 		if not auth_header:
-			return None
+			raise InvalidToken('Missing or invalid auth credentials.')
 		parts = auth_header.split()
 		if len(parts) == 0:
-			return None
+			raise InvalidToken('Missing or invalid auth credentials.')
 		if parts[0].decode('utf-8') != 'Bearer':
-			return None
+			raise InvalidToken('Missing or invalid auth credentials.')
 		if len(parts) != 2:
-			return None
+			raise InvalidToken('Missing or invalid auth credentials.')
 		return self.authenticate_credentials(parts[1])
 
 	def authenticate_credentials(self, token):
