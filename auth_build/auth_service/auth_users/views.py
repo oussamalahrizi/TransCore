@@ -86,14 +86,27 @@ class GetMyInfo(APIView):
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
 
-class GetUserService(RetrieveAPIView):
+class GetUserServiceID(RetrieveAPIView):
     """
     View to get user info based on id from other services.
     """
     serializer_class = UserDetailSerializer
     queryset = User.objects.all()
     lookup_field = 'id'
-    permission_classes = [IsAllowedHost]
+    permission_classes = []
+    authentication_classes = []
+    
+    def permission_denied(self, request, message=None, code=None):
+        raise PermissionDenied(detail="Host not allowed.")
+
+class GetUserServiceName(RetrieveAPIView):
+    """
+    View to get user info based on id from other services.
+    """
+    serializer_class = UserDetailSerializer
+    queryset = User.objects.all()
+    lookup_field = 'username'
+    permission_classes = []
     authentication_classes = []
     
     def permission_denied(self, request, message=None, code=None):

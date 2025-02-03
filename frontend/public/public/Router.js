@@ -5,18 +5,16 @@ import routes from "./routes.js"
 
 export const checkAccessToken = async () => {
 	const token = app.utils.getCookie("access_token")
-	if (token)
-		return true
-	const res = await app.utils.refreshToken()
-	if (res)
-		return true
-	return false
+	return token
 }
 
 const handleAuthGuard = async (content, route) => {
 	// url requires authenticated
-	if (content.auth_guard && !(await checkAccessToken())) {
-		// means refresh failed
+	if (content.auth_guard && !checkAccessToken()) {
+		const res = await app.utils.refreshToken()
+		// either 400 or 403  means refresh not in cookies
+		if (res)
+			return true
 		Router.navigate("/auth/login")
 		return false;
 	}

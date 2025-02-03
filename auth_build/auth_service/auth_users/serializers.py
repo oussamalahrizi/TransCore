@@ -82,7 +82,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 	
 	class Meta:
 		model = User
-		fields = ['username','email', 'icon_url','is_active', 'last_login']
+		fields = ['id' ,'username','email', 'icon_url','is_active', 'last_login']
 
 
 # serializer to update common user info

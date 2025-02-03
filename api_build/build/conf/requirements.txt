@@ -41,3 +41,4 @@ typing_extensions==4.12.2
 uvicorn==0.34.0
 yarl==1.18.3
 zope.interface==7.2
+websockets

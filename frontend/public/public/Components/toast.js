@@ -1,6 +1,6 @@
 
 
-const view = (message) =>  /* html*/ `
+const view = (message) =>  /*html*/ `
     <div class="flex p-4">
         <p class="text-lg mx-3">
             ${message}

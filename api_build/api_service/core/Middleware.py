@@ -6,8 +6,8 @@ from urllib.parse import parse_qs
 from api_core.utils import Cache
 from channels.exceptions import DenyConnection
 
-JWK_URL = "http://auth-service/auth/jwk/"
-USERINFO_URL = "http://auth-service/auth/api_users"
+JWK_URL = "http://auth-service/api/auth/jwk/"
+USERINFO_URL = "http://auth-service/api/auth/api_user_id"
 
 class jwtmiddleware(BaseMiddleware):
     """
@@ -79,9 +79,6 @@ class jwtmiddleware(BaseMiddleware):
         Retrieve user info from the Auth Service asynchronously,
         handling timeouts/unreachable hosts. Returns None on error.
         """
-        user_info = self.cache.get_user_data(user_id=user_id)
-        if user_info is not None:
-            return user_info
 
         try:
             timeout = httpx.Timeout(5.0, read=5.0)

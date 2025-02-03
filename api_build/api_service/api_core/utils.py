@@ -7,22 +7,23 @@ class Cache:
         only store user data along side with his presence status
     """
 
-    redis = None
 
     def __init__(self):
         self.redis = Redis(host="api-redis", port=6380, decode_responses=True, db=0)
-
-    def get_user_data(self, user_id: str):
-        value = self.redis.get(user_id)
-        if value:
-            return json.loads(value)
-        return None
+    
 
     def set_user_data(self, user_id: str, data):
         status = self.get_user_status(user_id)
         data["status"] = status
         json_data = json.dumps(data)
         self.redis.set(user_id, json_data)
+    
+    def get_user_data(self, user_id: str):
+        value = self.redis.get(user_id)
+        if value:
+            return json.loads(value)
+        return None
+
     
     def remove_user_data(self, user_id: str):
         self.redis.delete(user_id)

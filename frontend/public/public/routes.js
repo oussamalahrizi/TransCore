@@ -3,8 +3,16 @@ import authLogin from "./pages/AuthLogin/index.js";
 import authRegister from "./pages/AuthRegister/index.js";
 import NotFound from "./pages/NotFound/index.js"
 import AuthGoogle from "./pages/AuthGoogle/index.js";
+import Socket from "./pages/Socket/index.js";
+
 
 const routes = {
+	"/sockets" : {
+		view : Socket.View,
+		controller: Socket.Controller,
+		title: "Sockets Baby",
+		auth_guard: false
+	},
 	"/404": {
 		view: NotFound.View,
 		controller: null,

@@ -39,10 +39,16 @@ const refreshToken =  async () => {
 		})
 		if (!res.ok)
 		{
-			if (res.status === 500)
-				throw new Error("Internal Server Error")
+			if (res.status === 403)
+			{
+				data = await res.json()
+				throw new Error("Error: ", JSON.stringify(data, null, 10))
+			}
 			if (res.status === 400)
-				th
+			{
+				app.utils.removeCookie("access_token")
+				return false
+			}
 			data = await res.json();
 			throw new Error(JSON.stringify(data, null, 10))			
 		}
