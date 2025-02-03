@@ -1,56 +1,46 @@
+import { showToast } from "./Components/toast.js"
 import routes from "./routes.js"
 
 
-export const checkAccessToken = () => {
+
+export const checkAccessToken = async () => {
 	const token = app.utils.getCookie("access_token")
-	return token
+	if (token)
+		return true
+	const res = await app.utils.refreshToken()
+	if (res)
+		return true
+	return false
 }
 
-const handleAuthGuard =  (content, route) => {
-	// url requires auth and no access token
-	if (content.auth_guard && !checkAccessToken()) {
-		Router.navigate("/auth")
+const handleAuthGuard = async (content, route) => {
+	// url requires authenticated
+	if (content.auth_guard && !(await checkAccessToken())) {
+		// means refresh failed
+		Router.navigate("/auth/login")
 		return false;
 	}
-	if (route.startsWith("/auth") && checkAccessToken())
+	if (route.startsWith("/auth") && (await checkAccessToken()))
 	{
-		console.log("already logged in");
+		showToast("Already logged in", 'green')
 		Router.navigate("/")
 		return false
 	}
-	// url starts with /auth there is an access token
 	return true;
-}
-
-const startTokenRefresh =  () => {
-	if (!Router.intervalId) {
-		console.log("Starting refresh auto");
-		Router.intervalId = setInterval(refreshToken, 3000); // Refresh token every 4 minutes
-	}
-	else
-		console.log("interval id NOTTTTTT null : ",Router.intervalId);
-}
-
-const stopTokenRefresh =  () => {
-	if (Router.intervalId) {
-		clearInterval(Router.intervalId);
-		Router.intervalId = null;
-		app.utils.removeCookie("access_token")
-		console.log("stopped worker and removed token");
-	}
 }
 
 
 const Router = {
-	init : () => {
+	init :  () => {
 		// listen for url changes in history events
 		// called only when using forward and backward arrows of browser
-		window.addEventListener("popstate", (e) => Router.navigate(e.state.route, false))
-		Router.navigate(location.pathname)
+		window.addEventListener("popstate", (e) => Router.navigate(e.state.route, false)) 
+		Router.navigate(location.href)
 	},
-	navigate : (route, useHistory=true) => {
+	navigate : async (route, useHistory=true) => {
 		if (useHistory)
 			window.history.pushState({ route }, '', route)
+		route = new URL(route, window.location.origin).pathname
 		let content = routes[route]
 		// redirect uknown routes to 404
 		if (!content)
@@ -59,13 +49,16 @@ const Router = {
 			return
 		}
 		// handling auth guard
-		if (!handleAuthGuard(content, route))
-			return
+		const authorized = await handleAuthGuard(content, route);
+		if (!authorized)
+			return;
 		// injecting content in the root div and running the controller
 		const root = document.getElementById("root")
+		while (root.firstChild) {
+			root.removeChild(root.firstChild);
+		}
+		root.innerHTML = content.view;
 		document.head.title = content.title
-		root.innerHTML = ''
-		root.innerHTML = content.view
 		if (content.controller)
 			content.controller()
 		// disabling default behavior for anchor tags
@@ -86,10 +79,7 @@ const Router = {
 				})
 			})
 		}
-	},
-	intervalId : null
+	}
 }
-
-export {stopTokenRefresh}
 
 export default Router

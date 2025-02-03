@@ -9,3 +9,5 @@
     - [ ] send email
     - [ ] email error handling (no reply, spam)
 - [ ] test middleware from other services
+- [ ] asynchronus publisher along side with django server , publish on the current event loop to the queue
+- [ ]

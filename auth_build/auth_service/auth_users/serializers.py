@@ -1,10 +1,8 @@
-from django.contrib.auth import models
 from django.contrib.auth.hashers import check_password
 from rest_framework import serializers
-
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 from .models import AuthProvider, User
-
-from .utils import _AuthCache
 
 """
 	use different serializer as you can depending on the task
@@ -82,10 +80,9 @@ class AuthProviderSerializer(serializers.ModelSerializer):
 # serializer to get user data except for last_login and password
 class UserDetailSerializer(serializers.ModelSerializer):
 	
-	auth_provider = AuthProviderSerializer(many=True, read_only=True)
 	class Meta:
 		model = User
-		exclude = ['password']
+		fields = ['username','email', 'icon_url','is_active', 'last_login']
 
 
 # serializer to update common user info
@@ -122,8 +119,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
 		instance.save()
 		return instance
 
-from django.shortcuts import get_object_or_404
-from django.http import Http404
+
 
 class UserLogin(serializers.Serializer):
 

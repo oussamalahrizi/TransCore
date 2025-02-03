@@ -11,6 +11,8 @@ from rest_framework.permissions import AllowAny
 from asgiref.sync import async_to_sync
 import httpx
 
+USER_INFO = "http://auth-service/auth/api_users/"
+
 class GetUserData(APIView):
     """
         TODO : 
@@ -20,10 +22,6 @@ class GetUserData(APIView):
     cache = _Cache
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
-    
-    def try_cache(self, user_id):
-        user = self.cache.get_user_data()
-        return user
 
     async def fetch_user_data(self, user_id):
         try:
@@ -39,12 +37,16 @@ class GetUserData(APIView):
     @async_to_sync
     async def get(self, request: Request, *args, **kwargs):
         user_id = request.user.id
-        user_data = self.cache.get_user_data(user_id=user_id)
-        if user_data is not None:
-            return Response(data=user_data)
+        # user_data = self.cache.get_user_data(user_id=user_id)
+        # if user_data is not None:
+        #     return Response(data=user_data)
         user_data = await self.fetch_user_data(user_id)
         if user_data is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        print(user_data)
+        return Response(user_data)
+        self.cache.set_user_data(user_id=user_data["id"], data=user_data)
+        return Response(self.cache.get_user_data(user_data["id"]))
 
 
 class Debug(APIView):

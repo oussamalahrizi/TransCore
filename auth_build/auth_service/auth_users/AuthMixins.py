@@ -6,6 +6,7 @@ from django.urls import reverse
 from .models import User, AuthProvider
 from django.http.response import Http404
 from django.shortcuts import get_object_or_404
+import datetime
 
 
 class LoginMixin:
@@ -24,8 +25,9 @@ class LoginMixin:
 	def _handle_logged_user(self, user : User, refresh_cookie=None, force_logout=False):
 		"""Handle already logged in user scenarios"""
 		if self.cache.isUserLogged(user.username):
+			print("USER IS LOGGED IN 666666666666666666")
+
 			cache_token = self.cache.get_user_token(username=user.username)
-			
 			if refresh_cookie:
 				if cache_token != refresh_cookie:
 					response = Response(status=status.HTTP_403_FORBIDDEN,
@@ -35,9 +37,9 @@ class LoginMixin:
 					return response
 				return Response("You are already logged in")
 
-			if not force_logout:
+			if force_logout == False:
 				return Response(data={"detail": "User already logged in from another device"})
-			elif not user.two_factor_enabled:
+			elif user.two_factor_enabled == False:
 				return Response(data={"detail" : "You cannot force logout if 2FA is not enabled"})
 			self.cache.blacklist_token(cache_token, user.username)
 		return None
@@ -54,6 +56,8 @@ class LoginMixin:
 	def Helper(self, user : User) -> Response:
 		token_pair = GenerateTokenPair(str(user.id))
 		self.cache.store_token(user.username, token_pair['refresh'], token_pair["exp_refresh"])
+		user.last_login = datetime.datetime.now(datetime.timezone.utc)
+		user.save()
 		response = Response(
 			status=status.HTTP_202_ACCEPTED,
 			data={"access_token": token_pair['access'], "refresh_token": token_pair['refresh']}

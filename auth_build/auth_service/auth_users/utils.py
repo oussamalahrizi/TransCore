@@ -56,7 +56,7 @@ def RefreshBearer(refresh):
 			'session_state' : sess_id
 		}
 		access = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
-		response = Response({"acess_token" : access})
+		response = Response({"access_token" : access})
 	except jwt.ExpiredSignatureError:
 		response = Response({"detail" : "Refresh token expired."}, status=status.HTTP_400_BAD_REQUEST)
 	except jwt.InvalidTokenError:

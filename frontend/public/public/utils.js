@@ -1,18 +1,14 @@
+import { showToast } from "./Components/toast.js";
 import {checkAccessToken} from "./Router.js"
 
 const removeCookie = (name) =>  {
 	if (getCookie(name))
-    	document.cookie = name + '=; Max-Age=-99999999; path=/';
+    	document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 }
 
-const setCookie = (name, value, days) => {
+const setCookie = (name, value) => {
     let expires = "";
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    document.cookie = name + "=" + value + expires + "; path=/";
 }
 
 const  getCookie = (name) => {
@@ -34,6 +30,7 @@ const  getCookie = (name) => {
 
 const refreshToken =  async () => {
 	try {
+		let data;
 		const res = await fetch("http://localhost:8000/api/auth/refresh/", {
 			headers : {
 				"Accept" : "application/json"
@@ -42,16 +39,21 @@ const refreshToken =  async () => {
 		})
 		if (!res.ok)
 		{
-			console.warn("response status error : ", res.status);
-			return false
+			if (res.status === 500)
+				throw new Error("Internal Server Error")
+			if (res.status === 400)
+				th
+			data = await res.json();
+			throw new Error(JSON.stringify(data, null, 10))			
 		}
-		const data = await res.json()
-		app.utils.setCookie("access_token", data["access_token"], 4 * 60 + 30) // Set cookie with max_age of 4 minutes and 30 seconds
-		console.log("Just refreshed the access token", data)
+		data = await res.json()
+		app.utils.setCookie("access_token", data.access_token) // Set cookie with max_age of 4 minutes and 30 seconds
+		console.log("Just refreshed the access token", data.access_token, data)
 		return true
 	}
-	catch {
-		console.log("Failed to fetch from server");
+	catch (error) {
+		showToast(error, 'red')
+		app.utils.removeCookie("access_token")
 		return false
 	}
 }

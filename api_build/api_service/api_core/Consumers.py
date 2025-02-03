@@ -1,4 +1,5 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.layers import get_channel_layer
 class TestConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
 		await self.accept()
@@ -15,4 +16,6 @@ class TestConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data="Connection closed")
 
 	async def receive(self, text_data):
+
 		await self.send(text_data=f"Received from client: {text_data}")
+	

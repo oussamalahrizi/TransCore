@@ -109,7 +109,6 @@ class GetFriends(APIView):
     
     def get(self, request : Request, *args, **kwargs):
         user : User = request.user
-        # should perform "select * from friends where from_user=user or to_user==user"
         friends = Friends.objects.get_friends(user)
         print(friends)
         return Response(friends)
@@ -144,5 +143,5 @@ class CheckSentFriend(APIView):
     def get(self, request : Request, *args, **kwargs):
         current_user = request.user
         sent_requests = Friends.objects.get_sent_reqs(current_user)
-        data = [req.to_user.username for req in sent_requests]
-        return Response(data)
+        # data = [req.to_user.username for req in sent_requests]
+        return Response(sent_requests)

@@ -288,7 +288,7 @@ class GoogleCallback(GoogleMixin, APIView):
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
-		logged_response = self._handle_logged_user(user.	username, refresh_cookie, force_logout=False)
+		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout=False)
 		if logged_response:
 			return logged_response
 		twofa_response = self._handle_2fa(user)

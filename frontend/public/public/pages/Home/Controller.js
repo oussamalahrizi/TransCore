@@ -1,5 +1,5 @@
+import { showToast } from "../../Components/toast.js";
 
-import { stopTokenRefresh } from "../../Router.js";
 
 const LoadCss = (href) => {
 	return new Promise(async (resolve, reject) => {
@@ -30,38 +30,23 @@ const LoadCss = (href) => {
 
 
 export default  () => {
-    // (async ()=> {
-    //     try {
-    //         const res = await fetch("http://localhost:8000/api/auth/refresh/")
-    //         const data = await res.json()
-    //         console.log(data);
-    //     } catch (error) {
-    //         console.log("err", error);
-    //     }            
-    // })()
-    console.warn("setting temp access")
-    app.utils.setCookie("access_token", "random value")
-    const btn = document.getElementById("home-view").querySelector("#logout")
-    btn.addEventListener("click", ()=> {
-        if (app.utils.getCookie("access_token"))
-        {
+    const view = document.getElementById("home-view")
+    const logout = view.querySelector("#logout")
+    logout.addEventListener("click", async () => {
+        try {
+            const headers = {
+                'Authorization': "Bearer " + app.utils.getCookie("access_token")
+            }
+            const res = await fetch("http://localhost:8000/api/auth/logout/", {headers})
+            const data = await res.json()
+            if (!res.ok)
+                throw new Error(`Error: ${res.statusText} ${JSON.stringify(data)}`)
             app.utils.removeCookie("access_token")
-            console.warn("removed access token");
+            showToast("Logged out successfully", 'green')
+            app.router.navigate("/auth/login")
+        } catch (error) {
+            console.error(error)
+            showToast(error, 'red')
         }
     })
-    // const css = [
-    //     "/public/pages/Home/styles/style.css"
-    // ]
-	// try {
-    //     css.forEach(async (href)=> {
-    //         await LoadCss(href)
-    //     })
-    //     // other logic for event handling and prerendering content
-        
-    // } catch (error) {
-    //     console.log("Error occured");
-    //     console.log(error);
-    //     app.router.navigate("/404")
-    // }
-
 }

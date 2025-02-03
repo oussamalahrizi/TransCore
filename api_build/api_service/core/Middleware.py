@@ -3,6 +3,7 @@ import httpx
 from django.core.cache import cache
 from channels.middleware import BaseMiddleware
 from urllib.parse import parse_qs
+from api_core.utils import Cache
 from channels.exceptions import DenyConnection
 
 JWK_URL = "http://auth-service/auth/jwk/"
@@ -12,7 +13,7 @@ class jwtmiddleware(BaseMiddleware):
     """
     Custom JWT middleware for Django Channels.
     """
-
+    cache = Cache
     async def __call__(self, scope, receive, send):
         try:
             query_string = scope.get("query_string", b"").decode("utf-8")
@@ -78,10 +79,9 @@ class jwtmiddleware(BaseMiddleware):
         Retrieve user info from the Auth Service asynchronously,
         handling timeouts/unreachable hosts. Returns None on error.
         """
-        # cache_key = f"user_info:{user_id}"
-        # cached_user = cache.get(cache_key)
-        # if cached_user:
-        #     return cached_user
+        user_info = self.cache.get_user_data(user_id=user_id)
+        if user_info is not None:
+            return user_info
 
         try:
             timeout = httpx.Timeout(5.0, read=5.0)

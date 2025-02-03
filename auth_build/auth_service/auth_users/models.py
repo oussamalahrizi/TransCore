@@ -31,10 +31,10 @@ class UserManager(BaseUserManager):
             raise ValueError("email required")
         if not username:
             raise ValueError("username required")
-        if auth_provider == "email" and not password:
+        if auth_provider == "Email" and not password:
             raise ValueError("password required if auth_provider is email")
         auth_obj, created = AuthProvider.objects.get_or_create(name=auth_provider)
-        if len(password) < 8:
+        if auth_provider == "Email" and len(password) < 8:
             raise ValueError("password too short")
         user = self.model(email=email,
             username=username,
@@ -138,24 +138,24 @@ class FriendsManager(models.Manager):
         Returns:
             QuerySet: A QuerySet containing the 'to_user' values for pending requests.
         """
-        return self.filter(from_user=from_user, status="pending").all().values_list('to_user', flat=True)
-    
+        return self.filter(from_user=from_user, status="pending") \
+            .all() \
+            .values_list('to_user', flat=True)
+     
     def get_received_reqs(self, from_user):
         return self.filter(to_user=from_user, status="pending") \
-               .select_related('from_user') \
                .all() \
-               .values_list('from_user__username', flat=True)
+               .values_list('from_user', flat=True)
 
     def get_friends(self, user):
         friends_from_user = self.filter(from_user=user, status='accepted') \
-            .select_related('to_user') \
             .all() \
-            .values_list('to_user__username', flat=True)
+            .values_list('to_user', flat=True)
         friends_to_user = self.filter(to_user=user, status='accepted') \
-            .select_related('from_user') \
             .all() \
-            .values_list('from_user__username', flat=True)
-        return list(friends_to_user) + list(friends_from_user)
+            .values_list('from_user', flat=True)
+        friends = friends_from_user.union(friends_to_user)
+        return friends
     
     def get_blocked_users(self, from_user):
         return self.filter(from_user=from_user, status='blocked').all().values_list('to_user', flat=True)
@@ -178,4 +178,3 @@ class Friends(models.Model):
 
     class Meta:
         unique_together = ('from_user', 'to_user')
-
