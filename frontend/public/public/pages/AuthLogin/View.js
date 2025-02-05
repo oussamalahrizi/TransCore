@@ -8,9 +8,13 @@ export default /*html*/ `
 				<button type="submit" id="login-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition duration-300 w-full">
 					Login
 				</button>
+				<div class="flex items-center my-3">
+					<input type="checkbox" id="force" class="mr-2">
+					<label for="force" class="text-gray-700">Force Logout from other devices</label>
+				</div>
 				<div class="mt-2">Don't have an account? <a class="text-blue-600" href="/auth/register">Register</a></div>
 			</form>
-			<div class="flex flex-col mt-4">
+			<div class="flex flex-col">
 				<div class="flex items-center my-4">
 					<hr class="flex-grow border-t border-gray-300">
 					<span class="mx-2 text-gray-500">OR</span>

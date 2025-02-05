@@ -25,8 +25,9 @@ class LoginMixin:
 	def _handle_logged_user(self, user : User, refresh_cookie=None, force_logout=False):
 		"""Handle already logged in user scenarios"""
 		if self.cache.isUserLogged(user.username):
-			print("USER IS LOGGED IN 666666666666666666")
-
+			print("User logged in already")
+			print("yes force" if force_logout else "no force")
+			print("there is refresh" if refresh_cookie else "no refresh")
 			cache_token = self.cache.get_user_token(username=user.username)
 			if refresh_cookie:
 				if cache_token != refresh_cookie:
@@ -36,11 +37,11 @@ class LoginMixin:
 					response.delete_cookie("refresh_token")
 					return response
 				return Response("You are already logged in")
-
-			if force_logout == False:
-				return Response(data={"detail": "User already logged in from another device"})
+			
+			if not force_logout:
+				return Response(data={"detail": "User already logged in from another device"}, status=status.HTTP_403_FORBIDDEN)
 			elif user.two_factor_enabled == False:
-				return Response(data={"detail" : "You cannot force logout if 2FA is not enabled"})
+				return Response(data={"detail" : "You cannot force logout if 2FA is not enabled"}, status=status.HTTP_403_FORBIDDEN)
 			self.cache.blacklist_token(cache_token, user.username)
 		return None
 
@@ -50,7 +51,7 @@ class LoginMixin:
 			self.cache.execution_2fa_action(user.username, "set")
 			response = Response(status=status.HTTP_302_FOUND)
 			response["Location"] = reverse("verify-2fa", kwargs={'username': user.username})
-			return response 
+			return response
 		return None
 
 	def Helper(self, user : User) -> Response:

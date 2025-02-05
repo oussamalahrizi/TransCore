@@ -29,7 +29,8 @@ const  getCookie = (name) => {
 }
 
 const refreshToken =  async () => {
-	try {
+	try
+	{
 		let data;
 		const res = await fetch("http://localhost:8000/api/auth/refresh/", {
 			headers : {
@@ -39,19 +40,18 @@ const refreshToken =  async () => {
 		})
 		if (!res.ok)
 		{
-			if (res.status === 403)
+			if (res.status === 403) // blacklisted
 			{
 				data = await res.json()
 				throw new Error("Error: ", JSON.stringify(data, null, 10))
 			}
-			if (res.status === 400)
+			if (res.status === 400) // missing
 			{
 				app.utils.removeCookie("access_token")
 				return false
-			}
-			data = await res.json();
-			throw new Error(JSON.stringify(data, null, 10))			
+			}	
 		}
+		// new token
 		data = await res.json()
 		app.utils.setCookie("access_token", data.access_token) // Set cookie with max_age of 4 minutes and 30 seconds
 		console.log("Just refreshed the access token", data.access_token, data)
@@ -64,44 +64,16 @@ const refreshToken =  async () => {
 	}
 }
 
-const withAuth = async (url, options = {}) => {
-	// first add the access token from cookies
-	const access = checkAccessToken();
-	if (access) {
-		options.headers = {
-			...options.headers,
-			"Authorization": `Bearer ${access}`
-		};
-	}
-	try {
-		const response = await fetch(url, options);
-		// how do you know if the response tells you to refresh the token
-		// or you just cant access this route
-		if (!response.ok) {
-			if (response.status === 400) {
-				const ref = await refreshToken();
-				if (!ref)
-					throw new Error("Failed to get the refresh token.")
-				const newToken = checkAccessToken();
-				if (newToken) {
-					options.headers["Authorization"] = `Bearer ${newToken}`;
-					const retryResponse = await fetch(url, options);
-					if (!retryResponse.ok)
-						throw new Error(`Request failed with status ${retryResponse.status}`);
-					return retryResponse;
-				}
-			}
-			throw new Error(`Request failed with status ${response.status}`);
-		}
-		return response;
-	}
-	catch (error) {
-		console.error("Fetch error: ", error);
-		return Promise.reject(null)
-	}
-};
 
+const getForceState = () => {
+	const force = localStorage.getItem('TransCore-force');
+	return force === 'true';
+}
 
-const utils = { setCookie, removeCookie, getCookie, refreshToken };
+const setForceState = (value) => {
+	localStorage.setItem('TransCore-force', value ? 'true' : 'false');
+}
+
+const utils = { setCookie, removeCookie, getCookie, refreshToken , getForceState, setForceState};
 
 export default utils;

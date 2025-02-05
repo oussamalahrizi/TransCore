@@ -2,7 +2,7 @@ import Home from "./pages/Home/index.js"
 import authLogin from "./pages/AuthLogin/index.js";
 import authRegister from "./pages/AuthRegister/index.js";
 import NotFound from "./pages/NotFound/index.js"
-import AuthGoogle from "./pages/AuthGoogle/index.js";
+import AuthGoogle from "./pages/GoogleCallback/index.js";
 import Socket from "./pages/Socket/index.js";
 
 

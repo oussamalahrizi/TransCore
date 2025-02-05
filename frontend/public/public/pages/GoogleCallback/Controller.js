@@ -4,12 +4,14 @@ const GoogleCallback = async (code) => {
     try {
 
         let data;
-        const response = await fetch("http://localhost:8000/api/auth/google_callback/?code=" + code)
+        const url = new URL("http://localhost:8000/api/auth/google_callback/")
+        url.searchParams.append("code", code)
+        if (app.utils.getForceState())
+            url.searchParams.append("force_logout", "true")
+        const response = await fetch(url)
         if (!response.ok)
         {
-            if (response.status === 500)
-                throw new Error("Internal server Error")
-            data = await response.json()            
+            data = await response.json()
             throw new Error(JSON.stringify(data, null, 10))
         }
         data = await response.json()

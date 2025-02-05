@@ -12,7 +12,7 @@ export default /*html*/ `
 			</button>
 			<div class="mt-2">Already have an account? <a class="text-blue-600" href="/auth/login">Login</a></div>
 		</form>
-		<div class="flex flex-col mt-4">
+		<div class="flex flex-col">
 				<div class="flex items-center my-4">
 					<hr class="flex-grow border-t border-gray-300">
 					<span class="mx-2 text-gray-500">OR</span>

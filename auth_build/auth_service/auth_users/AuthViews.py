@@ -282,13 +282,13 @@ class GoogleCallback(GoogleMixin, APIView):
 	cache = _AuthCache
 
 	@sync_to_async
-	def cleanup(self, user_data, request):
+	def cleanup(self, user_data, request, force_logout):
 		user : User = self.getUser(user_data)
 		refresh_cookie = request.COOKIES.get("refresh_token")
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
-		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout=False)
+		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout)
 		if logged_response:
 			return logged_response
 		twofa_response = self._handle_2fa(user)
@@ -301,9 +301,11 @@ class GoogleCallback(GoogleMixin, APIView):
 	async def get(self, request : Request):
 		
 		code = request.query_params.get("code")
-		# force_logout = request.query_params.get("force_logout")
-		# if force_logout not in ["True", "False"]:
-		# 	return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail : Invalid force_logout value."})
+		force_logout = request.query_params.get("force_logout")
+		if force_logout is None:
+			force_logout = False
+		else:
+			force_logout = True if force_logout == 'true' else False
 		if code is None:
 			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail : Missing code."})
 		# Exchange code for access token
@@ -330,7 +332,7 @@ class GoogleCallback(GoogleMixin, APIView):
 				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "Failed to get user info"})
 
 			user_data = userinfo_response.json()
-			response = await self.cleanup(user_data, request)
+			response = await self.cleanup(user_data, request, force_logout)
 			return response
 
 class IntraCallback(IntraMixin, APIView):

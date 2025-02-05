@@ -3,7 +3,7 @@ import routes from "./routes.js"
 
 
 
-export const checkAccessToken = async () => {
+export const checkAccessToken = () => {
 	const token = app.utils.getCookie("access_token")
 	return token
 }
@@ -18,7 +18,7 @@ const handleAuthGuard = async (content, route) => {
 		Router.navigate("/auth/login")
 		return false;
 	}
-	if (route.startsWith("/auth") && (await checkAccessToken()))
+	if (route.startsWith("/auth") && (checkAccessToken()))
 	{
 		showToast("Already logged in", 'green')
 		Router.navigate("/")
@@ -32,7 +32,7 @@ const Router = {
 	init :  () => {
 		// listen for url changes in history events
 		// called only when using forward and backward arrows of browser
-		window.addEventListener("popstate", (e) => Router.navigate(e.state.route, false)) 
+		window.addEventListener("popstate", (e) => Router.navigate(e.state.route, false))
 		Router.navigate(location.href)
 	},
 	navigate : async (route, useHistory=true) => {

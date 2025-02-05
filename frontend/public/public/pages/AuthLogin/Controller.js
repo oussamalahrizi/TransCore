@@ -1,11 +1,12 @@
 import { showToast } from "../../Components/toast.js"
 
-const login = async ({email, password, force_logout}) => {
+const login = async ({email, password}) => {
     try {
         const headers = {
             "Content-Type" : "application/json",
             "Accept" : "application/json"
         }
+        const force_logout = app.utils.states.force;
         const body = JSON.stringify({email, password, force_logout})
         console.log(body);
         
@@ -32,6 +33,9 @@ export default () => {
     const view = document.getElementById('auth-view')
     const form = view.querySelector("#login-form")
     const button = view.querySelector("#login-btn")
+    // set force state
+    const force = view.querySelector("#force")
+    force.addEventListener("change", (e) => app.utils.setForceState(e.target.checked) ) 
     
     form.addEventListener("submit",async (e) => {
         
@@ -51,6 +55,7 @@ export default () => {
         button.className = list
         button.disabled = false
     })
+
 
     // social login
     const intra = view.querySelector("#login-intra")

@@ -28,25 +28,59 @@ const LoadCss = (href) => {
 }
 
 
+const fetchWithAuth = async (url, method="GET", body=null) => {
+    try {
+        const headers = {
+            'Authorization': "Bearer " + app.utils.getCookie("access_token"),
+            'Accept' : 'application/json' 
+        };
+        const options = { method, headers };
+        if ((method === "POST" || method === "PATCH") && body) {
+            headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+        let response = await fetch(url, options);
+        if (!response.ok)
+        {
+            if (response.status === 401)
+            {
+                const retry = await app.utils.refreshToken();
+                // refresh also failed
+                if (!retry) return false;
+                // got new token
+                // also update the auth header with newly access token from cookies
+                response = await fetch(url, {...options, headers : {...headers, 'Authorization': "Bearer " + app.utils.getCookie("access_token")}});
+                // failed again and its not 401
+                if (!response.ok)
+                {
+                    const data = await response.json();
+                    throw new Error(`Error: ${JSON.stringify(data, null, 10)}`);
+                }
+                // bypassed 401 after retrying again
+                return true;
+            }
+            // another error other than 401
+            const data = await response.json();
+            throw new Error(`Error: ${JSON.stringify(data, null, 10)}`);
+        }
+        return true;
+    } catch (error) {
+        showToast(step + error , 'red');
+        return false;
+    }
+}
+
 
 export default  () => {
     const view = document.getElementById("home-view")
     const logout = view.querySelector("#logout")
     logout.addEventListener("click", async () => {
-        try {
-            const headers = {
-                'Authorization': "Bearer " + app.utils.getCookie("access_token")
-            }
-            const res = await fetch("http://localhost:8000/api/auth/logout/", {headers})
-            const data = await res.json()
-            if (!res.ok)
-                throw new Error(`Error: ${res.statusText} ${JSON.stringify(data)}`)
+        const res = await fetchWithAuth("http://localhost:8000/api/auth/logout/")
+        if (res)
+        {
             app.utils.removeCookie("access_token")
             showToast("Logged out successfully", 'green')
             app.router.navigate("/auth/login")
-        } catch (error) {
-            console.error(error)
-            showToast(error, 'red')
         }
     })
 }
