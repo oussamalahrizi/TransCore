@@ -16,6 +16,7 @@ from rest_framework.request import Request
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from rest_framework import serializers
+from .utils import _AuthCache
 
 
 class UpdateUserInfo(UpdateAPIView):
@@ -158,3 +159,105 @@ class CheckSentFriend(APIView):
         sent_requests = Friends.objects.get_sent_reqs(current_user)
         # data = [req.to_user.username for req in sent_requests]
         return Response(sent_requests)
+
+
+class BanSelf(APIView):
+    permission_classes = [IsAuthenticated]
+    cache = _AuthCache
+
+    def get(self, request: Request, *args, **kwargs):
+        current_user: User = request.user
+        if current_user.is_active:
+            print("current user: ", current_user.username)
+            self.cache.BlacklistUserToken(current_user.username)
+            self.cache.remove_access_session(current_user.id)
+            current_user.is_active = False
+            current_user.save()
+            return Response(data={"detail" : "You are now banned!"})
+        return Response(data={"detail" : "You are already banned."})
+
+import json
+from django.core.mail import send_mail
+import pyotp
+
+class ResetPassword(APIView):
+    authentication_classes = []
+    cache = _AuthCache
+
+    class CodeRequest(serializers.Serializer):
+        email = serializers.EmailField(required=True)
+
+    def post(self, request : Request, *args, **kwargs):
+        ser = self.CodeRequest(data=request.data)
+        ser.is_valid(raise_exception=True) # will return 400 if fails
+        email = ser.data["email"]
+        try:
+            user = get_object_or_404(User, email=email)
+            code = self.cache.reset_code_action(email=user.email,action='set')
+            send_mail(
+                from_email=None,
+                subject="Password Reset",
+                message=f"Your password reset code is {code}",
+                recipient_list=[user.email],
+                fail_silently=False
+            )
+            return Response(status=status.HTTP_202_ACCEPTED, data={"detail": "A code has been sent to your email."})
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND,
+                            data={"detail" : "User Not Found"})
+        except  json.JSONDecodeError as e:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            data={"detail" : "Internal Server Error"})            
+        except Exception as e:
+            print(f"Error in Password Reset : {e}")
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            data={"detail" : "Internal Server Error"})
+
+from .models import AuthProvider
+
+class PasswordVerify(APIView):
+    authentication_classes = []
+    cache = _AuthCache
+
+    class Code(serializers.Serializer):
+        code = serializers.IntegerField(required=True)
+        email = serializers.EmailField(required=True)
+
+    def post(self, request: Request, *args, **kwargs):
+        ser = self.Code(data=request.data)
+        ser.is_valid(raise_exception=True)   
+        email = ser.data["email"]
+        code = ser.data["code"]     
+        cache_code = self.cache.reset_code_action(action="get", email=email)
+        if cache_code is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "User with this email did not request any code"})
+        if int(cache_code) != code:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "Invalid code"})
+        try:
+            user = get_object_or_404(User, email=email)
+            self.cache.reset_code_action(email=email, action='delete')
+            new_password = pyotp.random_base32()
+            obj, created = AuthProvider.objects.get_or_create(name="Email")
+            user.auth_provider.add(obj)
+            user.set_password(new_password)
+            user.save()
+            send_mail(
+                from_email=None,
+                subject="Your password has been reset",
+                message=f"Your new password is {new_password}",
+                recipient_list=[email],
+                fail_silently=False
+            )
+            return Response(data={"detail" : "A new Password has been sent to your email"})
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND,
+                            data={"detail" : "User Not Found"})
+        except Exception as e:
+            print(f"Error in Password Verify : {e}")
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            data={"detail" : "Internal Server Error"})
+        
+
+

@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-u&ht8p=(4n_ergov6(gzymafd4el=!6#v)g_=*h6$jixuy95s9'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["auth-service", '*']
 
@@ -73,7 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+                'django.contrib.messages.context_processors.messages',  
             ],
         },
     },
@@ -187,3 +187,11 @@ GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "")
 INTRA_CLIENT_ID = os.getenv("INTRA_CLIENT_ID", "")
 INTRA_CLIENT_SECRET = os.getenv("INTRA_CLIENT_SECRET", "")
 INTRA_REDIRECT_URI = os.getenv("INTRA_REDIRECT_URI", "")
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True 
+EMAIL_HOST_USER = os.getenv("HOST_EMAIL", "") #"oussamalahrizi23@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("HOST_EMAIL_PASSWORD", "")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 

@@ -6,7 +6,7 @@ const login = async ({email, password}) => {
             "Content-Type" : "application/json",
             "Accept" : "application/json"
         }
-        const force_logout = app.utils.states.force;
+        const force_logout = app.utils.getForceState();
         const body = JSON.stringify({email, password, force_logout})
         console.log(body);
         
@@ -17,8 +17,7 @@ const login = async ({email, password}) => {
         })
         const data = await response.json()
         if (!response.ok)
-            throw new Error(`${JSON.stringify(data, null, 10)}`)
-        console.log(data);
+            throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2))
         app.utils.setCookie("access_token", data.access_token)
         showToast("Logged in successfully", 'green')
         return true
@@ -35,6 +34,7 @@ export default () => {
     const button = view.querySelector("#login-btn")
     // set force state
     const force = view.querySelector("#force")
+    force.checked = app.utils.getForceState() 
     force.addEventListener("change", (e) => app.utils.setForceState(e.target.checked) ) 
     
     form.addEventListener("submit",async (e) => {
@@ -42,10 +42,9 @@ export default () => {
         e.preventDefault()
         button.disabled = true
         const list = button.className
-        button.className = "bg-gray-500 text-white font-semibold py-2 rounded-lg w-full"
+        button.className = "bg-gray-200 text-white font-semibold py-2 rounded-lg w-full"
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        console.log(data);
         const res = await login({...data, force_logout: false})
         if (res)
         {
@@ -55,7 +54,6 @@ export default () => {
         button.className = list
         button.disabled = false
     })
-
 
     // social login
     const intra = view.querySelector("#login-intra")
@@ -68,8 +66,11 @@ export default () => {
 
 export const IntraLogin = async () => {
     
-    const url = "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-bb8bb45d805dea5d561774903f1d1899c73b0ac051410cd7cae382331781f8cf&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fauth%2Fintra_callback%2F&response_type=code"
-    window.location.href = url;
+    const url = new URL("https://api.intra.42.fr/oauth/authorize");
+    url.searchParams.append("client_id", "u-s4t2ud-18f8278d214900868a7d2706fc12e3de85389d73c1b7bdc246e3590e477d423f");
+    url.searchParams.append("redirect_uri", "http://localhost:8000/auth/intra_callback");
+    url.searchParams.append("response_type", "code");
+    window.location.href = url.toString()
 }
 
 export const GoogleLogin = async () => {

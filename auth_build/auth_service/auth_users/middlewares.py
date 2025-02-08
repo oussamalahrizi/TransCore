@@ -6,6 +6,7 @@ from django.http import Http404
 from .utils import _AuthCache
 from .models import User
 from .exceptions import InvalidToken
+from rest_framework import status
 
 
 class JWTAuthentication(authentication.BaseAuthentication):
@@ -30,10 +31,11 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			payload = jwt.decode(token, settings.JWT_PUBLIC_KEY, algorithms=settings.JWT_ALGORITHM)
 			type = payload.get('typ')
 			if type is None or type != 'Bearer':
-				raise InvalidToken("Invalid token. ahbibi")
+				raise InvalidToken("Token is not Bearer")
 			user = get_object_or_404(User, id=payload['user_id'])
 			if not user.is_active:
-				raise InvalidToken('User is not active.')
+				raise InvalidToken('Your account has been permanently banned.',
+					   clear_cookie=True, custom_code=status.HTTP_423_LOCKED)
 			"""
 				verify if the session id in the token is same in the cache,
 				the only source of truth for session validity is the cache 
@@ -47,11 +49,12 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			if sess_cache is None:
 				raise jwt.ExpiredSignatureError
 			if sess_cache != sess_id:
-				raise InvalidToken("Access token revoked")
+				raise InvalidToken("Access token revoked",
+					   clear_cookie=True, custom_code=status.HTTP_423_LOCKED)
 		except jwt.ExpiredSignatureError:
 			raise InvalidToken('Token expired.')
 		except jwt.InvalidTokenError:
 			raise InvalidToken('Invalid token.')
 		except Http404:
-			raise InvalidToken('User not found')
+			raise InvalidToken('User not found', clear_cookie=True)
 		return (user, token)

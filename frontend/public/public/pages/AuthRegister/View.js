@@ -10,9 +10,9 @@ export default /*html*/ `
 			<button type="submit" id="register-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition duration-300 w-full">
 				Register
 			</button>
-			<div class="mt-2">Already have an account? <a class="text-blue-600" href="/auth/login">Login</a></div>
+			<div class="mt-5">Already have an account? <a class="text-blue-600" href="/auth/login">Login</a></div>
 		</form>
-		<div class="flex flex-col">
+		<div class="flex flex-col mt-2">
 				<div class="flex items-center my-4">
 					<hr class="flex-grow border-t border-gray-300">
 					<span class="mx-2 text-gray-500">OR</span>

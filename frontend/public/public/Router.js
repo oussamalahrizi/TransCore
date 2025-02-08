@@ -1,46 +1,72 @@
-import { showToast } from "./Components/toast.js"
-import routes from "./routes.js"
-
-
+import { showToast } from "./Components/toast.js";
+import routes from "./routes.js";
 
 export const checkAccessToken = () => {
-	const token = app.utils.getCookie("access_token")
-	return token
+	const token = app.utils.getCookie("access_token"); // Use utils.getCookie
+	return token;
+};
+
+const refreshLocal = async () => {
+	try
+	{
+		const response = await fetch("http://localhost:8000/api/auth/refresh/",
+			{ credentials : "include"})
+		const data = await response.json()
+		if (response.status === 400)
+			return false
+		else if (response.status === 403)
+		{
+			showToast(data.detail)
+			return false
+		}
+		return true
+	} catch (error) {
+		console.error(error);
+		return false
+	}
 }
 
 const handleAuthGuard = async (content, route) => {
-	// url requires authenticated
-	if (content.auth_guard && !checkAccessToken()) {
-		const res = await app.utils.refreshToken()
-		// either 400 or 403  means refresh not in cookies
+	const token = checkAccessToken();
+
+	if (route.startsWith("/auth"))
+	{
+		console.log("refresh starts with auth");
+		if (token)
+		{
+			showToast("You are already logged in", "green")
+			return false
+		}
+		const res = await refreshLocal()
 		if (res)
-			return true
+		{
+			showToast("You are already logged in", "green")
+			return false
+		}
+		return true
+	}	
+	if (content.auth_guard && !token) {
+		console.log("refresh requires auth");
+		const res = await refreshLocal(); // Use utils.refreshToken
+		if (res) return true;
 		Router.navigate("/auth/login")
 		return false;
 	}
-	if (route.startsWith("/auth") && (checkAccessToken()))
-	{
-		showToast("Already logged in", 'green')
-		Router.navigate("/")
-		return false
-	}
 	return true;
-}
-
+};	
 
 const Router = {
 	init :  () => {
 		// listen for url changes in history events
 		// called only when using forward and backward arrows of browser
-		window.addEventListener("popstate", (e) => Router.navigate(e.state.route, false))
+		window.addEventListener("popstate", (e) => Router.navigate(e.state.url, false))
 		Router.navigate(location.href)
 	},
-	navigate : async (route, useHistory=true) => {
-		if (useHistory)
-			window.history.pushState({ route }, '', route)
-		route = new URL(route, window.location.origin).pathname
+	navigate : async (url, useHistory=true) => {
+		
+		const route = new URL(url, window.location.origin).pathname
 		let content = routes[route]
-		// redirect uknown routes to 404
+		// redirect unknown routes to 404
 		if (!content)
 		{
 			Router.navigate("/404")
@@ -49,7 +75,9 @@ const Router = {
 		// handling auth guard
 		const authorized = await handleAuthGuard(content, route);
 		if (!authorized)
-			return;
+			return
+		if (useHistory)
+			window.history.pushState({ url }, '', url)
 		// injecting content in the root div and running the controller
 		const root = document.getElementById("root")
 		while (root.firstChild) {
@@ -72,6 +100,7 @@ const Router = {
 					if (!external)
 					{
 						e.preventDefault()
+						console.log("pressed a tag")
 						Router.navigate(e.target.getAttribute("href"))
 					}
 				})

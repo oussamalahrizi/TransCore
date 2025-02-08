@@ -15,7 +15,7 @@ const view = (message) =>  /*html*/ `
     </div>
 `
 
-export const showToast = (message, color) => {
+export const showToast = (message, color='red') => {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     const toast = document.createElement('div');
     toast.className = `max-w-xs bg-${color}-500 text-white rounded-xl shadow-lg mt-4`;

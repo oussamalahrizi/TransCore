@@ -1,5 +1,5 @@
 import { showToast } from "./Components/toast.js";
-import {checkAccessToken} from "./Router.js"
+import Router, {checkAccessToken} from "./Router.js"
 
 const removeCookie = (name) =>  {
 	if (getCookie(name))
@@ -24,45 +24,10 @@ const  getCookie = (name) => {
 		return cookie.substring(name.length + 1); // Return the cookie value
 	  }
 	}
-	
 	return null
 }
 
-const refreshToken =  async () => {
-	try
-	{
-		let data;
-		const res = await fetch("http://localhost:8000/api/auth/refresh/", {
-			headers : {
-				"Accept" : "application/json"
-			},
-			credentials : "include"
-		})
-		if (!res.ok)
-		{
-			if (res.status === 403) // blacklisted
-			{
-				data = await res.json()
-				throw new Error("Error: ", JSON.stringify(data, null, 10))
-			}
-			if (res.status === 400) // missing
-			{
-				app.utils.removeCookie("access_token")
-				return false
-			}	
-		}
-		// new token
-		data = await res.json()
-		app.utils.setCookie("access_token", data.access_token) // Set cookie with max_age of 4 minutes and 30 seconds
-		console.log("Just refreshed the access token", data.access_token, data)
-		return true
-	}
-	catch (error) {
-		showToast(error, 'red')
-		app.utils.removeCookie("access_token")
-		return false
-	}
-}
+
 
 
 const getForceState = () => {
@@ -74,6 +39,128 @@ const setForceState = (value) => {
 	localStorage.setItem('TransCore-force', value ? 'true' : 'false');
 }
 
-const utils = { setCookie, removeCookie, getCookie, refreshToken , getForceState, setForceState};
 
-export default utils;
+const refreshToken = async () => {
+    try {
+        const res = await fetch("http://localhost:8000/api/auth/refresh/", {
+            headers: {
+                "Accept": "application/json"
+            },
+            credentials: "include"
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            if (res.status === 403) { // blacklisted
+                showToast(data.detail ? data.detail : JSON.stringify(data, null, 2), 'red');
+                Router.navigate("/auth/login");
+				return false
+            } else if (res.status === 400) { // missing,
+                removeCookie("access_token");
+                Router.navigate("/auth/login");
+				return false
+            }
+			throw new Error(data.detail)
+        }
+
+        const data = await res.json();
+        setCookie("access_token", data.access_token);
+        return true;
+    } catch (error) {
+        showToast(error, 'red');
+        removeCookie("access_token");
+        return false;
+    }
+};
+
+const fetchWithAuth = async (url) => {
+    try {
+        let response = await fetch(url, {
+            headers: {
+                'Authorization': "Bearer " + getCookie("access_token"),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            return await response.json();
+        }
+
+        if (response.status === 401) {
+            const refresh = await refreshToken();
+            if (!refresh) return null;
+
+            response = await fetch(url, {
+                headers: {
+                    'Authorization': "Bearer " + getCookie("access_token"),
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                return await response.json();
+            }
+        }
+
+        if (response.status === 423) {
+            const data = await response.json();
+            removeCookie("access_token");
+            showToast(data.detail, 'red');
+            Router.navigate('/auth/login');
+            return null;
+        }
+
+        const data = await response.json();
+        throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2));
+    } catch (error) {
+        showToast(error, 'red');
+        console.error(error);
+        return null;
+    }
+}
+
+const fetchWithout = async (url, method=null, body=null) => {
+    try {
+        let options = {
+            headers : {"Content-Type" : "application/json"},
+            method : method ? method : "GET",
+        }
+        if (body)
+            options = {...options, body}
+        const response = await fetch(url, options);
+        let data
+        if (!response.ok)
+        {
+            if (response.headers.get("Content-Type") !== "application/json") {
+                return {
+                    data, 
+                    status : response.status,
+                    error : "Something went wrong : " + response.status
+                }
+            }
+            data = await response.json() 
+            return {
+                data,
+                status: response.status,
+                error: data.detail ? data.detail : JSON.stringify(data, null, 2)
+            };
+        }
+        data = await response.json()
+        return { data, status: response.status, error: null };
+    } catch (error) {
+        console.error(error);
+        return { data: null, status: null, error };
+    }
+}
+
+export default {
+	setCookie,
+	removeCookie,
+	getCookie,
+	refreshToken,
+	getForceState,
+	setForceState,
+	fetchWithAuth,
+    fetchWithout
+};
+

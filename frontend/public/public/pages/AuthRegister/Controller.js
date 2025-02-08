@@ -21,8 +21,9 @@ const register = async ({username, email, password1, password2}) => {
         })
         const data = await response.json()
         if (!response.ok)
-            throw new Error(`${JSON.stringify(data)}`)
-        showToast(JSON.stringify(data), 'green')
+            throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2))
+        showToast(data.detail ? data.detail : JSON.stringify(data, null, 2)
+            , 'green')
         return true
     } catch (error) {
         showToast(error, 'red')

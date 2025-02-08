@@ -3,8 +3,9 @@ import authLogin from "./pages/AuthLogin/index.js";
 import authRegister from "./pages/AuthRegister/index.js";
 import NotFound from "./pages/NotFound/index.js"
 import AuthGoogle from "./pages/GoogleCallback/index.js";
+import AuthIntra from "./pages/IntraCallback/index.js";
 import Socket from "./pages/Socket/index.js";
-
+import PasswordReset from "./pages/PasswordReset/index.js"
 
 const routes = {
 	"/sockets" : {
@@ -38,9 +39,15 @@ const routes = {
 		auth_guard: false,
 	},
 	"/auth/intra_callback": {
-		view: NotFound.View,
-		controller: null,
-		title: "Redirecting",
+		view: AuthIntra.View,
+		controller: AuthIntra.Controller,
+		title: "Signing in Intra 42",
+		auth_guard: false,
+	},
+	"/auth/forgot_password": {
+		view: PasswordReset.View,
+		controller: PasswordReset.Controller,
+		title: "Reset Password",
 		auth_guard: false,
 	},
 	"/auth/2fa": {

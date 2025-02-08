@@ -73,9 +73,9 @@ class APIConsumer(AsyncRabbitMQConsumer):
             data = message.body.decode()
             print(f"received message : {data}")
             user = json.loads(message.body)
-            # self.cache.remove_user_data(user_id=user["id"])
+            self.cache.remove_user_data(user_id=user["id"])
             await message.ack()
-            # print(f"deleted cached data for user : {user["username"]}")
+            print(f"deleted cached data for user : {user["username"]}")
         except json.JSONDecodeError:
             print("invalid json data")
             await message.reject()

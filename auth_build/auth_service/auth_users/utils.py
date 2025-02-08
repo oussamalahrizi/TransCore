@@ -203,11 +203,38 @@ class AuthCache:
 		self.redis.setex(f"auth:{user_id}:access", value=sess_id, time=ttl_seconds)
 		return sess_id
 	
+	def remove_access_session(self, user_id: str):
+		self.redis.delete(f"auth:{user_id}:access")
+	
 	def get_access_session(self, user_id):
 		value = self.redis.get(f"auth:{user_id}:access")
 		return value
 	def delete_access_session(self, user_id):
 		value = self.redis.delete(f"auth:{user_id}:access")
 		return value
+	# reset password utils
+	def store_reset_code(self, email : str):
+		totp = pyotp.TOTP(pyotp.random_base32())
+		code = totp.now()
+		self.redis.setex(f"auth:reset:{email}", value=code, time=300)
+		return code
+	
+	def get_reset_code(self, email: str) :
+		value = self.redis.get(f"auth:reset:{email}")
+		return value
+
+	def delete_reset_code(self, email: str):
+		self.redis.delete(f"auth:reset:{email}")
+
+	def reset_code_action(self, email: str, action: str):
+		actions = {
+            'set': self.store_reset_code,
+            'get': self.get_reset_code,
+            'delete': self.delete_reset_code
+        }
+		if action in actions.keys():
+			return actions[action](email)
+		else:
+			raise Exception("invalid action")
 
 _AuthCache = AuthCache()

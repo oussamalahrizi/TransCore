@@ -12,7 +12,7 @@ const GoogleCallback = async (code) => {
         if (!response.ok)
         {
             data = await response.json()
-            throw new Error(JSON.stringify(data, null, 10))
+            throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2))
         }
         data = await response.json()
         app.utils.setCookie("access_token", data.access_token)

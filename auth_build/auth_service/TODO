@@ -2,7 +2,8 @@
 
 - [x] Write documentation for API endpoints : check swagger interface at {/api/auth/swagger/}
 - [x] update password
-- [ ] add friends
+- [x] add friends
+- [ ] friends url views
 - [ ] add matchmaking
 - [ ] forgot password
     - [ ] email template
@@ -10,4 +11,3 @@
     - [ ] email error handling (no reply, spam)
 - [ ] test middleware from other services
 - [ ] asynchronus publisher along side with django server , publish on the current event loop to the queue
-- [ ]

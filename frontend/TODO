@@ -1,0 +1,6 @@
+[ ] handle banned users while they are logged in, when fetching data with their access token
+    - 401 can mean many things, from token validity to user status in the server,
+    one of them is being permanently banned so what is the best approach to take in the client side,
+    we already have code for handling 401 status which most cases means access token has expired,
+    but when the access token is revoked or the user has been banned, normally he should be logged out from the server
+[ ] 

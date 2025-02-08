@@ -31,10 +31,10 @@ class UserManager(BaseUserManager):
             raise ValueError("email required")
         if not username:
             raise ValueError("username required")
-        if auth_provider == "Email" and not password:
+        if auth_provider == "email" and not password:
             raise ValueError("password required if auth_provider is email")
         auth_obj, created = AuthProvider.objects.get_or_create(name=auth_provider)
-        if auth_provider == "Email" and len(password) < 8:
+        if auth_provider == "email" and len(password) < 8:
             raise ValueError("password too short")
         user = self.model(email=email,
             username=username,
@@ -61,7 +61,7 @@ class User(AbstractBaseUser):
     username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     
-    auth_provider = models.ManyToManyField(AuthProvider, related_name="users")
+    auth_provider = models.ManyToManyField(AuthProvider, related_name="auth_provider")
     icon_url = models.URLField(blank=True, null=True)
     password = models.CharField(max_length=128, blank=True, null=True)
     is_superuser = models.BooleanField(default=False)
@@ -172,7 +172,7 @@ class Friends(models.Model):
         default="pending"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)    
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects : FriendsManager = FriendsManager()
 

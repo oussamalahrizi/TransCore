@@ -79,10 +79,10 @@ class AuthProviderSerializer(serializers.ModelSerializer):
 
 # serializer to get user data except for last_login and password
 class UserDetailSerializer(serializers.ModelSerializer):
-	
+	auth_provider = AuthProviderSerializer(many=True)
 	class Meta:
 		model = User
-		fields = ['id' ,'username','email', 'icon_url','is_active', 'last_login']
+		fields = ['id' ,'username','email', 'icon_url','is_active', 'last_login', "auth_provider"]
 
 
 # serializer to update common user info
@@ -133,11 +133,13 @@ class UserLogin(serializers.Serializer):
 		try:
 			user : User = get_object_or_404(User, email=email)
 			if user.auth_provider.filter(name="Email").exists() is False:
-				raise serializers.ValidationError({"detail" : "user doesn't have an Email Auth Provider"})
+				raise serializers.ValidationError(detail="user doesn't have an Email Auth Provider")
 		except Http404:
-			raise serializers.ValidationError({'detail' : 'user not found'})
+			raise serializers.ValidationError(detail='user not found')
+		if not user.is_active:
+			raise serializers.ValidationError(detail="Your Account has been permanently banned.")
 		if not check_password(password, user.password):
-			raise serializers.ValidationError({'detail' : 'wrong password'})
+			raise serializers.ValidationError(detail='wrong password')
 		attrs['user'] = user
 		return attrs
 
@@ -165,7 +167,7 @@ class SessionSerializer(serializers.Serializer):
 			user = get_object_or_404(User, id=user_id)
 			return attrs
 		except Http404:
-			raise serializers.ValidationError({"detail" : "user not found http404"})
+			raise serializers.ValidationError("user not found http404")
 
 
 """

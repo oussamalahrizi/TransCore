@@ -8,8 +8,11 @@ def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
     if isinstance(exc, InvalidToken):
         if response is not None:
-            response.status_code = status.HTTP_401_UNAUTHORIZED
+            response.status_code = exc.custom_code
+            print("status code exception is : ", exc.custom_code)
             response.data = {
                 'detail': exc.detail,
             }
+            if exc.clear_cookie:
+                response.delete_cookie("refresh_token")
     return response

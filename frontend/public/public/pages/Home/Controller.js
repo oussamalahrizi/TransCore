@@ -28,59 +28,31 @@ const LoadCss = (href) => {
 }
 
 
-const fetchWithAuth = async (url, method="GET", body=null) => {
-    try {
-        const headers = {
-            'Authorization': "Bearer " + app.utils.getCookie("access_token"),
-            'Accept' : 'application/json' 
-        };
-        const options = { method, headers };
-        if ((method === "POST" || method === "PATCH") && body) {
-            headers['Content-Type'] = 'application/json';
-            options.body = JSON.stringify(body);
-        }
-        let response = await fetch(url, options);
-        if (!response.ok)
-        {
-            if (response.status === 401)
-            {
-                const retry = await app.utils.refreshToken();
-                // refresh also failed
-                if (!retry) return false;
-                // got new token
-                // also update the auth header with newly access token from cookies
-                response = await fetch(url, {...options, headers : {...headers, 'Authorization': "Bearer " + app.utils.getCookie("access_token")}});
-                // failed again and its not 401
-                if (!response.ok)
-                {
-                    const data = await response.json();
-                    throw new Error(`Error: ${JSON.stringify(data, null, 10)}`);
-                }
-                // bypassed 401 after retrying again
-                return true;
-            }
-            // another error other than 401
-            const data = await response.json();
-            throw new Error(`Error: ${JSON.stringify(data, null, 10)}`);
-        }
-        return true;
-    } catch (error) {
-        showToast(step + error , 'red');
-        return false;
-    }
-}
-
 
 export default  () => {
     const view = document.getElementById("home-view")
     const logout = view.querySelector("#logout")
     logout.addEventListener("click", async () => {
-        const res = await fetchWithAuth("http://localhost:8000/api/auth/logout/")
+        const res = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/logout/")
         if (res)
         {
             app.utils.removeCookie("access_token")
             showToast("Logged out successfully", 'green')
             app.router.navigate("/auth/login")
         }
+    })
+    view.querySelector("#fetch-data").addEventListener("click", async (e)=> {
+        e.preventDefault()
+        const res = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/users/me/")
+        if (!res)
+            return
+        view.querySelector("p").innerText = JSON.stringify(res, null, 2)
+    })
+    const banme = view.querySelector("#ban-self")
+    banme.addEventListener("click", async () => {
+        const res = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/users/ban_me/")
+        if (!res)
+            return
+        showToast(res.detail, "green")
     })
 }

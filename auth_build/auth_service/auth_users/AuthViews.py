@@ -69,8 +69,11 @@ class LoginView(LoginMixin, CreateAPIView):
 		if token is None:
 			return Response(data={"detail : invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 		try:
-			user = get_object_or_404(User, username=username)
+			user: User = get_object_or_404(User, username=username)
 			self.cache.execution_2fa_action(user.username, action="delete")
+			if not user.is_active:
+				return Response(status=status.HTTP_403_FORBIDDEN,
+					data={"detail" : "Your Account has been permanently banned."})
 			if self.cache.isUserLogged(user.username):
 				self.cache.BlacklistUserToken(user.username)
 			return self.Helper(user)
@@ -89,7 +92,6 @@ class LoginView(LoginMixin, CreateAPIView):
 		serializer.is_valid(raise_exception=True)
 		user = serializer.validated_data['user']
 		force_logout = serializer.validated_data["force_logout"]
-
 		# Handle logged in user
 		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout)
 		if logged_response:
@@ -140,8 +142,8 @@ class RefreshToken(APIView):
 		if self.cache.isTokenBlacklisted(refresh):
 			response = Response(status=status.HTTP_403_FORBIDDEN,
 				data={
-						"detail: Cookie token is blacklisted.",
-						"action: Deleted cookie."
+						"detail": "Cookie token is blacklisted.",
+						"action": "Deleted cookie."
 					})
 			response.delete_cookie("refresh_token")
 			return response
@@ -284,6 +286,9 @@ class GoogleCallback(GoogleMixin, APIView):
 	@sync_to_async
 	def cleanup(self, user_data, request, force_logout):
 		user : User = self.getUser(user_data)
+		if not user.is_active:
+			return Response(status=status.HTTP_403_FORBIDDEN,
+				   data={"detail" : "Your Account has been permanently banned."})
 		refresh_cookie = request.COOKIES.get("refresh_token")
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
@@ -340,13 +345,16 @@ class IntraCallback(IntraMixin, APIView):
 	authentication_classes = []
 
 	@sync_to_async
-	def cleanup(self, user_data, request):
+	def cleanup(self, user_data, request, force_logout):
 		user : User = self.getUser(user_data)
+		if not user.is_active:
+			return Response(status=status.HTTP_403_FORBIDDEN,
+				data={"detail" : "Your Account has been permanently banned."})
 		refresh_cookie = request.COOKIES.get("refresh_token")
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
-		logged_response = self._handle_logged_user(user.username, refresh_cookie, force_logout=False)
+		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout)
 		if logged_response:
 			return logged_response
 		twofa_response = self._handle_2fa(user)
@@ -357,6 +365,11 @@ class IntraCallback(IntraMixin, APIView):
 	@async_to_sync
 	async def get(self, request : Request):
 		code = request.query_params.get("code")
+		force_logout = request.query_params.get("force_logout")
+		if force_logout is None:
+			force_logout = False
+		else:
+			force_logout = True if force_logout == 'true' else False
 		if code is None:
 			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail : Missing code."})
 		# Exchange code for access token
@@ -383,5 +396,6 @@ class IntraCallback(IntraMixin, APIView):
 			if userinfo_response.status_code != 200:
 				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "Failed to get user info"})
 			user_data = userinfo_response.json()
-			response = await self.cleanup(user_data, request)
+			response = await self.cleanup(user_data, request, force_logout)
 			return response
+

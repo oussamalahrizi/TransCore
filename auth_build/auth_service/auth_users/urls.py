@@ -10,7 +10,10 @@ from .views import (
    SendFriendRequest,
    CheckReceivedFriend,
    CheckSentFriend,
-   GetMyInfo
+   GetMyInfo,
+   BanSelf,
+   ResetPassword,
+   PasswordVerify
 )
 
 from .AuthViews import (
@@ -44,6 +47,8 @@ schema_view = get_schema_view(
 urlpatterns = [
    path('register/', RegisterEmail.as_view(), name='register-email'),
    path('login/', LoginView.as_view(), name='login-email'),
+   path('password_reset/', ResetPassword.as_view(), name='password-reset'),
+   path('password_verify/', PasswordVerify.as_view(), name='password-verify'),
    path('google_callback/', GoogleCallback.as_view(), name='google-callback'),
    path('intra_callback/', IntraCallback.as_view(), name='intra-callback'),
    path('logout/', LogoutView.as_view(), name='logout'),
@@ -51,6 +56,7 @@ urlpatterns = [
    path('session_state/', SessionState.as_view(), name='session-state'),
    path('refresh/', RefreshToken.as_view(), name='refresh-token'),
    path('users/', ListUsers.as_view(), name='list-users'),
+   path('users/ban_me/', BanSelf.as_view(), name='ban-self'),
    path('users/me/', GetMyInfo.as_view(), name='profile-info'),
    path('users/<str:username>/', GetUser.as_view(), name='user-info'),
    path('api_user_id/<str:id>/', GetUserServiceID.as_view(), name='user-id-service'),
