@@ -193,6 +193,9 @@ class ResetPassword(APIView):
         email = ser.data["email"]
         try:
             user = get_object_or_404(User, email=email)
+            if not user.is_active:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : "This Account has been permanently banned."})
             code = self.cache.reset_code_action(email=user.email,action='set')
             send_mail(
                 from_email=None,
@@ -241,6 +244,9 @@ class PasswordVerify(APIView):
             new_password = pyotp.random_base32()
             obj, created = AuthProvider.objects.get_or_create(name="Email")
             user.auth_provider.add(obj)
+            if user.two_factor_enabled:
+                user.two_factor_enabled = False
+                user.two_factor_secret = ""
             user.set_password(new_password)
             user.save()
             send_mail(

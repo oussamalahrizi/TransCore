@@ -5,9 +5,6 @@
 - [x] add friends
 - [ ] friends url views
 - [ ] add matchmaking
-- [ ] forgot password
-    - [ ] email template
-    - [ ] send email
-    - [ ] email error handling (no reply, spam)
-- [ ] test middleware from other services
+- [x] forgot password
+    - [x] send email
 - [ ] asynchronus publisher along side with django server , publish on the current event loop to the queue

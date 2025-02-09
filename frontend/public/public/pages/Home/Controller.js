@@ -33,26 +33,29 @@ export default  () => {
     const view = document.getElementById("home-view")
     const logout = view.querySelector("#logout")
     logout.addEventListener("click", async () => {
-        const res = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/logout/")
-        if (res)
+        const {data, error} = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/logout/")
+        if (!error)
         {
             app.utils.removeCookie("access_token")
             showToast("Logged out successfully", 'green')
             app.router.navigate("/auth/login")
+            return
         }
+        showToast(data.detail)
+        return
     })
     view.querySelector("#fetch-data").addEventListener("click", async (e)=> {
         e.preventDefault()
-        const res = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/users/me/")
-        if (!res)
+        const {error, data} = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/users/me/")
+        if (error)
             return
-        view.querySelector("p").innerText = JSON.stringify(res, null, 2)
+        view.querySelector("p").innerText = JSON.stringify(data, null, 2)
     })
     const banme = view.querySelector("#ban-self")
     banme.addEventListener("click", async () => {
-        const res = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/users/ban_me/")
-        if (!res)
+        const {error, data} = await app.utils.fetchWithAuth("http://localhost:8000/api/auth/users/ban_me/")
+        if (error)
             return
-        showToast(res.detail, "green")
+        showToast(data.detail, "green")
     })
 }

@@ -28,8 +28,6 @@ const  getCookie = (name) => {
 }
 
 
-
-
 const getForceState = () => {
 	const force = localStorage.getItem('TransCore-force');
 	return force === 'true';
@@ -53,6 +51,7 @@ const refreshToken = async () => {
             const data = await res.json();
             if (res.status === 403) { // blacklisted
                 showToast(data.detail ? data.detail : JSON.stringify(data, null, 2), 'red');
+                removeCookie("access_token");
                 Router.navigate("/auth/login");
 				return false
             } else if (res.status === 400) { // missing,
@@ -81,14 +80,19 @@ const fetchWithAuth = async (url) => {
                 'Accept': 'application/json'
             }
         });
-
+        let data;
         if (response.ok) {
-            return await response.json();
+            data = await response.json()
+            return {
+                data,
+                status : response.status,
+                error : null
+            }
         }
 
         if (response.status === 401) {
             const refresh = await refreshToken();
-            if (!refresh) return null;
+            if (!refresh) return {data : null, status: null, error : null};
 
             response = await fetch(url, {
                 headers: {
@@ -98,24 +102,30 @@ const fetchWithAuth = async (url) => {
             });
 
             if (response.ok) {
-                return await response.json();
+                data = await response.json()
+                return {
+                    data,
+                    status : response.status,
+                    error : null
+                }
             }
         }
 
         if (response.status === 423) {
-            const data = await response.json();
+            data = await response.json();
             removeCookie("access_token");
             showToast(data.detail, 'red');
             Router.navigate('/auth/login');
-            return null;
+            const error = data.detail ? data.detail : JSON.stringify(data)
+            return {data : null, status : null, error};
         }
 
-        const data = await response.json();
-        throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2));
-    } catch (error) {
-        showToast(error, 'red');
-        console.error(error);
-        return null;
+        data = await response.json();
+        return {data , status : response.status, error : null};
+    } catch (err) {
+        const error = err
+        showToast(err, 'red');
+        return {data : null, status : null, error};
     }
 }
 

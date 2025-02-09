@@ -82,7 +82,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
 	auth_provider = AuthProviderSerializer(many=True)
 	class Meta:
 		model = User
-		fields = ['id' ,'username','email', 'icon_url','is_active', 'last_login', "auth_provider"]
+		fields = ['id' ,'username','email', 'icon_url','is_active',
+			'last_login', "auth_provider", "two_factor_enabled"]
 
 
 # serializer to update common user info

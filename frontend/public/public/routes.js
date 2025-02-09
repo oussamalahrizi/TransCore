@@ -6,8 +6,9 @@ import AuthGoogle from "./pages/GoogleCallback/index.js";
 import AuthIntra from "./pages/IntraCallback/index.js";
 import Socket from "./pages/Socket/index.js";
 import PasswordReset from "./pages/PasswordReset/index.js"
+import Settings from "./pages/Settings/index.js"
 
-const routes = {
+export default {
 	"/sockets" : {
 		view : Socket.View,
 		controller: Socket.Controller,
@@ -22,13 +23,13 @@ const routes = {
 	},
 	"/": {
 		view: Home.View,
-		controller: () => Home.Controller(),
+		controller: Home.Controller,
 		title: "HomePage",
 		auth_guard: true
 	},
 	"/profile": {
 		view: Home.View,
-		controller: () => Home.Controller(),
+		controller: Home.Controller,
 		title: "HomePage",
 		auth_guard: true
 	},
@@ -68,6 +69,11 @@ const routes = {
 		title: "Register",
 		auth_guard: false,
 	},
+	"/settings": {
+		view: Settings.View,
+		controller: Settings.Controller,
+		title: "Settings",
+		auth_guard: true,
+	},
 };
 
-export default routes;

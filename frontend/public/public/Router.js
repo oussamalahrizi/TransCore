@@ -9,8 +9,7 @@ export const checkAccessToken = () => {
 const refreshLocal = async () => {
 	try
 	{
-		const response = await fetch("http://localhost:8000/api/auth/refresh/",
-			{ credentials : "include"})
+		const response = await fetch("http://localhost:8000/api/auth/refresh/", { credentials : "include"})
 		const data = await response.json()
 		if (response.status === 400)
 			return false
@@ -31,18 +30,14 @@ const handleAuthGuard = async (content, route) => {
 
 	if (route.startsWith("/auth"))
 	{
-		console.log("refresh starts with auth");
 		if (token)
 		{
 			showToast("You are already logged in", "green")
 			return false
 		}
+		console.log("refresh starts with auth");
 		const res = await refreshLocal()
-		if (res)
-		{
-			showToast("You are already logged in", "green")
-			return false
-		}
+		if (res) return false
 		return true
 	}	
 	if (content.auth_guard && !token) {
@@ -63,30 +58,34 @@ const Router = {
 		Router.navigate(location.href)
 	},
 	navigate : async (url, useHistory=true) => {
-		
 		const route = new URL(url, window.location.origin).pathname
-		let content = routes[route]
-		// redirect unknown routes to 404
+		const content = app.routes[route]
+		// redirect uknown routes to 404
 		if (!content)
 		{
 			Router.navigate("/404")
 			return
 		}
 		// handling auth guard
+	
 		const authorized = await handleAuthGuard(content, route);
 		if (!authorized)
 			return
 		if (useHistory)
 			window.history.pushState({ url }, '', url)
+		/*
+			TODO :
+				make sure if you are signing out or something to close the online websocket
+		*/
 		// injecting content in the root div and running the controller
 		const root = document.getElementById("root")
-		while (root.firstChild) {
+		
+		while (root.firstChild)
 			root.removeChild(root.firstChild);
-		}
+
 		root.innerHTML = content.view;
 		document.head.title = content.title
-		if (content.controller)
-			content.controller()
+		content.controller && content.controller()
 		// disabling default behavior for anchor tags
 		Router.disableReload()
 	},
@@ -100,7 +99,6 @@ const Router = {
 					if (!external)
 					{
 						e.preventDefault()
-						console.log("pressed a tag")
 						Router.navigate(e.target.getAttribute("href"))
 					}
 				})
