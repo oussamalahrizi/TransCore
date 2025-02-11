@@ -1,6 +1,6 @@
 export default /*html*/ `
-	<div id="auth-view" class="bg-gray-100 min-h-screen flex items-center justify-center">
-		<div class="flex max-w-md w-full p-6 flex-col rounded-lg shadow-md bg-white">
+	<div id="auth-view" class="bg-black min-h-screen flex items-center justify-center">
+		<div class="flex max-w-md w-full p-6 flex-col rounded-lg shadow-md bg-slate-200">
 			<form id="login-form" class="mx-3">
 				<h2 class="text-xl font-semibold mb-4 text-center">Login</h2>
 				<input type="email" placeholder="Email" required autocomplete="email" name="email" class="mb-3 p-2 border rounded w-full">
@@ -9,8 +9,8 @@ export default /*html*/ `
 					Login
 				</button>
 				<div class="flex items-center my-3">
-					<input type="checkbox" id="force" class="mr-2 scale-125">
-					<label for="force" class="text-gray-700">Force Logout from other devices</label>
+					<input type="checkbox" id="force" class="mr-2 scale-125 bg-black border-white checked:accent-green-500 ">
+					<label for="force" class="text-gray-700 ">Force Logout from other devices</label>
 				</div>
 				<div class="mt-2">Don't have an account? <a class="text-blue-600" href="/auth/register">Register</a></div>
 				<div class="mt-2">Forgot password?? <a class="text-blue-600" href="/auth/forgot_password">Reset here</a></div>

@@ -51,7 +51,7 @@ const handleVerify = async (view, email) => {
         const bool = await handleCodeSubmit(code, email)
         if (bool)
         {
-            app.router.navigate("/auth/login")
+            app.Router.navigate("/auth/login")
             return
         }
         verify.className = list

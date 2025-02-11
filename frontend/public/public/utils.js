@@ -1,5 +1,5 @@
 import { showToast } from "./Components/toast.js";
-import Router, {checkAccessToken} from "./Router.js"
+import Router from "./Router.js"
 
 const removeCookie = (name) =>  {
 	if (getCookie(name))
@@ -171,6 +171,7 @@ export default {
 	getForceState,
 	setForceState,
 	fetchWithAuth,
-    fetchWithout
+    fetchWithout,
+    showToast
 };
 

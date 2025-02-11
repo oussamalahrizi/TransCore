@@ -48,7 +48,7 @@ export default () => {
         const res = await login({...data, force_logout: false})
         if (res)
         {
-            app.router.navigate("/")
+            app.Router.navigate("/")
             return
         }
         button.className = list

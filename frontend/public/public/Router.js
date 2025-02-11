@@ -1,60 +1,58 @@
-import { showToast } from "./Components/toast.js";
-import routes from "./routes.js";
 
 export const checkAccessToken = () => {
-	const token = app.utils.getCookie("access_token"); // Use utils.getCookie
-	return token;
+	const token = app.utils.getCookie("access_token"); // Use utils.getCookie			
+	return !!token;
 };
 
 const refreshLocal = async () => {
-	try
-	{
-		const response = await fetch("http://localhost:8000/api/auth/refresh/", { credentials : "include"})
-		const data = await response.json()
+	try {
+		const response = await fetch("http://localhost:8000/api/auth/refresh/", { credentials: "include", method: "GET" });
+		const data = await response.json();
+		if (response.ok)
+			return true
 		if (response.status === 400)
-			return false
-		else if (response.status === 403)
-		{
-			showToast(data.detail)
-			return false
+			return false;
+		else if (response.status === 403) {
+			app.utils.showToast(data.detail);
+			return false;
 		}
-		return true
 	} catch (error) {
-		console.error(error);
-		return false
+		console.error("catch error : ", error);
+		return false;
 	}
 }
 
 const handleAuthGuard = async (content, route) => {
-	const token = checkAccessToken();
+	const token = checkAccessToken()
 
 	if (route.startsWith("/auth"))
 	{
 		if (token)
 		{
-			showToast("You are already logged in", "green")
+			await Router.navigate("/")
 			return false
 		}
-		console.log("refresh starts with auth");
 		const res = await refreshLocal()
-		if (res) return false
+		if (res)
+		{
+			await Router.navigate("/")
+			return false
+		}
 		return true
-	}	
+	}
 	if (content.auth_guard && !token) {
-		console.log("refresh requires auth");
-		const res = await refreshLocal(); // Use utils.refreshToken
+		const res = await refreshLocal();
 		if (res) return true;
-		Router.navigate("/auth/login")
+		await Router.navigate("/auth/login")
 		return false;
 	}
 	return true;
-};	
+};
 
 const Router = {
-	init :  () => {
+	init : async () => {
 		// listen for url changes in history events
-		// called only when using forward and backward arrows of browser
-		window.addEventListener("popstate", (e) => Router.navigate(e.state.url, false))
+		onpopstate = (e) => Router.navigate(e.state.url, false);
 		Router.navigate(location.href)
 	},
 	navigate : async (url, useHistory=true) => {
@@ -66,13 +64,14 @@ const Router = {
 			Router.navigate("/404")
 			return
 		}
+		// excluding intra and google callback from being added to history
+		
 		// handling auth guard
-	
-		const authorized = await handleAuthGuard(content, route);
-		if (!authorized)
+		const render = await handleAuthGuard(content, route);
+		if (!render)
 			return
 		if (useHistory)
-			window.history.pushState({ url }, '', url)
+			history.pushState({ url }, '', url)
 		/*
 			TODO :
 				make sure if you are signing out or something to close the online websocket

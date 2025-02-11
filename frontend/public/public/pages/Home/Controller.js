@@ -38,7 +38,7 @@ export default  () => {
         {
             app.utils.removeCookie("access_token")
             showToast("Logged out successfully", 'green')
-            app.router.navigate("/auth/login")
+            app.Router.navigate("/auth/login")
             return
         }
         showToast(data.detail)

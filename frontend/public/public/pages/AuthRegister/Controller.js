@@ -47,7 +47,7 @@ export default ()=> {
         const res = await register(data)
         if (res)
         {
-            app.router.navigate("/auth/login")
+            app.Router.navigate("/auth/login")
             return
         }
         button.className = list

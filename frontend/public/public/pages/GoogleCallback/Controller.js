@@ -8,7 +8,7 @@ const GoogleCallback = async (code) => {
         url.searchParams.append("code", code)
         if (app.utils.getForceState())
             url.searchParams.append("force_logout", "true")
-        const response = await fetch(url)
+        const response = await fetch(url, {credentials : "include"})
         if (!response.ok)
         {
             data = await response.json()
@@ -17,10 +17,10 @@ const GoogleCallback = async (code) => {
         data = await response.json()
         app.utils.setCookie("access_token", data.access_token)
         showToast("Logged in successfully", 'green')
-        app.router.navigate("/")
+        app.Router.navigate("/")
     } catch (error) {
         showToast(error, "red")
-        app.router.navigate("/auth/login")
+        app.Router.navigate("/auth/login")
     }
 }
 
@@ -30,7 +30,7 @@ export default () => {
     if (!code)
     {
         showToast("No code was given", 'red')
-        app.router.navigate("/auth/login")
+        app.Router.navigate("/auth/login")
         return
     }
     GoogleCallback(code)
