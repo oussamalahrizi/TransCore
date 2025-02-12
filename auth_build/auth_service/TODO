@@ -7,4 +7,5 @@
 - [ ] add matchmaking
 - [x] forgot password
     - [x] send email
+- [ ] Testing PRs
 - [ ] asynchronus publisher along side with django server , publish on the current event loop to the queue
