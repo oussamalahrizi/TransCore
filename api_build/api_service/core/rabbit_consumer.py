@@ -69,8 +69,8 @@ class APIConsumer(AsyncRabbitMQConsumer):
 
     async def on_message(self, message : IncomingMessage):
         try:
-            print(f"received message in api : {data}")
             data = message.body.decode()
+            print(f"received message in api : {data}")
             await message.ack()
         except json.JSONDecodeError:
             print("invalid json data")
@@ -84,8 +84,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
 
     async def on_message(self, message : IncomingMessage):
         try:
-            print(f"received message in notifs : {data}")
             data = message.body.decode()
+            print(f"received message in notifs : {data}")
             await message.ack()
         except json.JSONDecodeError:
             print("invalid json data")
