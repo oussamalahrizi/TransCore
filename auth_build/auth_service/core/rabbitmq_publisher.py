@@ -37,12 +37,7 @@ class RabbitmqBase:
         await self.connect()
     
     async def publish(self, data : dict):
-        message = Message(
-            json.dumps(data).encode(),
-            delivery_mode=1,
-            content_type="application/json")
-        self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
-        print("pusblished!")
+        raise NotImplementedError()
 
     async def stop(self):
         if not self.closing:
@@ -52,3 +47,23 @@ class RabbitmqBase:
                 await self.channel.close()
                 await self.connection.close()
             print("Stopped")
+
+class APIPub(RabbitmqBase):
+    
+    def publish(self, data : dict):
+        message = Message(
+            json.dumps(data).encode(),
+            delivery_mode=1,
+            content_type="application/json")
+        self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
+        print("api publisher : pusblished!")
+
+class NotificationPub(RabbitmqBase):
+    
+    async def publish(self, data : dict):
+        message = Message(
+            json.dumps(data).encode(),
+            delivery_mode=1,
+            content_type="application/json")
+        await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
+        print("notification publisher : pusblished!")

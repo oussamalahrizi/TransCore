@@ -8,7 +8,7 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-from .rabbit_consumer import APIConsumer
+from .rabbit_consumer import APIConsumer, NotifConsumer
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from .Middleware import jwtmiddleware
@@ -17,22 +17,29 @@ import asyncio
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
-rabbitmq_consumer = APIConsumer(host='rabbitmq', port=5672, queue_name='api')
-rabbitmq_consumer = APIConsumer(host='rabbitmq', port=5672, queue_name='notifications')
+api_consumer = APIConsumer(host='rabbitmq', port=5672, queue_name='api')
+notifs_consumer = NotifConsumer(host='rabbitmq', port=5672, queue_name='notifications')
+
+consumers = [api_consumer, notifs_consumer]
 
 async def app(scope, receive, send):
     if scope['type'] == 'lifespan':
-        task = None
+        tasks = []
         while True:
             message = await receive()
             if message['type'] == 'lifespan.startup':
                 print("started consumer")
-                task = asyncio.create_task(rabbitmq_consumer.run())
+                for con in consumers:
+                    tasks.append({
+                        "consumer" : con,
+                        'task' : asyncio.create_task(con.run())
+                        })
                 await send({'type': 'lifespan.startup.complete'})
             elif message['type'] == 'lifespan.shutdown':
-                if task:
-                    task.cancel()
-                await rabbitmq_consumer.stop()
+                if len(tasks):
+                    for task in tasks:
+                        await task["consumer"].stop()
+                        task["task"].cancel()
                 await send({'type': 'lifespan.shutdown.complete'})
                 return
             
