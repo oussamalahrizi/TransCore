@@ -12,7 +12,6 @@ class AsyncRabbitMQConsumer:
         self._connection : Connection = None
         self._channel = None
         self._closing = False
-        self.tries = 0
         
     async def connect(self):
         while not self._closing:

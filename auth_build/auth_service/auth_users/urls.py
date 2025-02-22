@@ -13,7 +13,8 @@ from .views import (
    GetMyInfo,
    BanSelf,
    ResetPassword,
-   PasswordVerify
+   PasswordVerify,
+   CDNVerify
 )
 
 from .AuthViews import (
@@ -58,17 +59,18 @@ urlpatterns = [
    path('users/', ListUsers.as_view(), name='list-users'),
    path('users/ban_me/', BanSelf.as_view(), name='ban-self'),
    path('users/me/', GetMyInfo.as_view(), name='profile-info'),
+   path('users/verify-2fa/', VerifyOTP.as_view(), name='verify-2fa'),
+   path('users/enable-2fa/', EnableOTP.as_view(), name='enable-2fa'),
+   path('users/disable-2fa/', DisableOTP.as_view(), name='disable-2fa'),
    path('users/<str:username>/', GetUser.as_view(), name='user-info'),
    path('api_user_id/<str:id>/', GetUserServiceID.as_view(), name='user-id-service'),
    path('api_user_name/<str:username>/', GetUserServiceName.as_view(), name='user-name-service'),
    path('users/<str:username>/update/', UpdateUserInfo.as_view(), name='update'),
    path('users/<str:username>/update_password/', UpdatePassword.as_view(), name='update'),
-   path('users/<str:username>/enable-2fa/', EnableOTP.as_view(), name='enable-2fa'),
-   path('users/<str:username>/disable-2fa/', DisableOTP.as_view(), name='disable-2fa'),
-   path('users/<str:username>/verify-2fa/', VerifyOTP.as_view(), name='verify-2fa'),
    path('friends/', GetFriends.as_view(), name='friend-list'),
    path('friends/received/', CheckReceivedFriend.as_view(), name='recv-list'),
    path('friends/sent/', CheckSentFriend.as_view(), name='sent-list'),
    path('add_friend/<str:username>', SendFriendRequest.as_view(), name='add-friend'),
    path('swagger/', schema_view.with_ui(), name='schema-swagger-ui'),
+   path('cdn_verify/', CDNVerify.as_view(), name='cdn-nginx'),
 ]

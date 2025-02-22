@@ -1,0 +1,151 @@
+
+.settings-container
+{
+    display: flex;
+    background-color: #161616;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.fa-container
+{
+    display: flex;
+    position: absolute;
+    inset: 0;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    z-index: 50;
+    background-color: rgb(0 0 0 / 0.7);
+}
+
+.elements-container
+{
+    display: flex;
+    border-radius: 0.75rem;
+    max-width: 26.5rem;
+    width: 100%;
+    padding: 1.5rem;
+    flex-direction: column;
+    background-color: #222222;
+}
+
+.upper-elements
+{
+    display: flex;
+    justify-content: space-between;
+    flex: 1 1 0;
+}
+
+.title
+{
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    color: #CDCDCD;
+}
+
+.enable2fatext
+{
+    text-align: center;
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    color: #F7F7F7;
+}
+
+.notes
+{
+    color: #94979C;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5rem;
+}
+
+.verifybutton
+{
+    /* width: 100%; */
+    text-align: center;
+    background-color: #029F5B;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+    font-weight: 600;
+}
+
+.verifybutton:hover
+{
+    opacity: 1;
+    background-color: #057343;
+    transition: 0.25s;
+}
+
+.code-input
+{
+    color: #CECFD2;
+    background-color: #222;
+    border-color: #373A41;
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    border-width: 1px;
+    border-radius: 2rem;
+    transition: 0.5s;
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    text-align: center;
+}
+
+.code-input::placeholder
+{
+    color: #373A41;
+    text-align: center;
+}
+.code-input:hover
+{
+    border-color: #CECFD2;
+}
+
+.qr
+{
+    height: 14rem;
+    width: 14rem;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+    align-self: center;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

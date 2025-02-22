@@ -6,8 +6,7 @@ const login = async ({email, password}) => {
             "Content-Type" : "application/json",
             "Accept" : "application/json"
         }
-        const force_logout = app.utils.getForceState();
-        const body = JSON.stringify({email, password, force_logout})
+        const body = JSON.stringify({email, password})
         console.log(body);
         
         const response = await fetch("http://localhost:8000/api/auth/login/", {
@@ -18,6 +17,12 @@ const login = async ({email, password}) => {
         const data = await response.json()
         if (!response.ok)
             throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2))
+        if (data["2fa"] === true)
+        {
+            app.username = data.username
+            app.Router.navigate("/auth/verify-2fa")
+            return
+        }
         app.utils.setCookie("access_token", data.access_token)
         showToast("Logged in successfully", 'green')
         return true
@@ -28,40 +33,38 @@ const login = async ({email, password}) => {
     }
 }
 
-export default () => {
-    const view = document.getElementById('auth-view')
-    const form = view.querySelector("#login-form")
-    const button = view.querySelector("#login-btn")
-    // set force state
-    const force = view.querySelector("#force")
-    force.checked = app.utils.getForceState() 
-    force.addEventListener("change", (e) => app.utils.setForceState(e.target.checked) ) 
-    
-    form.addEventListener("submit",async (e) => {
-        
-        e.preventDefault()
-        button.disabled = true
-        const list = button.className
-        button.className = "bg-gray-200 text-white font-semibold py-2 rounded-lg w-full"
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-        const res = await login({...data, force_logout: false})
-        if (res)
-        {
-            app.Router.navigate("/")
-            return
-        }
-        button.className = list
-        button.disabled = false
-    })
 
-    // social login
-    const intra = view.querySelector("#login-intra")
-    if (intra)
-        intra.addEventListener("click", IntraLogin)
-    const google = view.querySelector("#login-google")
-    if (google)
-        google.addEventListener("click", GoogleLogin)
+export default  () => {
+ 
+        const view = document.getElementById('auth-view')
+        const form = view.querySelector("#login-form")
+        const button = view.querySelector("#login-btn")
+        
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault()
+            button.disabled = true
+            const list = button.className
+            button.className = "bg-gray-200 text-white font-semibold py-2 rounded-lg w-full"
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            const res = await login(data)
+            if (res)
+            {
+                app.Router.navigate("/")
+                return
+            }
+            button.className = list
+            button.disabled = false
+        })
+    
+        // social login
+        const intra = view.querySelector("#login-intra")
+        if (intra)
+            intra.addEventListener("click", IntraLogin)
+        const google = view.querySelector("#login-google")
+        if (google)
+            google.addEventListener("click", GoogleLogin)
+
 }
 
 export const IntraLogin = async () => {

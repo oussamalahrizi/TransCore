@@ -126,7 +126,6 @@ class UserLogin(serializers.Serializer):
 
 	email = serializers.EmailField(required=True)
 	password = serializers.CharField(write_only=True, required=True)
-	force_logout = serializers.BooleanField(required=False, default=False)
 
 	def validate(self, attrs):
 		email = attrs.get('email')

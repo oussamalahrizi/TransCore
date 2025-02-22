@@ -7,6 +7,7 @@ class IsAllowedHost(BasePermission):
     """
     Custom permission to only allow access from specific hosts.
     """
+
     try:
         api = gethostbyname("api-service")
     except:
@@ -17,6 +18,13 @@ class IsAllowedHost(BasePermission):
         incoming_host = request.META.get('REMOTE_ADDR')
         return incoming_host in self.allowed_hosts
 
+class isNginx(BasePermission):
+
+    nginx = gethostbyname("nginx")
+
+    def has_permission(self, request, view):
+        incoming = request.META.get('REMOTE_ADDR')
+        return incoming == self.nginx
 
 class IsSameUser(BasePermission):
 

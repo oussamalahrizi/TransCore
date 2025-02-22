@@ -4,6 +4,13 @@ networks:
     name: "TransNetwork"
 
 volumes:
+  images:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "./images"
+
   users-data:
     driver: local
     driver_opts:
@@ -73,6 +80,7 @@ services:
       - "auth_build/build/conf/.env"
     volumes:
       - "auth-service-code:/var/app"
+      - "images:/var/images"
 
   api-service:
     build: "api_build/."
@@ -119,6 +127,8 @@ services:
       - api-service
     networks:
       - TransNetwork    
+    volumes:
+      - "images:/var/images"
 
   adminer:
     image: adminer

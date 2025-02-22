@@ -5,61 +5,56 @@ export const checkAccessToken = () => {
 };
 
 const refreshLocal = async () => {
-	try {
-		const response = await fetch("http://localhost:8000/api/auth/refresh/", { credentials: "include", method: "GET" });
-		const data = await response.json();
-		if (response.ok)
-			return true
-		if (response.status === 400)
-			return false;
-		else if (response.status === 403) {
-			app.utils.showToast(data.detail);
-			return false;
-		}
-	} catch (error) {
-		console.error("catch error : ", error);
-		return false;
+	const response = await fetch("http://localhost:8000/api/auth/refresh/", { credentials: "include", method: "GET" });
+	const data = await response.json();
+	if (response.status === 400)
+		throw new app.utils.AuthError()
+	else if (response.status === 403) {
+		app.utils.showToast(data.detail);
+		throw new app.utils.AuthError()
 	}
 }
 
 const handleAuthGuard = async (content, route) => {
 	const token = checkAccessToken()
-
-	if (route.startsWith("/auth"))
+	try
 	{
-		if (token)
+		if (route.startsWith("/auth"))
 		{
-			await Router.navigate("/")
-			return false
+			if (token)
+				return "/"
+			await refreshLocal()
+			return '/'
 		}
-		const res = await refreshLocal()
-		if (res)
-		{
-			await Router.navigate("/")
-			return false
+		if (content.auth_guard && !token) {
+			await refreshLocal();
+			return route;
 		}
-		return true
+		return route;
 	}
-	if (content.auth_guard && !token) {
-		const res = await refreshLocal();
-		if (res) return true;
-		await Router.navigate("/auth/login")
-		return false;
+	catch (error)
+	{
+		if (error instanceof app.utils.AuthError)
+			if (route.startsWith("/auth"))
+				return route
+			return '/auth/login'
 	}
-	return true;
 };
 
 const Router = {
 	init : async () => {
 		// listen for url changes in history events
-		onpopstate = (e) => Router.navigate(e.state.url, false);
-		Router.navigate(location.href)
+		onpopstate = async (e) => {
+			console.log("popstate event");
+			const url = e.state ? e.state.url : location.href
+			await Router.navigate(url, false)
+		}
+		await Router.navigate(location.href)
 	},
 	navigate : async (url, useHistory=true) => {
 		const route = new URL(url, window.location.origin).pathname
-		const content = app.routes[route]
 		// redirect uknown routes to 404
-		if (!content)
+		if (!app.routes[route])
 		{
 			Router.navigate("/404")
 			return
@@ -67,42 +62,70 @@ const Router = {
 		// excluding intra and google callback from being added to history
 		
 		// handling auth guard
-		const render = await handleAuthGuard(content, route);
-		if (!render)
-			return
+		const render = await handleAuthGuard(app.routes[route], route);
+		// special case to replace state in case of navigating through popstate event
+		const content = app.routes[render]
 		if (useHistory)
-			history.pushState({ url }, '', url)
+		{
+			url = render === route ? url : render
+			console.log("history use");
+			history.pushState({url}, '', url)
+		}
+		else
+		{
+			// this is always triggered by popstate
+			url = render === route ? url : render
+			// replace only if its not allowed, eg: navigating back to home after logout
+			if(render !== route)
+			{
+				console.log("no history replace", url);
+				history.replaceState({url}, '', url)
+			}
+		}
 		/*
 			TODO :
 				make sure if you are signing out or something to close the online websocket
 		*/
+
 		// injecting content in the root div and running the controller
-		const root = document.getElementById("root")
 		
+		const root = document.getElementById("root")
 		while (root.firstChild)
 			root.removeChild(root.firstChild);
-
 		root.innerHTML = content.view;
-		document.head.title = content.title
+
+		if (content.style)
+		{
+			console.log("loading css", content.style);
+				
+			const loaded = await app.utils.LoadCss(content.style)
+			if (!loaded)
+			{
+				app.utils.showToast("failed to load css")
+				app.Router.navigate("/404")
+				return
+			}
+		}
+		
 		content.controller && content.controller()
 		// disabling default behavior for anchor tags
 		Router.disableReload()
 	},
 	disableReload : ()=> {
 		const a = document.querySelectorAll("a")
-		if (a.length)
-		{
-			a.forEach(tag => {
-				tag.addEventListener("click", e => {
-					const external = /^(http|https|mailto|ftp):/.test(tag.getAttribute("href"))
-					if (!external)
-					{
-						e.preventDefault()
-						Router.navigate(e.target.getAttribute("href"))
-					}
-				})
+		if (!a.length)
+			return
+		a.forEach(tag => {
+			tag.addEventListener("click", e => {
+				const external = /^(http|https|mailto|ftp):/.test(tag.getAttribute("href"))
+				if (!external)
+				{
+					e.preventDefault()
+					Router.navigate(e.target.getAttribute("href"))
+				}
 			})
-		}
+		})
+		
 	}
 }
 

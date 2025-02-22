@@ -7,7 +7,8 @@ window.app = {};
 app.Router = Router
 app.utils = utils
 app.routes = routes
+app.username = null
 
 window.addEventListener("DOMContentLoaded", () => {
-  app.Router.init()  
+   app.Router.init()
 });
