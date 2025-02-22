@@ -105,7 +105,7 @@ def ValidateToken(token, token_type) -> bool:
 		return False
 	return True
 	
-import pyotp
+import pyotp, json
 
 class AuthCache:
 	"""
@@ -234,6 +234,29 @@ class AuthCache:
         }
 		if action in actions.keys():
 			return actions[action](email)
+		else:
+			raise Exception("invalid action")
+	# enable 2fa
+	def store_2fa(self, username: str) -> str:
+		secret = pyotp.random_base32()
+		self.redis.setex(f"2fa:{username}", time=60, value=secret)
+		return secret
+
+	def get_2fa(self, username: str) -> None:
+		secret = self.redis.get(f"2fa:{username}")
+		return secret if secret else None
+
+	def delete_2fa(self, username: str) -> None:
+		self.redis.delete(f"2fa:{username}")
+
+	def enable_2fa_action(self, action: str, username: str):
+		actions = {
+            'set': self.store_2fa,
+            'get': self.get_2fa,
+            'delete': self.delete_2fa
+        }
+		if action in actions.keys():
+			return actions[action](username)
 		else:
 			raise Exception("invalid action")
 

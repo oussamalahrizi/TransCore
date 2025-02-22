@@ -12,10 +12,13 @@ app.use("/public",express.static(path.join(__dirname, "public")));
 // this will do for now
 app.get("*", (req, res) => {
 	if (req.url.startsWith("/public") || req.url === "/404")
+	{
+		console.log("not found");
 		res.status(404)
+	}
 	res.sendFile(path.join(__dirname, "/", "index.html"));
 });
 
 app.listen(port, () => {
-	console.log(`Server running on port ${port}`);
+	console.log(`Server running on port this ${port}`);
 });

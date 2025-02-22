@@ -1,17 +1,21 @@
 import { showToast } from "../../Components/toast.js"
 
-const GoogleCallback = async (code) => {
+const IntraCallback = async (code) => {
     try {
 
         let data;
         const url = new URL("http://localhost:8000/api/auth/intra_callback/")
         url.searchParams.append("code", code)
-        if (app.utils.getForceState())
-            url.searchParams.append("force_logout", "true")
         const response = await fetch(url, {credentials : "include"})
         data = await response.json()
         if (!response.ok)
             throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2))
+        if (data["2fa"] === true)
+        {        
+            app.username = data.username
+            app.Router.navigate("/auth/verify-2fa")
+            return
+        }
         app.utils.setCookie("access_token", data.access_token)
         showToast("Logged in successfully", 'green')
         app.Router.navigate("/")
@@ -30,5 +34,5 @@ export default () => {
         app.Router.navigate("/auth/login")
         return
     }
-    GoogleCallback(code)
+    IntraCallback(code)
 }

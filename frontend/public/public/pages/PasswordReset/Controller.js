@@ -60,33 +60,40 @@ const handleVerify = async (view, email) => {
 }
 
 
-export default () => {
-    const view = document.getElementById("reset-pw-view")
-    const form = view.querySelector("#reset-form")
-    const reset = view.querySelector("#reset-btn")
-    form.addEventListener("submit", async(e) => {
-        e.preventDefault()
-        const formData = new FormData(form);
-        const { email } = Object.fromEntries(formData.entries());
-        if (!email)
-        {
-            showToast("Please enter an email")
-            return
-        }
-        reset.disabled = true
-        const list = reset.className
-        reset.className = "bg-gray-200 text-white font-semibold py-2 rounded-lg"
-        const bool = await handleSubmit(email)
-        if (bool)
-        {
-            while (view.firstChild) {
-                view.removeChild(view.firstChild);
+export default async () => {
+    try {
+        await app.utils.LoadCss("/public/styles/forgotpass.css")
+        const view = document.getElementById("reset-pw-view")
+        const form = view.querySelector("#reset-form")
+        const reset = view.querySelector("#reset-btn")
+        form.addEventListener("submit", async(e) => {
+            e.preventDefault()
+            const formData = new FormData(form);
+            const { email } = Object.fromEntries(formData.entries());
+            if (!email)
+            {
+                showToast("Please enter an email")
+                return
             }
-            view.innerHTML = verifyView
-            handleVerify(view, email)
-            return
-        }
-        reset.className = list
-        reset.disabled = false
-    })
+            reset.disabled = true
+            const list = reset.className
+            reset.className = "bg-gray-200 text-white font-semibold py-2 rounded-lg"
+            const bool = await handleSubmit(email)
+            if (bool)
+            {
+                while (view.firstChild) {
+                    view.removeChild(view.firstChild);
+                }
+                view.innerHTML = verifyView
+                handleVerify(view, email)
+                return
+            }
+            reset.className = list
+            reset.disabled = false
+        })
+    } catch (error) {
+        app.utils.showToast("failed to load css")
+        app.router.navigate("/404")
+        return
+    }
 }

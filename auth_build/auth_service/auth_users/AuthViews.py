@@ -50,7 +50,7 @@ class RegisterEmail(LoginMixin, CreateAPIView):
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		self.perform_create(serializer)
-		response = Response(status=status.HTTP_201_CREATED, data={"detail : User created successfully"})
+		response = Response(status=status.HTTP_201_CREATED, data={"detail" : "User created successfully"})
 		response["Location"] = reverse("login-email")
 		return response
 
@@ -64,10 +64,10 @@ class LoginView(LoginMixin, CreateAPIView):
 		execution = request.query_params.get("execution")
 		username = request.query_params.get("username")
 		if execution is None or username is None:
-			return Response(data={"detail : missing query params"})
+			return Response(data={"detail" : "missing query params"})
 		token = self.cache.execution_2fa_action(username, action="get")
 		if token is None:
-			return Response(data={"detail : invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+			return Response(data={"detail" : "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 		try:
 			user: User = get_object_or_404(User, username=username)
 			self.cache.execution_2fa_action(user.username, action="delete")
@@ -91,9 +91,8 @@ class LoginView(LoginMixin, CreateAPIView):
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		user = serializer.validated_data['user']
-		force_logout = serializer.validated_data["force_logout"]
 		# Handle logged in user
-		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout)
+		logged_response = self._handle_logged_user(user, refresh_cookie)
 		if logged_response:
 			return logged_response
 
@@ -189,11 +188,15 @@ class SessionState(APIView):
 
 
 class EnableOTP(APIView):
-	permission_classes = [IsSameUser]
+	cache = _AuthCache
+	permission_classes = [IsAuthenticated]
 
-	def _generate_url(self, user : User):
+	class SerializeCode(serializers.Serializer):
+		code = serializers.CharField(required=True)
+
+	def _generate_url(self, user : User, secret: str):
 		""" Generate base64 image data """
-		url = pyotp.totp.TOTP(user.two_factor_secret) \
+		url = pyotp.totp.TOTP(secret) \
 			.provisioning_uri(name=user.username, issuer_name="Auth Service")
 		qr = qrcode.QRCode(
         	version=1,
@@ -209,72 +212,90 @@ class EnableOTP(APIView):
 		img_str = b64encode(buffer.getvalue()).decode()
 		return Response(img_str)
 
-	def get(self, request, *args, **kwargs):
-		try:
-			user = get_object_or_404(User, username=kwargs.get("username"))
-			if user.two_factor_enabled is True:
-				return Response(data={f"detail : {user.username} already enabled 2FA."})
-			# generate secret and update attributes
-			secret = pyotp.random_base32()
-			data = {
-				"two_factor_enabled": True,
-				"two_factor_secret": secret
-			}
-			for key, value in data.items():
-				setattr(user, key, value)
-			user.save()
-			# generate url
-			return self._generate_url(user)
-		except Http404:
-			return Response(data={"detail" : "User Not Found."}, status=status.HTTP_404_NOT_FOUND)
+	def get(self, request : Request, *args, **kwargs):
+		user : User = request.user
+		if user.two_factor_enabled is True:
+			return Response(data={f"detail" : f"{user.username} already enabled 2FA."},
+				status=status.HTTP_400_BAD_REQUEST)
+		# generate secret and update attributes
+		secret = self.cache.enable_2fa_action(username=user.username, action="set")
+		return self._generate_url(user, secret)
+	
+	def post(self, request : Request, *args, **kwargs):
+		# user is valid cuz authenticated
+		user : User = request.user
+		ser = self.SerializeCode(data=request.data)
+		ser.is_valid(raise_exception=True)
+		if user.two_factor_enabled:
+			return Response(data={f"detail" : f"{user.username} already enabled 2FA."},
+					status=status.HTTP_400_BAD_REQUEST)
+		code = ser.validated_data["code"]
+		cache_secret = self.cache.enable_2fa_action(action="get", username=user.username)
+		if cache_secret is None:
+			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : "User did not request to enable 2fa"})
+		val = pyotp.TOTP(cache_secret).verify(code)
+		if val is False:
+			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail" : "Invalid Code"})
+		data = {
+			"two_factor_enabled": True,
+			"two_factor_secret": cache_secret
+		}
+		for key, value in data.items():
+			setattr(user, key, value)
+		user.save()
+		self.cache.enable_2fa_action(action="delete", username=user.username)
+		return Response(status=status.HTTP_201_CREATED, data={"detail" : "Updated Successfully"})
 
 class DisableOTP(APIView):
-	permission_classes = [IsSameUser]
+	permission_classes = [IsAuthenticated]
 
-	def get(self, request, *args, **kwargs):
-		try:
-			user = get_object_or_404(User, username=kwargs.get("username"))
-			if not user.two_factor_enabled:
-				return Response(data={f"detail : {user.username} already disabled."})
-			data = {
-				"two_factor_enabled": False,
-				"two_factor_secret": ""
-			}
-			for key, value in data.items():
-				setattr(user, key, value)
-			user.save()
-			return Response(data={"detail : Updated successfully."})
-		except Http404:
-			return Response(data={"detail" : "User Not Found."}, status=status.HTTP_404_NOT_FOUND)
+	def get(self, request : Request, *args, **kwargs):
+		user : User= request.user
+		if not user.two_factor_enabled:
+			return Response(data={f"detail" : f"{user.username} already disabled."},
+				status=status.HTTP_400_BAD_REQUEST)
+		data = {
+			"two_factor_enabled": False,
+			"two_factor_secret": ""
+		}
+		for key, value in data.items():
+			setattr(user, key, value)
+		user.save()
+		return Response(data={"detail" : "Updated successfully."})
+		
 
-
-class VerifyOTP(CreateAPIView):
+"""
+	TODO:
+		- convert this to only api view
+"""
+class VerifyOTP(APIView):
 
 	class OTPSerializer(serializers.Serializer):
-		code = serializers.IntegerField(required=True)
+		code = serializers.CharField(required=True)
+		username = serializers.CharField(required=True)
 
-	lookup_field = "username"
-	queryset = User.objects.all()
 	cache = _AuthCache
-	serializer_class = OTPSerializer
 	authentication_classes = []
+	permission_classes = []
 
 	def post(self, request, *args, **kwargs):
-		user : User = self.get_object()
-		if self.cache.didUserRequest(user.username) is False:
-			return Response({f"detail : {user.username} did not request a code; the incident will be reported."},
-				   				status=status.HTTP_403_FORBIDDEN)
-		instance = self.get_serializer(data=request.data)
-		secret = user.two_factor_secret
-		if not instance.is_valid():
-			return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-		val = pyotp.TOTP(secret).verify(instance.validated_data["code"])
-		if not val :
-			return Response(data={"detail : invalid OTP code."}, status=status.HTTP_403_FORBIDDEN)
-		sec = self.cache.execution_2fa_action(user.username, "get")
-		response = Response(status=status.HTTP_302_FOUND)
-		response["Location"] = f"/api/auth/login/?username={user.username}&execution={sec}"
-		return response
+		try:
+			instance = self.OTPSerializer(data=request.data)
+			instance.is_valid(raise_exception=True)
+			user : User = get_object_or_404(User, username=instance.validated_data["username"])
+			if self.cache.didUserRequest(user.username) is False:
+				return Response({"detail" : f"{user.username} did not request a code."},
+									status=status.HTTP_403_FORBIDDEN)
+			secret = user.two_factor_secret
+			val = pyotp.TOTP(secret).verify(instance.validated_data["code"])
+			if not val :
+				return Response(data={"detail" : "invalid OTP code."}, status=status.HTTP_403_FORBIDDEN)
+			sec = self.cache.execution_2fa_action(user.username, "get")
+			response = Response()
+			response.data = {"Location" : f"/api/auth/login/?username={user.username}&execution={sec}"}
+			return response
+		except Http404:
+			return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "User Not Found."})
 
 
 class GoogleCallback(GoogleMixin, APIView):
@@ -284,7 +305,7 @@ class GoogleCallback(GoogleMixin, APIView):
 	cache = _AuthCache
 
 	@sync_to_async
-	def cleanup(self, user_data, request, force_logout):
+	def cleanup(self, user_data, request):
 		user : User = self.getUser(user_data)
 		if not user.is_active:
 			return Response(status=status.HTTP_403_FORBIDDEN,
@@ -293,7 +314,7 @@ class GoogleCallback(GoogleMixin, APIView):
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
-		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout)
+		logged_response = self._handle_logged_user(user, refresh_cookie)
 		if logged_response:
 			return logged_response
 		twofa_response = self._handle_2fa(user)
@@ -306,13 +327,8 @@ class GoogleCallback(GoogleMixin, APIView):
 	async def get(self, request : Request):
 		
 		code = request.query_params.get("code")
-		force_logout = request.query_params.get("force_logout")
-		if force_logout is None:
-			force_logout = False
-		else:
-			force_logout = True if force_logout == 'true' else False
 		if code is None:
-			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail : Missing code."})
+			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : "Missing code."})
 		# Exchange code for access token
 		token_url = "https://oauth2.googleapis.com/token"
 		token_data = {
@@ -337,7 +353,7 @@ class GoogleCallback(GoogleMixin, APIView):
 				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "Failed to get user info"})
 
 			user_data = userinfo_response.json()
-			response = await self.cleanup(user_data, request, force_logout)
+			response = await self.cleanup(user_data, request)
 			return response
 
 class IntraCallback(IntraMixin, APIView):
@@ -345,7 +361,7 @@ class IntraCallback(IntraMixin, APIView):
 	authentication_classes = []
 
 	@sync_to_async
-	def cleanup(self, user_data, request, force_logout):
+	def cleanup(self, user_data, request):
 		user : User = self.getUser(user_data)
 		if not user.is_active:
 			return Response(status=status.HTTP_403_FORBIDDEN,
@@ -354,7 +370,7 @@ class IntraCallback(IntraMixin, APIView):
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
-		logged_response = self._handle_logged_user(user, refresh_cookie, force_logout)
+		logged_response = self._handle_logged_user(user, refresh_cookie)
 		if logged_response:
 			return logged_response
 		twofa_response = self._handle_2fa(user)
@@ -365,13 +381,8 @@ class IntraCallback(IntraMixin, APIView):
 	@async_to_sync
 	async def get(self, request : Request):
 		code = request.query_params.get("code")
-		force_logout = request.query_params.get("force_logout")
-		if force_logout is None:
-			force_logout = False
-		else:
-			force_logout = True if force_logout == 'true' else False
 		if code is None:
-			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail : Missing code."})
+			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : "Missing code."})
 		# Exchange code for access token
 		token_url = "https://api.intra.42.fr/oauth/token"
 		token_data = {
@@ -396,6 +407,6 @@ class IntraCallback(IntraMixin, APIView):
 			if userinfo_response.status_code != 200:
 				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "Failed to get user info"})
 			user_data = userinfo_response.json()
-			response = await self.cleanup(user_data, request, force_logout)
+			response = await self.cleanup(user_data, request)
 			return response
 

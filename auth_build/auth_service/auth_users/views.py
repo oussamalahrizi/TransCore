@@ -265,5 +265,16 @@ class PasswordVerify(APIView):
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             data={"detail" : "Internal Server Error"})
         
+from .permissions import isNginx
 
+class CDNVerify(APIView):
+    authentication_classes = []
+    permission_classes = [isNginx]
 
+    def get(self, request, *args , **kwargs):
+        return Response(data={"detail" : "works!"})
+    
+class Upload(APIView):
+
+    class imageSerial(serializers.Serializer):
+        image = serializers.ImageField()
