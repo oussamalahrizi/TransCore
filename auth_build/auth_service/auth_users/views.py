@@ -278,3 +278,19 @@ class Upload(APIView):
 
     class imageSerial(serializers.Serializer):
         image = serializers.ImageField()
+
+from ..core.asgi import publishers
+from asgiref.sync import async_to_sync
+
+class sendNotif(APIView):
+    authentication_classes = []
+    notif = publishers[0]
+
+    @async_to_sync
+    async def get(self, request, *args, **kwargs):
+        try:
+            await self.notif.publish({"notification" :" test"})
+            return Response(data={"detail" : "published successuly"})
+        except Exception as e:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            data={"detail" : f"error publishing, {e}"})

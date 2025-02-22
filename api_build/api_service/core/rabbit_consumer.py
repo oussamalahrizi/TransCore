@@ -41,7 +41,7 @@ class AsyncRabbitMQConsumer:
 
     async def start_consuming(self):
         try:
-            queue = await self._channel.declare_queue(self.queue_name)
+            queue = await self._channel.declare_queue(self.queue_name, durable=True)
             await queue.consume(self.on_message)
             print("Started consuming")
         except Exception as e:
@@ -69,12 +69,24 @@ class APIConsumer(AsyncRabbitMQConsumer):
 
     async def on_message(self, message : IncomingMessage):
         try:
+            print(f"received message in api : {data}")
             data = message.body.decode()
-            print(f"received message : {data}")
-            user = json.loads(message.body)
-            self.cache.remove_user_data(user_id=user["id"])
             await message.ack()
-            print(f"deleted cached data for user : {user["username"]}")
+        except json.JSONDecodeError:
+            print("invalid json data")
+            await message.reject()
+        except Exception as e:
+            print(f"Error processing the message : {e}")
+
+class NotifConsumer(AsyncRabbitMQConsumer):
+
+    cache = _Cache
+
+    async def on_message(self, message : IncomingMessage):
+        try:
+            print(f"received message in notifs : {data}")
+            data = message.body.decode()
+            await message.ack()
         except json.JSONDecodeError:
             print("invalid json data")
             await message.reject()
