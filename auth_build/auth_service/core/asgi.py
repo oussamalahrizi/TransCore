@@ -14,8 +14,8 @@ from .rabbitmq_publisher import APIPub, NotificationPub, RabbitmqBase
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
-apipub = APIPub(host='rabitmq', port=5672, queue_name="api")
-notifspub = NotificationPub(host='rabitmq', port=5672, queue_name="notifications")
+apipub = APIPub(host='rabbitmq', port=5672, queue_name="api")
+notifspub = NotificationPub(host='rabbitmq', port=5672, queue_name="notifications")
 
 publishers : list[RabbitmqBase] = [apipub, notifspub]
 
@@ -30,7 +30,7 @@ async def lifespan(scope, receive, send):
                 print("started publisher")
                 for pub in publishers:
                     tasks.append({
-                        "publisher" : apipub,
+                        "publisher" : pub,
                         "task" : asyncio.create_task(pub.run())
                     })
                 await send({'type': 'lifespan.startup.complete'})
