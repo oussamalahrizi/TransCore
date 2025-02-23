@@ -1,5 +1,4 @@
 import asyncio
-import aiormq
 from aio_pika import connect, IncomingMessage, Connection
 from api_core.utils import _Cache
 import json
@@ -16,7 +15,6 @@ class AsyncRabbitMQConsumer:
     async def connect(self):
         while not self._closing:
             try:
-                print("Attempting to connect to RabbitMQ...")
                 self._connection = await connect(
                     host=self.host,
                     port=self.port,
@@ -25,30 +23,29 @@ class AsyncRabbitMQConsumer:
                 self._connection.close_callbacks.add(self.reconnect)
                 self._channel = await self._connection.channel()
                 await self._channel.set_qos(prefetch_count=1)
-                print("Connection established.")
+                print(f"{self.queue_name} : Connection established ")
                 self._closing = False
                 await self.start_consuming()
                 break
             except Exception as e:
-                print(f"Connection error : {e}")
+                print(f"{self.queue_name} : Connection error in queue :  {e}")
                 await asyncio.sleep(2)
 
     async def reconnect(self, param1, param2):
         if not self._closing:
-            print("reconnecting...")
+            print(f"{self.queue_name} : reconnecting...")
             await self.connect()
-            print("Done")
 
     async def start_consuming(self):
         try:
-            queue = await self._channel.declare_queue(self.queue_name)
+            queue = await self._channel.declare_queue(self.queue_name, durable=True)
             await queue.consume(self.on_message)
-            print("Started consuming")
+            print(f"{self.queue_name} : Started consuming")
         except Exception as e:
-            print(f"Error while starting consuming: {e}")
+            print(f"{self.queue_name} : Error while starting consuming : {e}")
 
     async def on_message(self, message: IncomingMessage):
-            raise NotImplementedError()
+            raise NotImplementedError
 
     async def run(self):
         await self.connect()
@@ -56,11 +53,11 @@ class AsyncRabbitMQConsumer:
     async def stop(self):
         if not self._closing:
             self._closing = True
-            print("Stopping")
+            print(f"Stopping consumer : {self.queue_name}")
             if self._connection and not self._connection.is_closed:
                 await self._channel.close()
                 await self._connection.close()
-            print("Stopped")
+            print(f"Stopped {self.queue_name}")
 
 
 class APIConsumer(AsyncRabbitMQConsumer):
@@ -70,13 +67,25 @@ class APIConsumer(AsyncRabbitMQConsumer):
     async def on_message(self, message : IncomingMessage):
         try:
             data = message.body.decode()
-            print(f"received message : {data}")
-            user = json.loads(message.body)
-            self.cache.remove_user_data(user_id=user["id"])
+            print(f"{self.queue_name} : received message : {data}")
             await message.ack()
-            print(f"deleted cached data for user : {user["username"]}")
         except json.JSONDecodeError:
-            print("invalid json data")
+            print(f"{self.queue_name} : invalid json data")
             await message.reject()
         except Exception as e:
-            print(f"Error processing the message : {e}")
+            print(f"{self.queue_name} : Error processing the message : {e}")
+
+class NotifConsumer(AsyncRabbitMQConsumer):
+
+    cache = _Cache
+
+    async def on_message(self, message : IncomingMessage):
+        try:
+            data = message.body.decode()
+            print(f"{self.queue_name} : received message : {data}")
+            await message.ack()
+        except json.JSONDecodeError:
+            print(f"{self.queue_name} : invalid json data")
+            await message.reject()
+        except Exception as e:
+            print(f"{self.queue_name} : Error processing the message : {e}")

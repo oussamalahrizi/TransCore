@@ -118,7 +118,7 @@ class AuthCache:
 	logger = _logger
 
 	def __init__(self):
-		self.redis = Redis(host="auth_redis", port=6380, decode_responses=True, db=0)
+		self.redis = Redis(host="auth_redis", decode_responses=True, db=0)
 
 	#AUTH
 	def store_token(self, username: str, token: str, exp):

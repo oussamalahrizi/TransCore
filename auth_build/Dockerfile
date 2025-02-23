@@ -15,4 +15,4 @@ RUN pip install -r /var/requirements.txt
 
 ENTRYPOINT ["../init.sh"]
 
-CMD ["./manage.py", "runserver", "0.0.0.0:80"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "80" ,"core.asgi:application", "--lifespan", "on", "--reload"]

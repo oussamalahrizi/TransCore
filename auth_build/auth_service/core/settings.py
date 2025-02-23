@@ -58,7 +58,11 @@ REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES' : [
 		'auth_users.middlewares.JWTAuthentication'
 	],
-	'EXCEPTION_HANDLER': 'auth_users.exception_handlers.custom_exception_handler'
+	'EXCEPTION_HANDLER': 'auth_users.exception_handlers.custom_exception_handler',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ]
 }
 
 ROOT_URLCONF = 'core.urls'
@@ -80,6 +84,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = 'core.asgi.application'
 
 
 # Database
@@ -133,7 +138,6 @@ USE_TZ = True
 
 STATIC_URL = '/api/auth/static/'
 MEDIA_URL = '/api/auth/media/'
-MEDIA_ROOT = ""
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
