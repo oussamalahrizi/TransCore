@@ -1,5 +1,4 @@
 import asyncio
-import aiormq
 from aio_pika import connect, IncomingMessage, Connection
 from api_core.utils import _Cache
 import json
@@ -16,7 +15,6 @@ class AsyncRabbitMQConsumer:
     async def connect(self):
         while not self._closing:
             try:
-                print("Attempting to connect to RabbitMQ...")
                 self._connection = await connect(
                     host=self.host,
                     port=self.port,
@@ -25,12 +23,12 @@ class AsyncRabbitMQConsumer:
                 self._connection.close_callbacks.add(self.reconnect)
                 self._channel = await self._connection.channel()
                 await self._channel.set_qos(prefetch_count=1)
-                print("Connection established.")
+                print(f"Connection established with queue {self.queue_name}")
                 self._closing = False
                 await self.start_consuming()
                 break
             except Exception as e:
-                print(f"Connection error : {e}")
+                print(f"Connection error in queue {self.queue_name} : {e}")
                 await asyncio.sleep(2)
 
     async def reconnect(self, param1, param2):
@@ -43,12 +41,12 @@ class AsyncRabbitMQConsumer:
         try:
             queue = await self._channel.declare_queue(self.queue_name, durable=True)
             await queue.consume(self.on_message)
-            print("Started consuming")
+            print(f"Started consuming : {self.queue_name}")
         except Exception as e:
-            print(f"Error while starting consuming: {e}")
+            print(f"Error while starting consuming {self.queue_name} : {e}")
 
     async def on_message(self, message: IncomingMessage):
-            raise NotImplementedError()
+            raise NotImplementedError
 
     async def run(self):
         await self.connect()
@@ -56,11 +54,11 @@ class AsyncRabbitMQConsumer:
     async def stop(self):
         if not self._closing:
             self._closing = True
-            print("Stopping")
+            print(f"Stopping consumer : {self.queue_name}")
             if self._connection and not self._connection.is_closed:
                 await self._channel.close()
                 await self._connection.close()
-            print("Stopped")
+            print(f"Stopped {self.queue_name}")
 
 
 class APIConsumer(AsyncRabbitMQConsumer):
