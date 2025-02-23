@@ -66,6 +66,12 @@ class APIPub(RabbitmqBase):
 class NotificationPub(RabbitmqBase):
     
     async def publish(self, data : dict):
+        data = {
+            "notification" : {
+                "user_id" : 123,
+                'message' : 'check notification'
+            }
+        }
         message = Message(
             json.dumps(data).encode(),
             delivery_mode=1,

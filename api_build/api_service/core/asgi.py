@@ -8,7 +8,7 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-from .rabbit_consumer import APIConsumer, NotifConsumer
+from .rabbit_consumer import APIConsumer, NotifConsumer, AsyncRabbitMQConsumer
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from .Middleware import jwtmiddleware
@@ -20,7 +20,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 api_consumer = APIConsumer(host='rabbitmq', port=5672, queue_name='api')
 notifs_consumer = NotifConsumer(host='rabbitmq', port=5672, queue_name='notifications')
 
-consumers = [api_consumer, notifs_consumer]
+consumers : list[AsyncRabbitMQConsumer] = [api_consumer, notifs_consumer]
 
 async def app(scope, receive, send):
     if scope['type'] == 'lifespan':
@@ -28,7 +28,6 @@ async def app(scope, receive, send):
         while True:
             message = await receive()
             if message['type'] == 'lifespan.startup':
-                print("started consumer")
                 for con in consumers:
                     tasks.append({
                         "consumer" : con,
