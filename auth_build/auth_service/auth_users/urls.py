@@ -14,7 +14,8 @@ from .views import (
    BanSelf,
    ResetPassword,
    PasswordVerify,
-   CDNVerify
+   CDNVerify,
+   sendNotif
 )
 
 from .AuthViews import (
@@ -73,4 +74,6 @@ urlpatterns = [
    path('add_friend/<str:username>', SendFriendRequest.as_view(), name='add-friend'),
    path('swagger/', schema_view.with_ui(), name='schema-swagger-ui'),
    path('cdn_verify/', CDNVerify.as_view(), name='cdn-nginx'),
+   path('send_notif/', sendNotif.as_view(), name='send-notif'),
+
 ]

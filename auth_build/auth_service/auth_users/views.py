@@ -247,6 +247,8 @@ class PasswordVerify(APIView):
             if user.two_factor_enabled:
                 user.two_factor_enabled = False
                 user.two_factor_secret = ""
+            self.cache.BlacklistUserToken(user.username)
+            self.cache.delete_access_session(user.id)
             user.set_password(new_password)
             user.save()
             send_mail(
@@ -278,3 +280,19 @@ class Upload(APIView):
 
     class imageSerial(serializers.Serializer):
         image = serializers.ImageField()
+
+from core.asgi import publishers
+from asgiref.sync import async_to_sync
+
+class sendNotif(APIView):
+    authentication_classes = []
+    notif = publishers[1]
+
+    @async_to_sync
+    async def get(self, request, *args, **kwargs):
+        try:
+            await self.notif.publish({"notification" :"send this"})
+            return Response(data={"detail" : "published successuly"})
+        except Exception as e:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            data={"detail" : f"error publishing, {e}"})
