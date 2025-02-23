@@ -36,7 +36,7 @@ class GetUserData(APIView):
 
     @async_to_sync
     async def get(self, request: Request, *args, **kwargs):
-        user_id = request.user.id
+        user_id = request.user["auth"]
         # user_data = self.cache.get_user_data(user_id=user_id)
         # if user_data is not None:
         #     return Response(data=user_data)

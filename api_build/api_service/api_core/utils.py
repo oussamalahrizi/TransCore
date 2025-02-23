@@ -1,4 +1,4 @@
-from redis import Redis
+from redis import asyncio as aioredis, Redis
 import json
 
 class Cache:
@@ -9,13 +9,14 @@ class Cache:
 
 
     def __init__(self):
-        self.redis = Redis(host="api-redis", port=6380, decode_responses=True, db=0)
-    
+        self.redis = Redis(host="api-redis", decode_responses=True, retry_on_timeout=True)
 
-    def set_user_data(self, user_id: str, data):
+    def set_user_data(self, user_id: str, data, service : str):
         status = self.get_user_status(user_id)
-        data["status"] = status
-        json_data = json.dumps(data)
+        json_data = json.dumps({
+            service : data,
+            "status" : status
+        })
         self.redis.set(user_id, json_data)
     
     def get_user_data(self, user_id: str):
@@ -24,7 +25,6 @@ class Cache:
             return json.loads(value)
         return None
 
-    
     def remove_user_data(self, user_id: str):
         self.redis.delete(user_id)
 
@@ -41,13 +41,11 @@ class Cache:
             self.redis.set(user_id, json.dumps(user_data))
 
     def get_user_status(self, user_id: str):
-        value = self.redis.get(user_id)
         status = "offline"
+        value = self.redis.get(user_id)
         if value:
             data = json.loads(value)
             status = data.get("status")
         return status
-
-    
 
 _Cache = Cache()
