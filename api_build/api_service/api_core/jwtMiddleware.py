@@ -1,5 +1,5 @@
 import jwt
-from rest_framework import authentication
+from rest_framework import authentication, status
 import httpx
 from .exceptions import InvalidToken
 from .utils import _Cache
@@ -55,21 +55,30 @@ class JWTAuthentication(authentication.BaseAuthentication):
 				response = await client.get(JWK_URL)
 				response.raise_for_status()
 				return response.json()
-		except:
+		except httpx.ReadTimeout:
+			print("Error reaching the auth service.")
+			return None
+		except Exception:
 			return None
 	
 	async def get_user_data(self, user_id):
 		try:
-			# user = self.cache.get_user_data(user_id=user_id)
-			# if user:
-			# 	return user
+			user = self.cache.get_user_data(user_id=user_id)
+			if user:
+				return user["auth"]
 			timeout = httpx.Timeout(5.0, read=5.0)
 			async with httpx.AsyncClient(timeout=timeout) as client:
 				response = await client.get(f"{USER_INFO}{user_id}/")
 				response.raise_for_status()
 				self.cache.set_user_data(user_id, data=response.json())
-				return response.json()
-		except:
+				auth_user = response.json()
+				self.cache.set_user_data(auth_user["id"], auth_user, "auth")
+				return {"auth" : auth_user}
+		except httpx.ReadTimeout:
+			print("Error reaching the auth service.")
+			return None
+		except Exception:
+			print(f"Error get user : {response.json()}")
 			return None
 	
 	async def get_session_state(self, user_id):
@@ -81,7 +90,10 @@ class JWTAuthentication(authentication.BaseAuthentication):
 				self.cache.set_user_data(user_id, data=response.json())
 				data = response.json()
 				return data["session_state"]
-		except:
+		except httpx.ReadTimeout:
+			print("Error reaching the auth service.")
+			return None
+		except Exception:
 			print(f"Error session : {response.json()}")
 			return None
 	
@@ -94,12 +106,13 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			payload = jwt.decode(token, public_key["public_key"], algorithms=public_key["algorithm"])
 			type = payload.get('typ')
 			if type is None or type != 'Bearer':
-				raise InvalidToken("Invalid token. ahbibi")
+				raise InvalidToken("Invalid token.")
 			user = await self.get_user_data(user_id=payload['user_id'])
 			if user is None:
-				raise InvalidToken("User Not Found")
+				raise InvalidToken("User Not Found",)
 			if not user["is_active"]:
-				raise InvalidToken('User is not active.')
+				raise InvalidToken('User is not active.',
+					   clear=True, custom_code=status.HTTP_423_LOCKED)
 			"""
 				verify if the session id in the token is same in the cache,
 				the only source of truth for session validity is the cache 
@@ -113,10 +126,10 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			if sess_cache is None:
 				raise jwt.ExpiredSignatureError
 			if sess_cache != sess_id:
-				raise InvalidToken("Access token revoked")
+				raise InvalidToken("Access token revoked",
+					clear=True, custom_code=status.HTTP_423_LOCKED)
 		except jwt.ExpiredSignatureError:
 			raise InvalidToken('Token expired.')
 		except jwt.InvalidTokenError:
 			raise InvalidToken('Invalid token.')
-		
 		return (ProxyUser(user), token)
