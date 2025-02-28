@@ -17,6 +17,12 @@ volumes:
       o: "bind"
       type: "none"
       device: "/tmp/users_data"
+  api-data:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "/tmp/api_data"
   auth_redis_data:
     driver: local
     driver_opts:
@@ -53,6 +59,8 @@ volumes:
       o: "bind"
       type: "none"
       device: "./api_build/api_service"
+
+  portainer_data:
 
 services:
   users-db:
@@ -91,9 +99,23 @@ services:
       - TransNetwork
     depends_on:
       - rabbitmq
+      - api-db
       - api-redis
     volumes:
       - "api-service-code:/var/app/"
+    env_file:
+      - "api_build/build/conf/.env"
+
+
+  api-db:
+    image: postgres
+    container_name: api_db
+    networks:
+      - TransNetwork
+    volumes:
+      - api-data:/var/lib/postgresql/data
+    env_file:
+      - "api_build/build/conf/.env"
 
   api-redis:
     build: "api_redis"
@@ -174,3 +196,12 @@ services:
       - auth-service
     volumes:
       - "frontend-volume:/app/src"
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer_data:/data
+    ports:
+      - 9000:9000

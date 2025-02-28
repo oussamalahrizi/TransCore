@@ -32,7 +32,7 @@ class RabbitmqBase:
                 print(f"Connection error : {e}")
                 await asyncio.sleep(2)
     
-    async def reconnect(self):
+    async def reconnect(self, *args, **kwargs):
         if not self.closing:
             print("reconnecting...")
             await self.connect()
@@ -66,12 +66,6 @@ class APIPub(RabbitmqBase):
 class NotificationPub(RabbitmqBase):
     
     async def publish(self, data : dict):
-        data = {
-            "notification" : {
-                "user_id" : 123,
-                'message' : 'check notification'
-            }
-        }
         message = Message(
             json.dumps(data).encode(),
             delivery_mode=1,

@@ -24,6 +24,7 @@ const login = async ({email, password}) => {
             return
         }
         app.utils.setCookie("access_token", data.access_token)
+        dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
         showToast("Logged in successfully", 'green')
         return true
     } catch (error) {
@@ -59,11 +60,9 @@ export default  () => {
     
         // social login
         const intra = view.querySelector("#login-intra")
-        if (intra)
-            intra.addEventListener("click", IntraLogin)
+        intra.addEventListener("click", IntraLogin)
         const google = view.querySelector("#login-google")
-        if (google)
-            google.addEventListener("click", GoogleLogin)
+        google.addEventListener("click", GoogleLogin)
 
 }
 

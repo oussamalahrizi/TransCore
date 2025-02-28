@@ -8,6 +8,8 @@ from django.http.response import Http404
 from django.shortcuts import get_object_or_404
 import datetime
 
+from core.asgi import publishers
+from asgiref.sync import async_to_sync
 
 class LoginMixin:
 	cache = _AuthCache
@@ -52,6 +54,19 @@ class LoginMixin:
 				"username" : user.username
 				})
 		return None
+
+	@async_to_sync
+	async def disconnect_user(self, username : str):
+		notif_queue = publishers[1]
+		data = {
+			'type' : "disconnect_user",
+			'data' : {
+				'username' : username,
+				'reason' : "Logged in from a new device"
+			}
+		}
+		print("sending notification disconnect")
+		await notif_queue.publish(data)
 
 	def Helper(self, user : User) -> Response:
 		token_pair = GenerateTokenPair(str(user.id))
