@@ -1,5 +1,6 @@
 
 
+
 const handleLocation = async (url) => {
     try {
         const response = await fetch("http://localhost:8000" + url, {
@@ -14,6 +15,7 @@ const handleLocation = async (url) => {
             return
         }
         app.utils.setCookie("access_token", data.access_token)
+        dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
         app.utils.showToast("Logged in successfully", 'green')
         app.Router.navigate("/")
     } catch (error) {

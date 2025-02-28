@@ -71,21 +71,59 @@ class APIConsumer(AsyncRabbitMQConsumer):
             await message.ack()
         except json.JSONDecodeError:
             print(f"{self.queue_name} : invalid json data")
-            await message.reject()
         except Exception as e:
             print(f"{self.queue_name} : Error processing the message : {e}")
+            await message.reject()
+
+
+from channels.layers import get_channel_layer
 
 class NotifConsumer(AsyncRabbitMQConsumer):
 
     cache = _Cache
+    actions = {}
+
+    def __init__(self, host, port, queue_name):
+        self.actions = {
+            "send_notification" : self.send_notification,
+            'disconnect_user' : self.disconnect_user
+        }
+        super().__init__(host, port, queue_name)
+
+    async def send_notification(self, data : dict):
+        group_name = f"notification_{data.get('username')}"
+        layer = get_channel_layer()
+
+        await layer.group_send(group_name, {
+            'type' : 'send_notification',
+            'message' : data.get('message')
+        })
+        
+    async def disconnect_user(self, data : dict):
+        group_name = f"notification_{data.get('username')}"
+        layer = get_channel_layer()
+        print("rabbit mq disconnect :", data)
+        await layer.group_send(group_name, {
+            'type' : 'disconnect_user',
+            'code' : 4003,
+            'message' : f"You have been forcibly disconnected. {data.get('reason') if data.get('reason') else ""}."
+        })
 
     async def on_message(self, message : IncomingMessage):
         try:
-            data = message.body.decode()
-            print(f"{self.queue_name} : received message : {data}")
+            body : dict = json.loads(message.body.decode())
+            print(f"{self.queue_name} : received message : {body}")
+            type = body.get("type")
+            if type not in self.actions:
+                print("type is not in avalaible actions")
+                await message.reject()
+                return
+            print("body in notification", body)
+            await self.actions[type](body.get('data'))
             await message.ack()
         except json.JSONDecodeError:
             print(f"{self.queue_name} : invalid json data")
             await message.reject()
         except Exception as e:
             print(f"{self.queue_name} : Error processing the message : {e}")
+            await message.reject()

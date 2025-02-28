@@ -159,7 +159,6 @@ class UserTwoFactorSerial(serializers.ModelSerializer):
 class SessionSerializer(serializers.Serializer):
 	user_id = serializers.UUIDField(required=True)
 
-		
 	def validate(self, attrs):
 		try:
 			user_id = attrs["user_id"]

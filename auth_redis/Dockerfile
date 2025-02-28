@@ -8,6 +8,8 @@ COPY ./tools/init.sh /bin/init.sh
 
 RUN chmod +x /bin/init.sh
 
+RUN rm /etc/redis/redis.conf
+
 ENTRYPOINT ["/bin/init.sh"]
 
 CMD ["redis-server","--protected-mode", "no", "--bind", "0.0.0.0", \

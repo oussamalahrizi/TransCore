@@ -1,5 +1,4 @@
 import { showToast } from "./Components/toast.js";
-import Router from "./Router.js"
 
 const removeCookie = (name) =>  {
 	if (getCookie(name))
@@ -99,7 +98,6 @@ const fetchWithAuth = async (url, method=null, body=null) => {
     if (response.status === 423) {
         removeCookie("access_token");
         showToast(data.detail, 'red');
-        // Router.navigate('/auth/login');
         throw new AuthError()
     }
     return {data , status : response.status, error : data.detail ? data.detail : JSON.stringify(data, null, 2)};

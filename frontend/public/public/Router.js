@@ -1,10 +1,10 @@
 
 export const checkAccessToken = () => {
-	const token = app.utils.getCookie("access_token"); // Use utils.getCookie			
+	const token = app.utils.getCookie("access_token"); 
 	return !!token;
 };
 
-const refreshLocal = async () => {
+export const refreshLocal = async () => {
 	const response = await fetch("http://localhost:8000/api/auth/refresh/", { credentials: "include", method: "GET" });
 	const data = await response.json();
 	if (response.status === 400)
@@ -13,6 +13,7 @@ const refreshLocal = async () => {
 		app.utils.showToast(data.detail);
 		throw new app.utils.AuthError()
 	}
+	app.utils.setCookie("access_token", data.access_token)
 }
 
 const handleAuthGuard = async (content, route) => {
@@ -28,6 +29,7 @@ const handleAuthGuard = async (content, route) => {
 		}
 		if (content.auth_guard && !token) {
 			await refreshLocal();
+			console.log("refreshed the token");
 			return route;
 		}
 		return route;
@@ -35,9 +37,11 @@ const handleAuthGuard = async (content, route) => {
 	catch (error)
 	{
 		if (error instanceof app.utils.AuthError)
+		{
 			if (route.startsWith("/auth"))
 				return route
 			return '/auth/login'
+		}
 	}
 };
 
@@ -49,7 +53,10 @@ const Router = {
 			const url = e.state ? e.state.url : location.href
 			await Router.navigate(url, false)
 		}
+		// start fresh
+		app.utils.removeCookie("access_token")
 		await Router.navigate(location.href)
+		dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
 	},
 	navigate : async (url, useHistory=true) => {
 		const route = new URL(url, window.location.origin).pathname

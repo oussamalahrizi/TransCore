@@ -87,19 +87,25 @@ class GetMyInfo(APIView):
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
 
+from .serializers import AuthProviderSerializer
+
 class GetUserServiceID(RetrieveAPIView):
     """
     View to get user info based on id from other services.
     """
-    serializer_class = UserDetailSerializer
+    class UserDetail(serializers.ModelSerializer):
+        auth_provider = AuthProviderSerializer(many=True)
+        class Meta:
+            model = User
+            fields =  ["auth_provider", 'id', 'username', 'email', "is_active", 'icon_url']
+
+    serializer_class = UserDetail
     queryset = User.objects.all()
     lookup_field = 'id'
     permission_classes = []
     authentication_classes = []
     
-    def permission_denied(self, request, message=None, code=None):
-        raise PermissionDenied(detail="Host not allowed.")
-
+    
 class GetUserServiceName(RetrieveAPIView):
     """
     View to get user info based on id from other services.
@@ -285,13 +291,21 @@ from core.asgi import publishers
 from asgiref.sync import async_to_sync
 
 class sendNotif(APIView):
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
     notif = publishers[1]
 
     @async_to_sync
-    async def get(self, request, *args, **kwargs):
+    async def get(self, request : Request, *args, **kwargs):
         try:
-            await self.notif.publish({"notification" :"send this"})
+            user : User = request.user
+            data = {
+                'type' : "send_notification",
+                'data' : {
+                    'username' : user.username,
+                    'message' : 'Test message'
+                }
+            }
+            await self.notif.publish(data)
             return Response(data={"detail" : "published successuly"})
         except Exception as e:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,

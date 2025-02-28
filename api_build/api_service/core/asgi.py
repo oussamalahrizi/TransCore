@@ -8,11 +8,11 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
+
 from .rabbit_consumer import APIConsumer, NotifConsumer, AsyncRabbitMQConsumer
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from .Middleware import jwtmiddleware
-from api_core.urls_sockets import websocket_urlpatterns
 import asyncio
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
@@ -41,9 +41,12 @@ async def app(scope, receive, send):
                         task["task"].cancel()
                 await send({'type': 'lifespan.shutdown.complete'})
                 return
-            
+
 
 django_asgi = get_asgi_application()
+
+from api_core.urls_sockets import websocket_urlpatterns
+
 
 application = ProtocolTypeRouter({
     "http": django_asgi,

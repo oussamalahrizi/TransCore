@@ -23,7 +23,6 @@ class jwtmiddleware(BaseMiddleware):
             if not token:
                 raise DenyConnection("Missing token in query")
             token = token[0]
-
             # Fetch public key & algorithm from JWK endpoint
             jwk_data = await self.fetch_jwk_data()
             if not jwk_data:
@@ -49,7 +48,7 @@ class jwtmiddleware(BaseMiddleware):
             # Fetch user info
             user_info = await self.fetch_user_info(user_id)
             if not user_info:
-                raise DenyConnection("Unable to fetch user info")
+                raise DenyConnection("Unable to fetch user info from Auth Service")
 
             # Attach user info to scope
             scope["user"] = user_info
@@ -73,6 +72,7 @@ class jwtmiddleware(BaseMiddleware):
                 return response.json()
         except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
             return None
+        
 
     async def fetch_user_info(self, user_id: str):
         """
@@ -91,4 +91,8 @@ class jwtmiddleware(BaseMiddleware):
                 self.cache.set_user_data(user_id=user_id, data=user_info, service="auth")
                 return user_info
         except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
+            return None
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == httpx.codes.NOT_FOUND:
+                raise DenyConnection("User Not found")
             return None
