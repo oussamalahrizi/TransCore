@@ -17,6 +17,9 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from rest_framework import serializers
 from .utils import _AuthCache
+from core.asgi import publishers
+from asgiref.sync import async_to_sync
+
 
 
 class UpdateUserInfo(UpdateAPIView):
@@ -125,6 +128,10 @@ class ListUsers(ListAPIView):
     authentication_classes = []
 
 class GetFriends(APIView):
+    class FriendsSerialize(serializers.ModelSerializer):
+        class Meta:
+            model = Friends
+            fields = []
     permission_classes = [IsAuthenticated]
     
     def get(self, request : Request, *args, **kwargs):
@@ -135,13 +142,24 @@ class GetFriends(APIView):
 
 class SendFriendRequest(APIView):
     permission_classes = [IsAuthenticated]
+
+    notif = publishers[1]
+    
     
     def get(self, request :Request, *args, **kwargs):
-        user = request.user
+        user : User = request.user
         requested_username = kwargs.get("username")
         try:
             to_user = get_object_or_404(User, username=requested_username)
             Friends.objects.add_friend(from_user=user, to_user=to_user)
+            data = {
+                'type' : "send_notification",
+                'data' : {
+                    'username' : to_user.username,
+                    'message' : f'you received a friend request from {user.username}'
+                }
+            }
+            async_to_sync(self.notif.publish)(data)
             return Response(data={"detail" : "Friend Request sent"})
         except Http404:
             return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "User Not Found"})
@@ -287,8 +305,6 @@ class Upload(APIView):
     class imageSerial(serializers.Serializer):
         image = serializers.ImageField()
 
-from core.asgi import publishers
-from asgiref.sync import async_to_sync
 
 class sendNotif(APIView):
     permission_classes = [IsAuthenticated]

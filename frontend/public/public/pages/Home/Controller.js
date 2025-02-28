@@ -1,5 +1,3 @@
-import { showToast } from "../../Components/toast.js";
-
 
 const LoadCss = (href) => {
 	return new Promise(async (resolve, reject) => {
@@ -87,6 +85,69 @@ const sendNotif = async () => {
     }
 }
 
+
+/**
+ * 
+ * @param {HTMLElement} view 
+ * @returns 
+ */
+
+const fetch_friends = async (view) => {
+    try {
+        const {data, error} = await app.utils.fetchWithAuth("/api/auth/friends/")
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        const pre = view.querySelector("#friends-data")
+        pre.innerText = data
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+        {
+            app.Router.navigate("/auth/login")
+            return
+        }
+        console.log(error);
+    }
+}
+
+/**
+ * 
+ * @param {HTMLElement} view 
+ * @param {Event} e 
+ * @param {HTMLFormElement} form 
+*/
+
+const add_friend = async (view, e, form) => {
+    try {
+        e.preventDefault()
+        const formdata = new FormData(form)
+        const body = Object.fromEntries(formdata.entries())
+        const username = body["username"]
+        if (!username.length)
+        {
+            app.utils.showToast("empty username")
+            return
+        }
+        const {data, error} = await app.utils.fetchWithAuth(`/api/auth/add_friend/${username}/`)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        console.log("data : ",data);
+        
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+        {
+            app.Router.navigate("/auth/login")
+            return
+        }
+        console.log(error);
+    }
+}
+
 export default  () => {
     const view = document.getElementById("home-view")
     const logout = view.querySelector("#logout")
@@ -95,22 +156,25 @@ export default  () => {
         if (!error)
         {
             app.utils.removeCookie("access_token")
-            showToast("Logged out successfully", 'green')
+            app.utils.showToast("Logged out successfully", 'green')
             dispatchEvent(new CustomEvent("websocket", {detail : {type : "close"}}))
             app.Router.navigate("/auth/login")
             return
         }
-        showToast(data.detail)
+        app.utils.showToast(data.detail)
         return
     })
     view.querySelector("#fetch-data").addEventListener("click", () => my_data(view))
     view.querySelector("#fetchapi-data").addEventListener("click", () => api_data(view))
     view.querySelector("#send-notif").addEventListener("click", sendNotif)
+    view.querySelector("#fetch-friends").addEventListener("click", () => fetch_friends(view))
+    const form_friend = view.querySelector("#form-friend")
+    form_friend.addEventListener('submit', (e)=> add_friend(view, e, form_friend))
     const banme = view.querySelector("#ban-self")
     banme.addEventListener("click", async () => {
         const {error, data} = await app.utils.fetchWithAuth("/api/auth/users/ban_me/")
         if (error)
             return
-        showToast(data.detail, "green")
+        app.utils.showToast(data.detail, "green")
     })
 }
