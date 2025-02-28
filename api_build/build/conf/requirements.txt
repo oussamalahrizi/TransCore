@@ -42,3 +42,6 @@ uvicorn==0.34.0
 websockets==15.0
 yarl==1.18.3
 zope.interface==7.2
+channels-redis
+psycopg
+psycopg-binary

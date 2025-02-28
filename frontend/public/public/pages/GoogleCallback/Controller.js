@@ -17,6 +17,7 @@ const GoogleCallback = async (code) => {
             return
         }
         app.utils.setCookie("access_token", data.access_token)
+        dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
         showToast("Logged in successfully", 'green')
         app.Router.navigate("/")
     } catch (error) {

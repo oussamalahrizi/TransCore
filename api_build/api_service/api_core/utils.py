@@ -1,6 +1,6 @@
 from redis import asyncio as aioredis, Redis
 import json
-
+from channels.layers import get_channel_layer
 class Cache:
     """
         for api interaction with other services
@@ -26,7 +26,10 @@ class Cache:
         return None
 
     def remove_user_data(self, user_id: str):
+        status = self.get_user_status()
         self.redis.delete(user_id)
+        if status == "online":
+            self.redis.set(user_id, json.dumps({status : status}))
 
     def set_user_online(self, user_id: str):
         user_data = self.get_user_data(user_id)
@@ -35,10 +38,13 @@ class Cache:
             self.redis.set(user_id, json.dumps(user_data))
     
     def set_user_offline(self, user_id: str):
-        user_data = self.get_user_data(user_id)
+        user_data : dict = self.get_user_data(user_id)
         if user_data:
             user_data["status"] = "offline"
-            self.redis.set(user_id, json.dumps(user_data))
+            if user_data["auth"]:
+                self.redis.set(user_id, json.dumps(user_data))
+            else:
+                self.redis.delete(user_id)
 
     def get_user_status(self, user_id: str):
         status = "offline"

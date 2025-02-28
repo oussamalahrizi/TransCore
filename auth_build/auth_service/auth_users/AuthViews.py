@@ -74,8 +74,7 @@ class LoginView(LoginMixin, CreateAPIView):
 			if not user.is_active:
 				return Response(status=status.HTTP_403_FORBIDDEN,
 					data={"detail" : "Your Account has been permanently banned."})
-			if self.cache.isUserLogged(user.username):
-				self.cache.BlacklistUserToken(user.username)
+			self.disconnect_user(user.username)
 			return self.Helper(user)
 		except Http404:
 			return Response(status=status.HTTP_400_BAD_REQUEST)
