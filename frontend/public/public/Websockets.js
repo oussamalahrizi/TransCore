@@ -33,7 +33,6 @@ export const SetOnline = () => {
             view.appendChild(li)
         } catch (error) {
             console.log("error fetch notif", error);
-            
         }
     }
 
