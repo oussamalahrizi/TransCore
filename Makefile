@@ -2,6 +2,7 @@
 
 up:
 	@mkdir -p /tmp/users_data
+	@mkdir -p /tmp/api_data
 	@mkdir -p /tmp/auth_redis_data
 	@mkdir -p /tmp/api_redis_data
 	@mkdir -p /tmp/redisinsight
@@ -13,6 +14,7 @@ down:
 clean :
 	@docker compose -f ./docker-compose.yml down --volumes
 	@sudo rm -rf /tmp/users_data
+	@sudo rm -rf /tmp/api_data
 	@sudo rm -rf /tmp/auth_redis_data
 	@sudo rm -rf /tmp/api_redis_data
 	@sudo rm -rf /tmp/redisinsight

@@ -7,6 +7,8 @@ RUN apt install redis-server -y
 COPY ./tools/init.sh /bin/init.sh
 
 RUN chmod +x /bin/init.sh
+RUN rm /etc/redis/redis.conf
+
 
 ENTRYPOINT ["/bin/init.sh"]
 
