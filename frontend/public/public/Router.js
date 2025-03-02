@@ -60,6 +60,7 @@ const Router = {
 	},
 	navigate : async (url, useHistory=true) => {
 		const route = new URL(url, window.location.origin).pathname
+		
 		// redirect uknown routes to 404
 		if (!app.routes[route])
 		{
@@ -102,21 +103,17 @@ const Router = {
 		const root = document.getElementById("root")
 		while (root.firstChild)
 			root.removeChild(root.firstChild);
-		root.innerHTML = content.view;
-
 		if (content.style)
-		{
-			console.log("loading css", content.style);
-				
+		{				
 			const loaded = await app.utils.LoadCss(content.style)
 			if (!loaded)
 			{
-				app.utils.showToast("failed to load css")
+				app.utils.showToast("Failed to load css files")
 				app.Router.navigate("/404")
 				return
 			}
 		}
-		
+		root.innerHTML = content.view;
 		content.controller && content.controller()
 		// disabling default behavior for anchor tags
 		Router.disableReload()
@@ -131,7 +128,7 @@ const Router = {
 				if (!external)
 				{
 					e.preventDefault()
-					Router.navigate(e.target.getAttribute("href"))
+					Router.navigate(tag.getAttribute("href"))
 				}
 			})
 		})
