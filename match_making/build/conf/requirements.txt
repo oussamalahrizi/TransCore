@@ -1,0 +1,17 @@
+aio-pika==9.5.5
+aiormq==6.8.1
+asgiref==3.8.1
+channels==4.2.0
+click==8.1.8
+Django==5.1.6
+djangorestframework==3.15.2
+exceptiongroup==1.2.2
+h11==0.14.0
+idna==3.10
+multidict==6.1.0
+pamqp==3.3.0
+propcache==0.3.0
+sqlparse==0.5.3
+uvicorn==0.34.0
+websockets==15.0
+yarl==1.18.3
