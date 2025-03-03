@@ -16,7 +16,8 @@ const handleLocation = async (url) => {
         }
         app.utils.setCookie("access_token", data.access_token)
         dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
-        app.utils.showToast("Logged in successfully", 'green')
+        dispatchEvent(new CustomEvent("navbar-profile"))
+
         app.Router.navigate("/")
     } catch (error) {
         app.utils.showToast(error)

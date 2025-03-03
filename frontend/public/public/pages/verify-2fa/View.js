@@ -1,6 +1,6 @@
 
 export default /*html*/`
-    <div id="2fa-view" class="w-full min-h-screen flex justify-center items-center text-white bg-black">
+    <div id="2fa-view" class="w-full min-h-screen flex justify-center items-center text-white">
         <div class="flex max-w-md w-full p-6 flex-col rounded-lg shadow-md bg-slate-200">    
             <form id="form" class="mx-3 flex flex-col">
                 <input name="code" type="text" placeholder="Enter 6 digit verification code"

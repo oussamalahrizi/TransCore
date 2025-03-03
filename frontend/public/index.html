@@ -13,19 +13,17 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     </head>
     <body style="height: 100%; width: 100%;">
-        <div class="sticky top-0 flex bg-[#161616] px-10 py-3 text-white backdrop-blur-xl bg-opacity-90">
+        <div class="sticky top-0 flex bg-[#161616] px-10 py-3 text-white">
             <div class="flex w-full items-center">
                 <a href="/" class="ml-6">
                     <img src="/public/assets/logo.png" class="w-15 h-15 object-contain" />
                 </a>
                 <div id="nav-container" class="flex ml-10 w-full justify-between">
-                    <div>
+                    <div class="basis-5/6 flex" >
                         <a href="/" class="text-[#94979C] hover:text-[#94979C] text-lg font-semibold mx-2" >Tournaments</a>
                         <a href="/" class="text-[#94979C] hover:text-[#94979C] text-lg font-semibold mx-2" >Leaderboard</a>
                     </div>
-                    <a href="/auth/login"
-                    class="text-[#94979C] hover:text-[#94979C] text-lg font-semibold mx-2">
-                    Sign In</a>
+                    <div id="profile-container"></div>
                 </div>
             </div>
         </div>
