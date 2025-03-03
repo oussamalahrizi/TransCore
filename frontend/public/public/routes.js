@@ -4,7 +4,6 @@ import authRegister from "./pages/AuthRegister/index.js";
 import NotFound from "./pages/NotFound/index.js"
 import AuthGoogle from "./pages/GoogleCallback/index.js";
 import AuthIntra from "./pages/IntraCallback/index.js";
-import Socket from "./pages/Socket/index.js";
 import PasswordReset from "./pages/PasswordReset/index.js"
 import Settings from "./pages/Settings/index.js"
 import Verify from "./pages/verify-2fa/index.js"
@@ -14,11 +13,6 @@ export default {
 		view : Verify.View,
 		controller: Verify.Controller,
 		auth_guard: false	
-	},
-	"/sockets" : {
-		view : Socket.View,
-		controller: Socket.Controller,
-		auth_guard: false
 	},
 	"/404": {
 		view: NotFound.View,

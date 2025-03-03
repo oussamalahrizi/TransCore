@@ -8,7 +8,7 @@ export const SetOnline = () => {
     }
     ws.onclose = (e) => {
         console.log("connection closed :", e.reason);
-        app.utils.showToast(e.reason)
+        e.reason && app.utils.showToast(e.reason)
     }
     ws.onerror = (e)=> {
         console.log("websocket error", e);
