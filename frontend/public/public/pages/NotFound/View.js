@@ -1,5 +1,5 @@
 export default /*html*/ `
-	<div class="bg-gray-100 min-h-screen flex items-center justify-center">
+	<div class="min-h-screen flex items-center justify-center">
 		<div class="text-center">
 			<h1 class="text-9xl font-bold text-gray-800">404</h1>
 			<p class="text-2xl text-gray-600 mb-8">Page Not Found</p>

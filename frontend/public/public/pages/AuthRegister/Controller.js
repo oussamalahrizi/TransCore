@@ -1,11 +1,10 @@
-import { showToast } from "../../Components/toast.js"
 import { IntraLogin, GoogleLogin } from "../AuthLogin/Controller.js"
 
 const register = async ({username, email, password1, password2}) => {
     try {
         if (password1 !== password2)
         {
-            showToast('password missmatch', 'red')
+            app.utils.showToast('password missmatch', 'red')
             return false
         }
         const headers = {
@@ -22,11 +21,11 @@ const register = async ({username, email, password1, password2}) => {
         const data = await response.json()
         if (!response.ok)
             throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2))
-        showToast(data.detail ? data.detail : JSON.stringify(data, null, 2)
+        app.utils.showToast(data.detail ? data.detail : JSON.stringify(data, null, 2)
             , 'green')
         return true
     } catch (error) {
-        showToast(error, 'red')
+        app.utils.showToast(error, 'red')
         console.error(error)
         return false
     }

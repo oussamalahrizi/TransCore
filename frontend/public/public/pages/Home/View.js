@@ -1,5 +1,5 @@
 export default /*html*/ `
-	<div id="home-view" class="flex flex-col items-center min-h-screen justify-center ">
+	<div id="home-view" class="flex flex-col items-center w-full min-h-screen justify-center ">
 		<h1 class="text-6xl font-bold mb-2">
 			Home
 		</h1>

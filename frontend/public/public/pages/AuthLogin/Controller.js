@@ -1,4 +1,3 @@
-import { showToast } from "../../Components/toast.js"
 
 const login = async ({email, password}) => {
     try {
@@ -25,10 +24,10 @@ const login = async ({email, password}) => {
         }
         app.utils.setCookie("access_token", data.access_token)
         dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
-        showToast("Logged in successfully", 'green')
+        dispatchEvent(new CustomEvent("navbar-profile"))
         return true
     } catch (error) {
-        showToast(error, 'red')
+        app.utils.showToast(error, 'red')
         console.error(error)
         return false
     }

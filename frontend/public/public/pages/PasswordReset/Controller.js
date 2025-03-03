@@ -1,4 +1,3 @@
-import { showToast } from "../../Components/toast.js"
 import Router from "../../Router.js"
 import { verifyView } from "./View.js"
 
@@ -10,10 +9,10 @@ const handleSubmit = async (email) => {
     
     if (status !== 202)
     {
-        showToast(error)
+        app.utils.showToast(error)
         return false
     }
-    showToast(data.detail, 'green')
+    app.utils.showToast(data.detail, 'green')
     return true
 }
 
@@ -25,10 +24,10 @@ const handleCodeSubmit = async (code, email) => {
 
     if (status !== 200)
     {
-        showToast(error)
+        app.utils.showToast(error)
         return false
     }
-    showToast(data.detail, "green")
+    app.utils.showToast(data.detail, "green")
     return true
 }
 
@@ -42,7 +41,7 @@ const handleVerify = async (view, email) => {
         const { code } = Object.fromEntries(formData.entries())
         if (!code)
         {
-            showToast("Please enter the code received from email")
+            app.utils.showToast("Please enter the code received from email")
             return
         }
         verify.disabled = true
@@ -72,7 +71,7 @@ export default async () => {
             const { email } = Object.fromEntries(formData.entries());
             if (!email)
             {
-                showToast("Please enter an email")
+                app.utils.showToast("Please enter an email")
                 return
             }
             reset.disabled = true

@@ -1,4 +1,3 @@
-import { showToast } from "../../Components/toast.js"
 
 const GoogleCallback = async (code) => {
     try {
@@ -18,10 +17,11 @@ const GoogleCallback = async (code) => {
         }
         app.utils.setCookie("access_token", data.access_token)
         dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
-        showToast("Logged in successfully", 'green')
+        dispatchEvent(new CustomEvent("navbar-profile"))
+
         app.Router.navigate("/")
     } catch (error) {
-        showToast(error, "red")
+        app.utils.showToast(error, "red")
         app.Router.navigate("/auth/login")
     }
 }
@@ -31,7 +31,7 @@ export default () => {
     const code = url.searchParams.get("code")
     if (!code)
     {
-        showToast("No code was given", 'red')
+        app.utils.showToast("No code was given", 'red')
         app.Router.navigate("/auth/login")
         return
     }
