@@ -156,8 +156,8 @@ export default  () => {
         if (!error)
         {
             app.utils.removeCookie("access_token")
-            app.utils.showToast("Logged out successfully", 'green')
             dispatchEvent(new CustomEvent("websocket", {detail : {type : "close"}}))
+            dispatchEvent(new CustomEvent("navbar-profile"))
             app.Router.navigate("/auth/login")
             return
         }
