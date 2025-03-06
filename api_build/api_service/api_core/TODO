@@ -1,0 +1,9 @@
+TODO:
+  - /chat/{receipent}/?token=123
+  - middleware gets token with user id
+  - get user data by user id /api_user_id/id
+  - scope[user] saves user data on the consumer
+  - scope[receipent] get user data by username of the receipent
+  - fetch relationship between user and receipent
+
+  - get current user friends data

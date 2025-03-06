@@ -8,6 +8,7 @@ import PasswordReset from "./pages/PasswordReset/index.js"
 import Settings from "./pages/Settings/index.js"
 import Verify from "./pages/verify-2fa/index.js"
 import Game from "./pages/game/index.js"
+import Chat from "./pages/chat/index.js"
 
 export default {
 	"/auth/verify-2fa" : {
