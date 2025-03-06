@@ -36,6 +36,12 @@ export default {
 		controller: AuthGoogle.Controller,
 		auth_guard: false,
 	},
+	"/chat" : {
+		view : Chat.View,
+		controller: Chat.Controller,
+		auth_guard: true,
+		style : "/public/pages/chat/style.css"
+	},
 	"/auth/intra_callback": {
 		view: AuthIntra.View,
 		controller: AuthIntra.Controller,
