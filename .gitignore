@@ -1,4 +1,3 @@
-auth_build/auth_service/venv/
-auth_build/build/conf/.env
 frontend/public/node_modules
-api_build/api_service/venv/
+**/venv/
+auth_build/build/conf/.env
