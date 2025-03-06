@@ -59,6 +59,10 @@ volumes:
       o: "bind"
       type: "none"
       device: "./api_build/api_service"
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
 
   portainer_data:
 
@@ -89,6 +93,47 @@ services:
     volumes:
       - "auth-service-code:/var/app"
       - "images:/var/images"
+
+
+  chat-service:
+    build: "chat_service/."
+    pull_policy: build
+    image: "chat_image:latest"
+    container_name: chat_service
+    networks:
+      - TransNetwork
+    depends_on:
+      - redis
+      - postgres
+      - auth-service
+      - rabbitmq
+    volumes:
+      - "./chat_service:/chatco"
+
+  redis:
+    image: redis:latest
+    container_name: 'redis'
+    ports:
+      - "6379:6379"  # Expose Redis on the default port 6379
+    networks:
+      - TransNetwork
+    volumes:
+      - redis_data:/data  # Persist Redis data
+
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    networks:
+      - TransNetwork
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=your_database_name
+      - POSTGRES_USER=your_database_user
+      - POSTGRES_PASSWORD=your_database_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   api-service:
     build: "api_build/."
