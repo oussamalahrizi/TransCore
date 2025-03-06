@@ -8,6 +8,7 @@ import PasswordReset from "./pages/PasswordReset/index.js"
 import Settings from "./pages/Settings/index.js"
 import Verify from "./pages/verify-2fa/index.js"
 import Game from "./pages/game/index.js"
+import Chat from "./pages/chat/index.js"
 
 export default {
 	"/auth/verify-2fa" : {
@@ -35,6 +36,12 @@ export default {
 		view: AuthGoogle.View,
 		controller: AuthGoogle.Controller,
 		auth_guard: false,
+	},
+	"/chat" : {
+		view : Chat.View,
+		controller: Chat.Controller,
+		auth_guard: true,
+		style : "/public/pages/chat/style.css"
 	},
 	"/auth/intra_callback": {
 		view: AuthIntra.View,

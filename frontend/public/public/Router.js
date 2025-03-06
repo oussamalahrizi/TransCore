@@ -48,11 +48,10 @@ const handleAuthGuard = async (content, route) => {
 const Router = {
 	init : async () => {
 		// listen for url changes in history events
-		onpopstate = async (e) => {
+		onpopstate = (e) => {
 			e.preventDefault()
-			console.log("popstate event");
 			const url = e.state ? e.state.url : location.href
-			await Router.navigate(url, false)
+			Router.navigate(url, false)
 		}
 		// start fresh
 		app.utils.removeCookie("access_token")
