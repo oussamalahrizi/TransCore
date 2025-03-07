@@ -27,7 +27,8 @@ class Cache:
     def set_player_ingame(self, user_id : str, game : str):
         type = self.pong_queue if game == "pong" else self.tic_queue
         self.redis.set(f"{type}{user_id}", "in_game")
-        
-
     
+
+
+Queue = Cache()
     

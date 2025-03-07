@@ -44,6 +44,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
+REST_FRAMEWORK = {
+
+    'DEFAULT_RENDERER_CLASSES': [
+            'rest_framework.renderers.JSONRenderer',
+        ],
+    'DEFAULT_AUTHENTICATION_CLASSES' : [
+		'matchmaking.Middleware.JWTAuthentication'
+	],
+    'EXCEPTION_HANDLER': 'matchmaking.exception_handlers.custom_exception_handler'
+
+}
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
@@ -63,14 +75,6 @@ TEMPLATES = [
 ]
 
 
-REST_FRAMEWORK = {
-
-    'DEFAULT_RENDERER_CLASSES': [
-            'rest_framework.renderers.JSONRenderer',
-            'rest_framework.renderers.BrowsableAPIRenderer',
-    ],
-}
-
 WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'
 
@@ -78,7 +82,12 @@ ASGI_APPLICATION = 'core.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {}
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 
 # Password validation
