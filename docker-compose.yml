@@ -66,6 +66,13 @@ volumes:
 
   portainer_data:
 
+  match-code:
+    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "./match_making/match_service"
+
 services:
   users-db:
     image: postgres
@@ -192,6 +199,7 @@ services:
       - auth-service
       - adminer
       - api-service
+      - match-service
     networks:
       - TransNetwork    
     volumes:
@@ -236,7 +244,7 @@ services:
     pull_policy: build
     networks:
       - TransNetwork
-    init : true # handle correctly signals for node js container
+    init : true # handle signals for node js container, look gitub issue for node concerning pid 1
     depends_on:
       - auth-service
     volumes:
@@ -250,3 +258,15 @@ services:
       - portainer_data:/data
     ports:
       - 9000:9000
+  
+  match-service:
+    container_name: match_service
+    image: match_image
+    pull_policy: build
+    build: "match_making/."
+    networks:
+      - TransNetwork
+    volumes:
+      - "match-code:/var/app"
+    depends_on:
+      - auth-service

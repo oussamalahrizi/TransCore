@@ -8,8 +8,14 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 RUN mkdir -p /app/src
 
+COPY tools/init.sh /bin/init.sh
+
+RUN chmod +x /bin/init.sh
+
 # Install dependencies
 RUN npm init -y && \
 npm install express
 
-ENTRYPOINT [ "node", "src/server.js" ]
+ENTRYPOINT [ "/bin/init.sh" ]
+
+CMD [ "node", "src/server.js"]
