@@ -148,6 +148,25 @@ const add_friend = async (view, e, form) => {
     }
 }
 
+const findMatch = async () => {
+    try {
+        const {data, error} = await app.utils.fetchWithAuth("/api/match/findmatch/pong/")
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        console.log(data);
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+        {
+            app.Router.navigate("/auth/login")
+            return
+        }
+        console.log(error);
+    }
+}
+
 export default  () => {
     const view = document.getElementById("home-view")
     const logout = view.querySelector("#logout")
@@ -168,6 +187,7 @@ export default  () => {
     view.querySelector("#fetchapi-data").addEventListener("click", () => api_data(view))
     view.querySelector("#send-notif").addEventListener("click", sendNotif)
     view.querySelector("#fetch-friends").addEventListener("click", () => fetch_friends(view))
+    view.querySelector("#find-match").addEventListener("click", findMatch)
     const form_friend = view.querySelector("#form-friend")
     form_friend.addEventListener('submit', (e)=> add_friend(view, e, form_friend))
     const banme = view.querySelector("#ban-self")

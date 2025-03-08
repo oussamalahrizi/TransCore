@@ -15,6 +15,21 @@ from .models import Notification
 
 USER_INFO = "http://auth-service/auth/api_users/"
 
+class GetUserService(APIView):
+    """
+        TODO : 
+            - get user data from cache along with his presence status
+            - if not in cache try fetch from the auth service async
+    """
+    cache = _Cache
+    permission_classes = []
+    authentication_classes = []
+
+    def get(self, request: Request, *args, **kwargs):
+        id = kwargs.get('id')
+        user = self.cache.get_user_data(id)
+        return Response(data=user)
+
 class GetUserData(APIView):
     """
         TODO : 
@@ -48,3 +63,4 @@ class GetNotification(APIView):
         notif = Notification.objects.filter(user=id).all().order_by("created_at").last()
         serializer = NotifcationDetail(instance=notif)
         return Response(data=serializer.data)
+

@@ -317,7 +317,7 @@ class sendNotif(APIView):
             data = {
                 'type' : "send_notification",
                 'data' : {
-                    'username' : user.username,
+                    'user_id' : str(user.id),
                     'message' : 'Test message'
                 }
             }
