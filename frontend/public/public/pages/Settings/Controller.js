@@ -71,6 +71,7 @@ const toggleCallback = async (state, e) => {
 
 const handleRefreshState = async (e) => {
     const state = await getState()
+    console.log(state)
     if (state === null)
         return
     const toggle = e.target.querySelector("#toggle-2fa")    
@@ -81,11 +82,39 @@ const handleRefreshState = async (e) => {
 }
 
 export default async () => {
-    const view = document.getElementById("settings")
+    const view = document.getElementById("acc-security")
     try {
         view.addEventListener("refresh_state", handleRefreshState)
         view.dispatchEvent(new CustomEvent("refresh_state"))
-    } catch (error) {
+        const imageform = document.getElementById("img-form")
+        imageform.addEventListener("submit", (e)=>{
+            e.preventDefault();
+            const formdata = new FormData(imageform);
+            const file = formdata.get("image");
+            if (file)
+            {
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                if (fileExtension !== 'png')
+                {
+                    alert("Please upload a PNG image.");
+                    return;
+                }
+            }
+            else
+            {
+                alert("Please select an image to upload.");
+            }
+            const data = Object.fromEntries(formdata.entries());
+            var profile = document.getElementById("current")
+            profile.value = formdata.name;
+            console.log(data);
+            
+        })
+        
+
+    }
+    catch (error)
+    {
         if (error instanceof app.utils.AuthError)
         {
             app.Router.navigate("/auth/login")

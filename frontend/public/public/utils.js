@@ -63,7 +63,7 @@ const refreshToken = async () => {
 };
 
 const fetchWithAuth = async (url, method=null, body=null) => {
-    const finalurl = "http://localhost:8000" + url
+    const finalurl = url
     
     let options = {
         method : method ?? "GET",
@@ -100,7 +100,11 @@ const fetchWithAuth = async (url, method=null, body=null) => {
         showToast(data.detail, 'red');
         throw new AuthError()
     }
-    return {data , status : response.status, error : data.detail ? data.detail : JSON.stringify(data, null, 2)};
+    
+    return {
+        data ,
+        status : response.status,
+        error : data.detail ? data.detail : JSON.stringify(data, null, 2)};
 }
 
 const fetchWithout = async (url, method=null, body=null) => {

@@ -14,7 +14,8 @@ export const SetOnline = () => {
         console.log("websocket error", e);
     }
     ws.onmessage = async (e) => {
-        const {message} = JSON.parse(e.data)
+        const {message, type} = JSON.parse(e.data)
+        console.log(e.data);
         app.utils.showToast("You have a notification : " + message, "green")
         await fetchNotifs()
     }

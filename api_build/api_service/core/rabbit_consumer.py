@@ -86,12 +86,14 @@ class NotifConsumer(AsyncRabbitMQConsumer):
     def __init__(self, host, port, queue_name):
         self.actions = {
             "send_notification" : self.send_notification,
-            'disconnect_user' : self.disconnect_user
+            'disconnect_user' : self.disconnect_user,
+            'set_inqueue' : self.set_inqueue,
+            'match_found' : self.set_ingame
         }
         super().__init__(host, port, queue_name)
 
     async def send_notification(self, data : dict):
-        group_name = f"notification_{data.get('username')}"
+        group_name = f"notification_{data.get('user_id')}"
         layer = get_channel_layer()
 
         await layer.group_send(group_name, {
@@ -100,15 +102,34 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         })
         
     async def disconnect_user(self, data : dict):
-        group_name = f"notification_{data.get('username')}"
+        group_name = f"notification_{data.get('user_id')}"
         layer = get_channel_layer()
-        print("rabbit mq disconnect :", data)
         await layer.group_send(group_name, {
             'type' : 'disconnect_user',
             'code' : 4003,
-            'message' : f"You have been forcibly disconnected. {data.get('reason') if data.get('reason') else ""}."
+            'message' : f"""You have been forcibly disconnected.
+                {data.get('reason') if data.get('reason') else ""}."""
         })
-
+    
+    async def set_inqueue(self, data : dict):
+        self.cache.set_user_queue(data.get('user_id'))
+        group_name = f"notification_{data.get('user_id')}"
+        layer = get_channel_layer()
+        await layer.group_send(group_name, {
+            'type' : "set_user_queue",
+        })
+    
+    async def set_ingame(self, data : dict):
+        self.cache.set_user_game(data.get('user1'))
+        self.cache.set_user_game(data.get('user2'))
+        groups = [f"notification_{data.get('user1')}", f"notification_{data.get('user2')}"]
+        layer = get_channel_layer()
+        for group in groups:
+            await layer.group_send(group, {
+                'type' : "set_user_game",
+                'game_id' : data.get("game_id")
+            })
+    
     async def on_message(self, message : IncomingMessage):
         try:
             body : dict = json.loads(message.body.decode())

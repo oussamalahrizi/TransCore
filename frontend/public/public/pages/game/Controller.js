@@ -152,12 +152,12 @@ class BuildTerrain{
        this.cubeloader = new THREE.CubeTextureLoader();
 
        this.background = this.cubeloader.load([
-          'map/0/px.png',
-          'map/0/nx.png',
-          'map/0/py.png',
-          'map/0/ny.png',
-          'map/0/pz.png',
-          'map/0/nz.png',
+          '/public/pages/game/map/0/px.png',
+          '/public/pages/game/map/0/nx.png',
+          '/public/pages/game/map/0/py.png',
+          '/public/pages/game/map/0/ny.png',
+          '/public/pages/game/map/0/pz.png',
+          '/public/pages/game/map/0/nz.png',
        ])
 
        Scene.background = this.background;  
@@ -396,7 +396,8 @@ function singlePlayerMode(gameInfo)
 
 /**
  * 
- * @param {HTMLElement} gameContainer 
+ * @param {HTMLElement} gameContainer
+ * @param {*} gameInfo
  */
 
 const SetupScene = (gameContainer, gameInfo) =>
@@ -405,6 +406,7 @@ const SetupScene = (gameContainer, gameInfo) =>
     gameInfo.renderer = new THREE.WebGLRenderer({
       antialias: true, // Enables anti-aliasing
       powerPreference: "high-performance", // Optimizes rendering performance
+      
     });
     gameContainer.appendChild(gameInfo.renderer.domElement);
     gameInfo.renderer.domElement.setAttribute('tabindex', '0');

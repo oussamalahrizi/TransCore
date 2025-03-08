@@ -1,11 +1,16 @@
 
 export default /*html*/`
-    <div id="2fa-view" class="w-full min-h-screen flex justify-center items-center text-white">
-        <div class="flex max-w-md w-full p-6 flex-col rounded-lg shadow-md bg-slate-200">    
-            <form id="form" class="mx-3 flex flex-col">
-                <input name="code" type="text" placeholder="Enter 6 digit verification code"
-                    class="my-2 p-2 px-3 bg-gray-600 focus:outline-none rounded-lg"/>
-                <button class="rounded-full bg-green-600 hover:bg-green-700 py-2" type="submit">Verify</button>
+    <div id="2fa-view" class="twofa-container">
+        <div class="inner-container">    
+            <form id="form" class="verify-form">
+                <h1 class="title">2fa Verification</h1>
+                <p class="notes">Please enter the code we sent you!</p>
+                <input name="code" type="text" placeholder="6 digit verification" class="verify-input"/>
+                <button class="verify-button" type="submit">Verify</button>
+                <div class="login-page-div">
+                    <p class="notes">Back to login page</p>
+                    <a class="login-page" href="/auth/login"> Login</a>
+                </div>
             </form>
         </div>
     </div>

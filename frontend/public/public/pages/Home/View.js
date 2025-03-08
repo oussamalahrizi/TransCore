@@ -8,6 +8,9 @@ export default /*html*/ `
 			<pre id="auth-data"></pre>
 		</div>
 		<div class="flex flex-col items-center">
+			<button id="find-match" class="py-2 px-4 my-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition duration-300 text-white" >Find Match</button>
+		</div>
+		<div class="flex flex-col items-center">
 			<button id="fetch-friends" class="py-2 px-4 my-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition duration-300 text-white" >Get Friends</button>
 			<pre id="friends-data"></pre>
 		</div>
