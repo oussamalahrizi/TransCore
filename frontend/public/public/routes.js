@@ -14,13 +14,14 @@ export default {
 	"/auth/verify-2fa" : {
 		view : Verify.View,
 		controller: Verify.Controller,
-		auth_guard: false	
+		auth_guard: false,
+		style : "/public/styles/2fa.css"
 	},
 	"/404": {
 		view: NotFound.View,
 		controller: null,
 		auth_guard: false,
-		style : null
+		style : "/public/styles/notfound.css"
 	},
 	"/": {
 		view: Home.View,
@@ -52,6 +53,7 @@ export default {
 		view: PasswordReset.View,
 		controller: PasswordReset.Controller,
 		auth_guard: false,
+		style : "/public/styles/forgotpass.css"
 	},
 	"/auth/2fa": {
 		view: NotFound.View,
@@ -74,6 +76,7 @@ export default {
 		view: Settings.View,
 		controller: Settings.Controller,
 		auth_guard: true,
+		style : "/public/styles/settings.css"
 	},
 	"/game": {
 		view: Game.View,

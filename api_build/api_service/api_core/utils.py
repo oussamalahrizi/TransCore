@@ -37,6 +37,18 @@ class Cache:
             user_data["status"] = "online"
             self.redis.set(user_id, json.dumps(user_data))
     
+    def set_user_game(self, user_id: str):
+        user_data = self.get_user_data(user_id)
+        if user_data:
+            user_data["status"] = "ingame"
+            self.redis.set(user_id, json.dumps(user_data))
+    
+    def set_user_queue(self, user_id: str):
+        user_data = self.get_user_data(user_id)
+        if user_data:
+            user_data["status"] = "inqueue"
+            self.redis.set(user_id, json.dumps(user_data))
+    
     def set_user_offline(self, user_id: str):
         user_data : dict = self.get_user_data(user_id)
         if user_data:

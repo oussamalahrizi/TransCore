@@ -1,7 +1,7 @@
 from django.urls import path
 
-from .views import FindMatch
+from .views import FindMatchPong
 
 urlpatterns = [
-    path("findmatch/", FindMatch.as_view(), name="find-match")
+    path("findmatch/pong/", FindMatchPong.as_view(), name="find-match-pong")
 ]

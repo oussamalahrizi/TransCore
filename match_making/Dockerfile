@@ -16,4 +16,4 @@ RUN pip install -r /var/requirements.txt
 
 ENTRYPOINT ["../init.sh"]
 
-CMD ["uvicorn", "--host", "0.0.0.0", "--port", "80" ,"core.asgi:application", "--reload"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "80" ,"core.asgi:application","--lifespan", "on", "--reload"]

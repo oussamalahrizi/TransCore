@@ -120,8 +120,6 @@ services:
   redis:
     image: redis:latest
     container_name: 'redis'
-    ports:
-      - "6379:6379"  # Expose Redis on the default port 6379
     networks:
       - TransNetwork
     volumes:
@@ -270,3 +268,12 @@ services:
       - "match-code:/var/app"
     depends_on:
       - auth-service
+      - redis-queue
+
+  redis-queue:
+    build: "redis_queue/."
+    pull_policy: build
+    image: redis_queue
+    container_name: redis_queue
+    networks:
+      - TransNetwork
