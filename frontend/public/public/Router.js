@@ -117,6 +117,11 @@ const Router = {
 		root.innerHTML = content.view;
 		content.controller && content.controller()
 		// disabling default behavior for anchor tags
+		const navbar = document.getElementById("nav-bar-outer")
+		if (render === "/game")
+			navbar.hidden = true
+		else
+			navbar.hidden = false
 		Router.disableReload()
 	},
 	disableReload : ()=> {
