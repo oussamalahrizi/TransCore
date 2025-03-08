@@ -270,3 +270,12 @@ services:
       - "match-code:/var/app"
     depends_on:
       - auth-service
+      - redis-queue
+
+  redis-queue:
+    build: "redis_queue/."
+    pull_policy: build
+    image: redis_queue
+    container_name: redis_queue
+    networks:
+      - TransNetwork
