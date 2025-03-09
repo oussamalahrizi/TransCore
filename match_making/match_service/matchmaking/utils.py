@@ -5,27 +5,36 @@ from redis import Redis
     uuid : in_queue | in game 
 """
 from asgiref.sync import async_to_sync
-from core.asgi import publishers
 import uuid, json
-
+from core.rabbitmq import NotificationPub
 class Cache:
 
     pong_queue = "pong"
     tic_queue = "tic"
-    notif = publishers[1]
 
     def __init__(self):
         self.redis = Redis(host="redis-queue", decode_responses=True, retry_on_timeout=True)
 
-    def store_player(self, user_id : str, game : str):
+    def remove_player(self, user_id, type=None):
+        """
+        Remove a player from the specified queue
+        """
+        if not type:
+            type = [self.pong_queue, self.tic_queue]
+        else:
+            type = [type]
+        for t in type:
+            self.redis.lrem(t, 0, user_id)
+
+    def store_player(self, user_id : str, game : str, notif : NotificationPub):
         """
             store the player in queue and try to find a match
         """
         type = self.pong_queue if game == "pong" else self.tic_queue
         self.redis.rpush(type, user_id)
-        self.match(type, user_id)
+        self.match(type, user_id, notif)
 
-    def match(self, type : str, user_id : str):
+    def match(self, type : str, user_id : str, notif : NotificationPub):
         if self.redis.llen(type) >= 2:
             player1 = self.redis.lpop(type)
             player2 = self.redis.lpop(type)
@@ -37,9 +46,9 @@ class Cache:
                 'user_id' : user_id
             }
         }
-        async_to_sync(self.notif.publish)(body)
+        async_to_sync(notif.publish)(body)
 
-    def generate_game(self, players : list[str], match_type : str, game : str):
+    def generate_game(self, players : list[str], match_type : str, game : str, notif : NotificationPub):
         """
         `match_type` is either regular or tournament
         
@@ -70,8 +79,7 @@ class Cache:
                 'game_id' : str(id)
             }
         }
-        async_to_sync(self.notif.publish)(body)
+        async_to_sync(notif.publish)(body)
 
 
 Queue = Cache()
-    

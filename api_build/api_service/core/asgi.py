@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 
 import os
 
-from .rabbit_consumer import APIConsumer, NotifConsumer, AsyncRabbitMQConsumer
+from .rabbitmq import APIConsumer, NotifConsumer, AsyncRabbitMQConsumer, QueuePublisher
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from .Middleware import jwtmiddleware
@@ -19,8 +19,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 api_consumer = APIConsumer(host='rabbitmq', port=5672, queue_name='api')
 notifs_consumer = NotifConsumer(host='rabbitmq', port=5672, queue_name='notifications')
+queue_publisher = QueuePublisher(host='rabbitmq', port=5672, queue_name='match_queue')
 
-consumers : list[AsyncRabbitMQConsumer] = [api_consumer, notifs_consumer]
+consumers : list[AsyncRabbitMQConsumer] = [api_consumer, notifs_consumer, queue_publisher]
 
 async def app(scope, receive, send):
     if scope['type'] == 'lifespan':
@@ -57,14 +58,3 @@ application = ProtocolTypeRouter({
     ),
     "lifespan": app,
 })
-
-
-"""
-    chat websockets, 
-    chat db,
-    message broker publisher intergated with asgi event loop
-    middleware jwt
-    fetch user data from api-service only (optimized)
-    any other data can be requested directly from auth if necessary
-    
-"""

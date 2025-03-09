@@ -11,13 +11,16 @@ import os
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter
-from .rabbitmq_publisher import APIPub, NotificationPub, RabbitmqBase
+from .rabbitmq import APIPub, NotificationPub, RabbitmqBase, QueueConsumer
 import asyncio
+from matchmaking.utils import Cache
+
 
 apipub = APIPub(host='rabbitmq', port=5672, queue_name="api")
 notifspub = NotificationPub(host='rabbitmq', port=5672, queue_name="notifications")
+queue_consumer = QueueConsumer(host='rabbitmq', port=5672, queue_name='match_queue')
 
-publishers : list[RabbitmqBase] = [apipub, notifspub]
+publishers : list[RabbitmqBase] = [apipub, notifspub, queue_consumer]
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
