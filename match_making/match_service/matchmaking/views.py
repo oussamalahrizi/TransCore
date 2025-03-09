@@ -17,6 +17,8 @@ class APIException(Exception):
         self.detail = detail
         super().__init__(*args)
 
+from core.asgi import notifspub
+
 class FindMatchPong(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -50,7 +52,7 @@ class FindMatchPong(APIView):
             if user_data["status"] != "online":
                 return Response(status=status.HTTP_400_BAD_REQUEST,
                                 data={"detail" : f'It appears that you are {user_data["status"]}'})
-            self.cache.store_player(current_user['id'], "pong")
+            self.cache.store_player(current_user['id'], "pong", notif=notifspub)
             return Response(data={"detail" : "We are looking for a match."})
             
         except APIException as e:
