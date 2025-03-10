@@ -28,7 +28,8 @@ class GetUserService(APIView):
     def get(self, request: Request, *args, **kwargs):
         id = kwargs.get('id')
         user = self.cache.get_user_data(id)
-        return Response(data=user)
+        if user:
+            return Response(data=user)
 
 class GetUserData(APIView):
     """
