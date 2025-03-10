@@ -110,12 +110,13 @@ services:
     networks:
       - TransNetwork
     depends_on:
+      - users-db 
       - redis
-      - postgres
-      - auth-service
       - rabbitmq
     volumes:
       - "./chat_service:/chatco"
+    env_file:
+      - "auth_build/build/conf/.env" 
 
   redis:
     image: redis:latest
