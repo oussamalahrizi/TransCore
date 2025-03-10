@@ -4,6 +4,7 @@ from .utils import _Cache
 from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
 from .models import Notification
+from core.asgi import queue_publisher
 
 class OnlineConsumer(AsyncWebsocketConsumer):
 	cache = _Cache
@@ -19,11 +20,22 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		self.group_name = f"notification_{self.user["id"]}"
 		await sync_to_async(self.cache.set_user_online)(self.user["id"])
 		await self.channel_layer.group_add(self.group_name, self.channel_name)
+		print(f"{self.user['username']} connected")	
 
 	async def disconnect(self, code):
-		if self.cache.get_user_status(self.user["id"]) == "online":
-			await sync_to_async(self.cache.set_user_offline)(self.user['id'])
-		return await super().disconnect(code)
+		self.channel_layer.group_discard(self.group_name, self.channel_name)
+		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
+		# publish to the match making consumer to remove player from queue if player is offline
+		status = self.cache.get_user_status(self.user['id'])
+		if status == 'offline':
+			body = {
+				'type' : 'remove_pqueue',
+				'data' : {
+					'user_id' : self.user['id']
+				}
+			}
+			await queue_publisher.publish(body)
+		print(f"{self.user['username']} disconnected")
 	
 	@database_sync_to_async
 	def store_notfication(self, message : str):
@@ -50,7 +62,6 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 			'message' : 'You Are In Queue'
 		}
 		await self.send(text_data=json.dumps(data))
-		print("send notif for user in queue")
 	
 	async def set_user_game(self, event):
 		data = {
@@ -59,5 +70,4 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 			'game_id' : event["game_id"]
 		}
 		await self.send(text_data=json.dumps(data))
-		print("send notif for user in game")
 
