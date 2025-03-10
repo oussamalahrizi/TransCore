@@ -6,7 +6,9 @@ from urllib.parse import parse_qs
 
 
 JWK_URL = "http://auth-service/api/auth/jwk/"
-USERINFO_URL = "http://auth-service/api/auth/api_user_id"
+USERINFO_URL = "http://auth-service/api/main/user/"
+
+CHECK_GAME_URL = 'http://match-service/api/match/check_game/'
 
 class jwtMiddleware(BaseMiddleware):
     async def __call__(self, scope : dict, receive, send):
@@ -46,7 +48,10 @@ class jwtMiddleware(BaseMiddleware):
                 raise DenyConnection("Invalid token")
             user_id = payload.get("user_id")
 
-            user_info = self.fetch_user_info(user_id);
+            user_info = await self.fetch_user_info(user_id)
+            await self.check_game_id(game_id, user_id)
+            scope["user"] = user_info
+            scope['game_id'] = game_id
         
         except DenyConnection as e:
             scope["error_message"] = str(e)
@@ -74,13 +79,38 @@ class jwtMiddleware(BaseMiddleware):
         try:
             timeout = httpx.Timeout(5.0, read=5.0)
             async with httpx.AsyncClient(timeout=timeout) as client:
-                response = await client.get(f"{USERINFO_URL}/{user_id}/")
+                response = await client.get(f"{USERINFO_URL}{user_id}/")
                 response.raise_for_status()
                 user_info = response.json()
                 return user_info
         except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
-            return None
+            raise DenyConnection("Failed to get User Info from API Service")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == httpx.codes.NOT_FOUND:
                 raise DenyConnection("User Not found")
-            return None
+            raise DenyConnection("Internal Server Error")
+        except:
+            raise DenyConnection("Internal Server Error")
+
+
+    async def check_game_id(self, game_id: str, user_id: str):
+        try:
+            async with httpx.AsyncClient() as client:
+                post_data = {
+                    'game_id' : game_id,
+                    'user_id' : user_id,
+                    'game_type' : 'pong'
+                }
+                response = await client.post(CHECK_GAME_URL, json=post_data)
+                response.raise_for_status()
+                await response.json()
+        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
+            raise DenyConnection("Failed to get Game info From Match Making Service")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in range(400, 500):
+                error = await e.response.json()
+                raise DenyConnection(error)
+            raise DenyConnection("Internal Server Error")
+        except:
+            raise DenyConnection("Internal Server Error")
+            

@@ -57,4 +57,43 @@ class FindMatchPong(APIView):
             
         except APIException as e:
             return Response(status=e.code, data={"detail" : e.detail})
-        
+
+
+from rest_framework import serializers, status
+
+from .utils import Queue
+
+class CheckGame(APIView):
+
+    cache = Queue
+    class CheckGameSerializer(serializers.Serializer):
+        game_id  = serializers.CharField()
+        user_id = serializers.CharField()
+        game_type = serializers.CharField()
+
+        def validate_game_type(self, value):
+            types = ['pong', 'tic']
+            if value not in types:
+                raise serializers.ValidationError("game type not supported")
+            return value
+
+
+    def post(self, request : Request, *args, **kwargs):
+        try:
+            post_data = request.data
+            serializer = self.CheckGameSerializer(data=post_data)
+            serializer.is_valid(raise_exception=True)
+            game_id = serializer.validated_data['game_id']
+            user_id = serializer.validated_data['user_id']
+            game_type = serializer.validated_data['game_type']
+            game_info = self.cache.get_game_info(game_id, game_type)
+            if not game_info:
+                return Response(status=status.HTTP_404_NOT_FOUND,
+                                data={'detail': 'Game Not Found.'})
+            players = game_info['players']
+            if user_id not in players:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={'detail' : 'User Not in the game'})
+            return Response(status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
