@@ -13,7 +13,7 @@ class Cache:
 
     def set_user_data(self, user_id: str, data, service : str):
         status = self.get_user_status(user_id)
-        group_count = self.get_group_count()
+        group_count = self.get_group_count(user_id)
         if not group_count:
             group_count = 0
         json_data = json.dumps({
@@ -81,6 +81,25 @@ class Cache:
 
     def get_group_count(self, user_id : str):
         data : dict = self.get_user_data(user_id)
-        return data.get("group_count")
+        if data:
+            return data.get("group_count")
+        return 0
 
 _Cache = Cache()
+
+import httpx
+
+async def fetch_user_auth(user_id : str):
+    try:
+        timeout = httpx.Timeout(5.0, read=5.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.get(f"{"http://auth-service/api/auth/api_user_id"}/{user_id}/")
+            response.raise_for_status()
+            user_info = response.json()
+            return user_info
+    except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
+        return None
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == httpx.codes.NOT_FOUND:
+            raise DenyConnection("User Not found")
+        return None
