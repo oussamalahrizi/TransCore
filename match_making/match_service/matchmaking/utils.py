@@ -80,6 +80,12 @@ class Cache:
             }
         }
         async_to_sync(notif.publish)(body)
+    
+    def get_game_info(self, game_id : str, type : str):
+        data = self.redis.get(f'{type}:{game_id}')
+        if data:
+            return json.loads(data)
+        return None
 
 
 Queue = Cache()
