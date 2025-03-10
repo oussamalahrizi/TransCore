@@ -20,7 +20,6 @@ class JWTMiddleware(BaseMiddleware):
 
     async def __call__(self, scope, receive, send):
         try:
-            # Extract token from query string
             query_string = scope.get("query_string", b"").decode("utf-8")
             query_params = parse_qs(query_string)
             token = query_params.get("token")
@@ -33,11 +32,9 @@ class JWTMiddleware(BaseMiddleware):
             logger.info(f"Token received: {token}")
 
             try:
-                # Decode the token (without verifying the signature)
                 payload = jwt.decode(token, options={"verify_signature": False})
                 logger.info(f"Token payload: {payload}")
 
-                # Validate token type
                 if payload.get("typ") != "Bearer":
                     logger.error("Invalid token type")
                     raise jwt.InvalidTokenError("Invalid token type")
@@ -48,19 +45,16 @@ class JWTMiddleware(BaseMiddleware):
                 logger.error(f"Invalid token: {e}")
                 raise DenyConnection("Invalid token")
 
-            # Extract user info
             user_id = payload.get("user_id")
             if not user_id:
                 logger.error("Missing user_id in token payload")
                 raise DenyConnection("Invalid payload structure")
 
-            # Fetch or create user using user_id
             user = await self.get_or_create_user(user_id)
             if user is None:
                 logger.error("User not found")
                 raise DenyConnection("User not found")
 
-            # Add user to the scope
             scope["user"] = user
 
         except DenyConnection as e:
@@ -75,7 +69,6 @@ class JWTMiddleware(BaseMiddleware):
         Fetch or create a user using the provided user_id (UUID).
         """
         try:
-            # Convert the user_id (UUID string) to a UUID object
             try:
                 user_uuid = uuid.UUID(user_id)
                 logger.info(f"Converted user_id to UUID: {user_uuid}")
@@ -83,7 +76,6 @@ class JWTMiddleware(BaseMiddleware):
                 logger.error(f"Invalid UUID format: {user_id}")
                 raise DenyConnection("Invalid UUID format")
 
-            # Check if a Profile exists for the user
             profile = Profile.objects.filter(uuid=user_uuid).first()
 
             if profile:
@@ -92,7 +84,6 @@ class JWTMiddleware(BaseMiddleware):
             else:
                 logger.info("User not found. Creating new user.")
 
-                # Create a new user and profile
                 user = User.objects.create(username=f"user_{user_uuid}")
                 profile = Profile.objects.create(user=user, uuid=user_uuid)
                 logger.info(f"Created new user: {user.username}")
@@ -101,4 +92,3 @@ class JWTMiddleware(BaseMiddleware):
         except Exception as e:
             logger.error(f"Error fetching or creating user: {e}")
             return None
-

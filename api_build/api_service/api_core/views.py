@@ -12,8 +12,30 @@ from rest_framework.permissions import AllowAny
 from asgiref.sync import async_to_sync
 from .jwtMiddleware import ProxyUser
 from .models import Notification
+import httpx
 
-USER_INFO = "http://auth-service/auth/api_users/"
+
+USER_INFO = "http://auth-service/api/auth/api_user_id/"
+
+
+
+async def fetch_user_auth(user_id : str):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f'{USER_INFO}/{user_id}/')
+            response.raise_for_status()
+            data = await response.json()
+            return data
+    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
+        raise Exception("Failed to get User from Auth service")
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            return None
+        raise Exception("Failed to get User from Auth service")
+    except:
+        raise("Internal Server Error")
+
+
 
 class GetUserService(APIView):
     """
@@ -28,7 +50,12 @@ class GetUserService(APIView):
     def get(self, request: Request, *args, **kwargs):
         id = kwargs.get('id')
         user = self.cache.get_user_data(id)
-        return Response(data=user)
+        if user:
+            return Response(data=user)
+        user_data = async_to_sync(fetch_user_auth)(id)
+        self.cache.set_user_data(id, user_data, "auth")
+        return self.cache.get_user_data(id)
+        
 
 class GetUserData(APIView):
     """
