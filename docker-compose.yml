@@ -60,8 +60,10 @@ volumes:
       device: "./api_build/api_service"
   postgres_data:
     driver: local
-  redis_data:
-    driver: local
+    driver_opts:
+      o: "bind"
+      type: "none"
+      device: "/tmp/chat_db"
 
   portainer_data:
 
@@ -108,21 +110,16 @@ services:
     networks:
       - TransNetwork
     depends_on:
-      - users-db
-      - redis
-      - rabbitmq
+      - chat-redis
+      - chat-db
     volumes:
       - "./chat_service:/chatco"
-    env_file:
-      - "auth_build/build/conf/.env"
 
   chat-redis:
     image: redis:latest
     container_name: "chat_redis"
     networks:
       - TransNetwork
-    volumes:
-      - redis_data:/data # Persist Redis data
 
   chat-db:
     image: postgres:13
@@ -193,6 +190,8 @@ services:
       - adminer
       - api-service
       - match-service
+      - chat-service
+      - pong-game
     networks:
       - TransNetwork
     volumes:
@@ -272,3 +271,24 @@ services:
     container_name: redis_queue
     networks:
       - TransNetwork
+
+  pong-game:
+    build: "pong_build/."
+    container_name: pong_game
+    image: pong_game:latest
+    pull_policy: build
+    networks:
+      - TransNetwork
+    volumes:
+      - "./pong_build/pong_service:/var/app"
+    depends_on:
+      - game-redis
+
+  game-redis:
+    build: "game_redis/."
+    image: game_redis:latest
+    container_name: game_redis
+    pull_policy: build
+    networks:
+      - TransNetwork
+    
