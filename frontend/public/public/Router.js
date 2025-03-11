@@ -79,9 +79,9 @@ const Router = {
 			url = render === route ? url : render
 			console.log("history use");
 			render === route ?
-				history.replaceState({url}, '', url)
-			:
 				history.pushState({url}, '', url)
+			:
+				history.replaceState({url}, '', url)
 		}
 		else
 		{
