@@ -107,6 +107,12 @@ WSGI_APPLICATION = 'django_chat.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+"""
+    TODO:
+        - Do not use shared database
+        - Request user info from the auth service instead
+"""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
