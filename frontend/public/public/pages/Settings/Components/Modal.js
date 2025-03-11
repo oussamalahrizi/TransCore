@@ -45,6 +45,12 @@ const fetchCode = async (code) => {
     return true
 }
 
+/**
+ * 
+ * @param {Event} e 
+ * @param {HTMLElement} modal 
+ * @param {HTMLElement} view 
+ */
 const handleVerify = async (e, modal, view) => {
     await app.utils.ButtonHandler(e.target, async () => {
         const input = modal.querySelector("#code-input")
@@ -63,7 +69,7 @@ const handleVerify = async (e, modal, view) => {
 
 export const controller = async () => {
     try {
-        const view = document.getElementById("settings")
+        const view = document.getElementById("acc-security")
         const modal = view.querySelector("#modal-wrapper")
         console.log("modal controller");
         const cross = modal.querySelector("#close-modal")
