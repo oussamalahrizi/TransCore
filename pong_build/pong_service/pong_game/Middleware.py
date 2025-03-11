@@ -55,6 +55,8 @@ class jwtMiddleware(BaseMiddleware):
         
         except DenyConnection as e:
             scope["error_message"] = str(e)
+        
+        await super().__call__(scope, receive, send)
 
     async def fetch_jwk_data(self):
         """

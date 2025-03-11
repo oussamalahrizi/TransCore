@@ -6,6 +6,7 @@ up:
 	@mkdir -p /tmp/auth_redis_data
 	@mkdir -p /tmp/api_redis_data
 	@mkdir -p /tmp/redisinsight
+	@mkdir -p /tmp/chat_db
 	@docker compose -f ./docker-compose.yml up -d
 
 down:
@@ -18,6 +19,7 @@ clean :
 	@sudo rm -rf /tmp/auth_redis_data
 	@sudo rm -rf /tmp/api_redis_data
 	@sudo rm -rf /tmp/redisinsight
+	@sudo rm -rf /tmp/chat_db
 
 fclean:
 	@docker compose -f ./docker-compose.yml down --volumes --rmi all

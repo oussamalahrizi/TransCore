@@ -3,6 +3,11 @@ import json, asyncio
 
 from .utils import Game_Cache
 
+
+"""
+    /ws/game/pong/game_id=123&token=123
+"""
+
 class Consumer(AsyncWebsocketConsumer):
     
     actions = {}
@@ -32,11 +37,9 @@ class Consumer(AsyncWebsocketConsumer):
         await self.send(text_data="Waiting for other player to join")
 
         
-        
+    # called when user disonnects
     async def disconnect(self, code):
-        if not hasattr(self, 'game_task'):
-            return
-        self.game_task.cancel()
+        await self.stop_game()
 
     async def receive(self, text_data=None , bytes_data=None):
         socket_data : dict = json.loads(text_data)
@@ -58,24 +61,22 @@ class Consumer(AsyncWebsocketConsumer):
         pass
 
     async def move_paddle(self, event : dict):
-        data = event['data']
-        key = data.get('key')
         # do some calculations update game state
+        pass
 
-        self.game_state = {}
-        
     async def broadcast(self):
         try:
             while True:
-                await self.send(self.game_state)
+                await self.send(f"game state : {self.game_state}")
+                self.game_state["count"] += 1
                 await asyncio.sleep(0.05)
         except asyncio.CancelledError :
-            await self.stop_game()
-
-
+            pass
 
     async def start_game(self):
-        self.game_state = {}
+        self.game_state = {
+            'count' : 0
+        }
         self.game_task = asyncio.create_task(self.broadcast())
 
     async def stop_game(self):
