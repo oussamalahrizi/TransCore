@@ -9,9 +9,8 @@ from .serializers import (
     UpdatePasswordSerializer)
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated, BasePermission
-from .permissions import IsAllowedHost, IsSameUser
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsSameUser
 from rest_framework.request import Request
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -19,7 +18,6 @@ from rest_framework import serializers
 from .utils import _AuthCache
 from core.asgi import publishers
 from asgiref.sync import async_to_sync
-
 
 
 class UpdateUserInfo(UpdateAPIView):
@@ -92,35 +90,7 @@ class GetMyInfo(APIView):
 
 from .serializers import AuthProviderSerializer
 
-class GetUserServiceID(RetrieveAPIView):
-    """
-    View to get user info based on id from other services.
-    """
-    class UserDetail(serializers.ModelSerializer):
-        auth_provider = AuthProviderSerializer(many=True)
-        class Meta:
-            model = User
-            fields =  ["auth_provider", 'id', 'username', 'email', "is_active", 'icon_url']
 
-    serializer_class = UserDetail
-    queryset = User.objects.all()
-    lookup_field = 'id'
-    permission_classes = []
-    authentication_classes = []
-    
-    
-class GetUserServiceName(RetrieveAPIView):
-    """
-    View to get user info based on id from other services.
-    """
-    serializer_class = UserDetailSerializer
-    queryset = User.objects.all()
-    lookup_field = 'username'
-    permission_classes = []
-    authentication_classes = []
-    
-    def permission_denied(self, request, message=None, code=None):
-        raise PermissionDenied(detail="Host not allowed.")
 
 class ListUsers(ListAPIView):
     serializer_class = UserDetailSerializer
@@ -128,17 +98,20 @@ class ListUsers(ListAPIView):
     authentication_classes = []
 
 class GetFriends(APIView):
-    class FriendsSerialize(serializers.ModelSerializer):
+    class FriendsSerializer(serializers.ModelSerializer):
         class Meta:
-            model = Friends
-            fields = []
+            model = User
+            fields =  ['id', 'username', 'email', 'icon_url']
+
+
     permission_classes = [IsAuthenticated]
     
     def get(self, request : Request, *args, **kwargs):
         user : User = request.user
         friends = Friends.objects.get_friends(user)
-        print(friends)
-        return Response(friends)
+        objects = User.objects.filter(id__in=friends)
+        ser = self.FriendsSerializer(objects, many=True)
+        return Response(data=ser.data)
 
 class SendFriendRequest(APIView):
     permission_classes = [IsAuthenticated]
@@ -150,12 +123,12 @@ class SendFriendRequest(APIView):
         user : User = request.user
         requested_username = kwargs.get("username")
         try:
-            to_user = get_object_or_404(User, username=requested_username)
+            to_user : User = get_object_or_404(User, username=requested_username)
             Friends.objects.add_friend(from_user=user, to_user=to_user)
             data = {
                 'type' : "send_notification",
                 'data' : {
-                    'username' : to_user.username,
+                    'user_id' : str(to_user.id),
                     'message' : f'you received a friend request from {user.username}'
                 }
             }
