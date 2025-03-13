@@ -23,7 +23,8 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		print(f"{self.user['username']} connected")	
 
 	async def disconnect(self, code):
-		self.channel_layer.group_discard(self.group_name, self.channel_name)
+		if hasattr(self, 'group_name'):
+			self.channel_layer.group_discard(self.group_name, self.channel_name)
 		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
 		# publish to the match making consumer to remove player from queue if player is offline
 		status = self.cache.get_user_status(self.user['id'])
