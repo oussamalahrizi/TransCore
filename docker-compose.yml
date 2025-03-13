@@ -166,9 +166,6 @@ services:
     container_name: api_redis
     networks:
       - TransNetwork
-    volumes:
-      - "api_redis_data:/data"
-
   rabbitmq:
     image: rabbitmq:4.0.5-management
     container_name: "rabbitmq"
