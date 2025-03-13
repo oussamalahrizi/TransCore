@@ -13,10 +13,10 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
-from pong_game.urls import websocket_patterns
 
 from django.core.asgi import get_asgi_application
 
+from pong_game.urls import websocket_patterns
 
 from pong_game.Middleware import jwtMiddleware
 
