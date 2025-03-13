@@ -154,7 +154,7 @@ class FriendsManager(models.Manager):
         friends_to_user = self.filter(to_user=user, status='accepted') \
             .all() \
             .values_list('from_user', flat=True)
-        friends = friends_from_user.union(friends_to_user)
+        friends = list(friends_from_user.union(friends_to_user))
         return friends
     
     def get_blocked_users(self, from_user):
