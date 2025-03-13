@@ -54,7 +54,7 @@ class GetUserService(APIView):
             return Response(data=user)
         user_data = async_to_sync(fetch_user_auth)(id)
         self.cache.set_user_data(id, user_data, "auth")
-        return self.cache.get_user_data(id)
+        return Response(self.cache.get_user_data(id))
         
 
 class GetUserData(APIView):
