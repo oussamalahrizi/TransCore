@@ -18,7 +18,7 @@ layer = get_channel_layer()
 async def broadcast(Game : GameState):
     try:
         while not Game.gameover:
-            # Game.updateBall()
+            Game.updateBall()
             await layer.group_send(Game.game_id, {
                 'type' : 'gameState',
                 'state' : json.dumps(Game.to_dict())

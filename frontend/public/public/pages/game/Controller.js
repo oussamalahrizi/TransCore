@@ -10,7 +10,7 @@ import {
 } from "three/addons";
 // import game from '.';
 
-import { setupWebSocket, sleep } from "./websockets.js";
+import { setupWebSocket, sleep, rendergame } from "./websockets.js";
 
 class BuildTerrain {
   constructor(Scene) {
@@ -351,54 +351,54 @@ function updateBall(gameInfo) {
   });
 }
 
-function Playermovements(Terrain, gameInfo) {
-  const paddle1 = Terrain.paddlemesh;
-  const paddle2 = Terrain.paddlemesh1;
-  const ball = Terrain.ballmesh;
-  const wall = Terrain.wallmesh;
-  const wall1 = Terrain.wallmesh1;
+// function Playermovements(Terrain, gameInfo) {
+//   const paddle1 = Terrain.paddlemesh;
+//   const paddle2 = Terrain.paddlemesh1;
+//   const ball = Terrain.ballmesh;
+//   const wall = Terrain.wallmesh;
+//   const wall1 = Terrain.wallmesh1;
 
-  if (!gameInfo.singlePlayer) {
-    if (
-      gameInfo.keyState["ArrowUp"] &&
-      paddle2.position.z - 1.25 > wall.position.z
-    ) {
-      paddle2.position.z -= gameInfo.speed;
-    }
-    if (
-      gameInfo.keyState["ArrowDown"] &&
-      paddle2.position.z + 1.25 < wall1.position.z
-    ) {
-      paddle2.position.z += gameInfo.speed;
-    }
-  } else {
-    if (
-      ball.position.z > 0 &&
-      paddle2.position.z <= ball.position.z &&
-      paddle2.position.z + 1.25 < wall1.position.z
-    ) {
-      paddle2.position.z += gameInfo.speed;
-    } else if (
-      ball.position.z < 0 &&
-      paddle2.position.z >= ball.position.z &&
-      paddle2.position.z - 1.25 > wall.position.z
-    ) {
-      paddle2.position.z -= gameInfo.speed;
-    }
-  }
-  if (
-    gameInfo.keyState["KeyW"] &&
-    paddle1.position.z - 1.25 > wall.position.z
-  ) {
-    paddle1.position.z -= gameInfo.speed;
-  }
-  if (
-    gameInfo.keyState["KeyS"] &&
-    paddle1.position.z + 1.25 < wall1.position.z
-  ) {
-    paddle1.position.z += gameInfo.speed;
-  }
-}
+//   if (!gameInfo.singlePlayer) {
+//     if (
+//       gameInfo.keyState["ArrowUp"] &&
+//       paddle2.position.z - 1.25 > wall.position.z
+//     ) {
+//       paddle2.position.z -= gameInfo.speed;
+//     }
+//     if (
+//       gameInfo.keyState["ArrowDown"] &&
+//       paddle2.position.z + 1.25 < wall1.position.z
+//     ) {
+//       paddle2.position.z += gameInfo.speed;
+//     }
+//   } else {
+//     if (
+//       ball.position.z > 0 &&
+//       paddle2.position.z <= ball.position.z &&
+//       paddle2.position.z + 1.25 < wall1.position.z
+//     ) {
+//       paddle2.position.z += gameInfo.speed;
+//     } else if (
+//       ball.position.z < 0 &&
+//       paddle2.position.z >= ball.position.z &&
+//       paddle2.position.z - 1.25 > wall.position.z
+//     ) {
+//       paddle2.position.z -= gameInfo.speed;
+//     }
+//   }
+//   if (
+//     gameInfo.keyState["KeyW"] &&
+//     paddle1.position.z - 1.25 > wall.position.z
+//   ) {
+//     paddle1.position.z -= gameInfo.speed;
+//   }
+//   if (
+//     gameInfo.keyState["KeyS"] &&
+//     paddle1.position.z + 1.25 < wall1.position.z
+//   ) {
+//     paddle1.position.z += gameInfo.speed;
+//   }
+// }
 
 function singlePlayerMode(gameInfo) {
   gameInfo.singlePlayer = !gameInfo.singlePlayer;
@@ -574,12 +574,13 @@ export default async () => {
     } else if (keystate["KeyS"]) {
       send("KeyS", delta);
     }
-    if (gameInfo.useComposer) {
-      gameInfo.composer.render();
-    } else {
-      gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
-    }
+    // if (gameInfo.useComposer) {
+    //   gameInfo.composer.render();
+    // } else {
+    //   gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
     // }
+    // }
+    rendergame(gameInfo);
     requestAnimationFrame(animate);
   }
 
