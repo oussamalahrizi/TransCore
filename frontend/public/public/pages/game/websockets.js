@@ -9,6 +9,8 @@ import {
   UnrealBloomPass,
 } from "three/addons";
 
+// import { rendergame } from "./Controller.js";
+
 export const setupWebSocket = () => {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   console.log(protocol);
@@ -50,6 +52,14 @@ export const setupWebSocket = () => {
   return ws;
 };
 
+export function rendergame(gameInfo) {
+  if (gameInfo.useComposer) {
+    gameInfo.composer.render();
+  } else {
+    gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
+  }
+}
+
 function updateGameState(state) {
   // Update ball position
   // console.log("state :", state);
@@ -87,6 +97,7 @@ function updateGameState(state) {
     app.gameInfo.p2Score = state.p2Score;
     updateScoreDisplay();
   }
+  rendergame(app.gameInfo);
 }
 
 async function handleGameEnd(winner) {
