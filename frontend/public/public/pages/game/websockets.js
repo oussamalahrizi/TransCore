@@ -52,6 +52,7 @@ export const setupWebSocket = () => {
 
 function updateGameState(state) {
   // Update ball position
+  // console.log("state :", state);
   if (app.gameInfo.Terrain.ballmesh) {
     app.gameInfo.Terrain.ballmesh.position.set(
       state.ballPosition.x,

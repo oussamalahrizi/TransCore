@@ -50,10 +50,10 @@ class GameState:
         self.p1_score = 0
         self.p2_score = 0
         self.wall_bounds = {
-            'bottom' : 4.3,
-            'top' : -4.3
+            'top' : 4.3,
+            'bottom' : -4.3
         }
-        self.speed = 0.9
+        self.speed = 3
         self.ballSpeed = 0.007
         self.winner = None
         self.gameover = False
@@ -84,8 +84,8 @@ class GameState:
             'p1Score' : self.p1_score,
             'p2Score' : self.p2_score,
             'wall_bounds' : {
-                'bottom' : 4.3,
-                'top' : -4.3
+                'top' : 4.3,
+                'bottom' : -4.3
             },
             'speed' : self.speed,
             'ballSpeed' : self.ballSpeed,
@@ -123,7 +123,7 @@ class GameState:
             paddle_left = paddle_pos.x - 0.150
             paddle_right = paddle_pos.x + 0.150
             paddle_top = paddle_pos.z + 0.95
-            paddle_bottom = paddle_pos.z + 0.95 
+            paddle_bottom = paddle_pos.z + 0.95
         
             if (self.ball_position.x >= paddle_left and 
                 self.ball_position.x <= paddle_right and 
@@ -152,15 +152,19 @@ class GameState:
                 )
                 self.ball_velocity.normalize().multiply_scalar(min(current_speed * 1.2, 0.02))
 
-    def update_player_move(self, player_id, action):
+    def update_player_move(self, player_id, action, delta):
 
         paddle = self.paddle1_position if player_id == self.players[0] else self.paddle2_position
-        if action == 'KeyW' and paddle.z - 1.5 > self.wall_bounds['top']:
-            print("moved up")
-            paddle.z -= self.speed
-        elif action == 'KeyS' and paddle.z + 1.5 < self.wall_bounds['bottom']:
-            print("moved down")
-            paddle.z += self.speed
+
+        if action == 'KeyW' and paddle.z - 1.3 > self.wall_bounds['bottom']:
+            # print("moved up")
+            paddle.z -= self.speed * delta
+            # paddle1.z = position1
+            # paddle2.z = position2
+        elif action == 'KeyS' and paddle.z + 1.3 < self.wall_bounds['top']:
+            paddle.z += self.speed * delta
+            # paddle1.z = position1
+            # paddle2.z = position2
 
     def reset_ball(self):
         self.ball_position = Vector3(0, 0, 0)

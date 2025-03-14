@@ -18,11 +18,12 @@ layer = get_channel_layer()
 async def broadcast(Game : GameState):
     try:
         while not Game.gameover:
-            Game.updateBall()
+            # Game.updateBall()
             await layer.group_send(Game.game_id, {
                 'type' : 'gameState',
                 'state' : json.dumps(Game.to_dict())
             })
+            await asyncio.sleep(1/60)
         # print("broad cast over")
     except asyncio.CancelledError:
         # print("task was cancelled success")
@@ -119,7 +120,10 @@ class Consumer(AsyncWebsocketConsumer):
         key = data.get('key')
         player_id = data.get('player_id')
         instance =  Game.get(self.game_id)
-        instance.update_player_move(player_id, key)
+        delta = float(data.get('delta'))
+        # position1 = float(data.get('position1'))
+        # position2 = float(data.get('position2'))
+        instance.update_player_move(player_id, key, delta)
         print("data: ", json.loads(text_data))
         # pass
     
