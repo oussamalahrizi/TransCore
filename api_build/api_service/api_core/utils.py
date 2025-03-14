@@ -85,21 +85,40 @@ class Cache:
             return data.get("group_count")
         return 0
 
+    """
+        {
+            auth:{
+                id : 123,
+                username : oussama,
+                email : oussama@email.com,
+                friends : [
+                    'uuid1', 'uuid2', 'uuid3', 'uuid4'
+                ]
+            },
+            status : online,
+            group_count : 1
+        }
+        {
+            auth:{
+                id : uuid2,
+                username : user2,
+                email : user2@email.com,
+                friends : [
+                    '123', 'uuid2', 'uuid3', 'uuid4'
+                ]
+            },
+            status : online,
+            group_count : 1
+        }
+
+    """
+
+    def append_user_friends(self, user_id : str, friend_id : str):
+        user_data = self.get_user_data(user_id)
+        if not user_data.get('friends'):
+            user_data['friends'] = [friend_id]
+        else:
+            user_data['friends'].append(friend_id)
+        self.set_user_data(user_id, user_data, 'auth')
+
 _Cache = Cache()
-
-import httpx
-
-async def fetch_user_auth(user_id : str):
-    try:
-        timeout = httpx.Timeout(5.0, read=5.0)
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.get(f"{"http://auth-service/api/auth/api_user_id"}/{user_id}/")
-            response.raise_for_status()
-            user_info = response.json()
-            return user_info
-    except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
-        return None
-    except httpx.HTTPStatusError as e:
-        if e.response.status_code == httpx.codes.NOT_FOUND:
-            raise DenyConnection("User Not found")
-        return None

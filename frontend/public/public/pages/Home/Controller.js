@@ -94,14 +94,15 @@ const sendNotif = async () => {
 
 const fetch_friends = async (view) => {
     try {
-        const {data, error} = await app.utils.fetchWithAuth("/api/auth/friends/")
+        const {data, error} = await app.utils.fetchWithAuth("/api/main/friends/")
         if (error)
         {
             app.utils.showToast(error)
             return
         }
+        console.log(data);
         const pre = view.querySelector("#friends-data")
-        pre.innerText = data
+        pre.innerText = JSON.stringify(data)
     } catch (error) {
         if (error instanceof app.utils.AuthError)
         {

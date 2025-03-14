@@ -2,7 +2,7 @@
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
     
-    const ws = new WebSocket("ws://localhost:8000/api/ws/?token=" + token)
+    const ws = new WebSocket("ws://localhost:8000/api/main/ws/?token=" + token)
     ws.onopen = (e) => {
         console.log("websocket connected");
     }

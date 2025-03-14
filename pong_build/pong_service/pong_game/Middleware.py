@@ -6,7 +6,7 @@ from urllib.parse import parse_qs
 
 
 JWK_URL = "http://auth-service/api/auth/jwk/"
-USERINFO_URL = "http://auth-service/api/main/user/"
+USERINFO_URL = "http://api-service/api/main/user/"
 
 CHECK_GAME_URL = 'http://match-service/api/match/check_game/'
 
@@ -49,12 +49,14 @@ class jwtMiddleware(BaseMiddleware):
             user_id = payload.get("user_id")
 
             user_info = await self.fetch_user_info(user_id)
-            await self.check_game_id(game_id, user_id)
+            # await self.check_game_id(game_id, user_id)
             scope["user"] = user_info
             scope['game_id'] = game_id
         
         except DenyConnection as e:
             scope["error_message"] = str(e)
+        
+        await super().__call__(scope, receive, send)
 
     async def fetch_jwk_data(self):
         """

@@ -7,7 +7,7 @@ from api_core.utils import _Cache
 from channels.exceptions import DenyConnection
 
 JWK_URL = "http://auth-service/api/auth/jwk/"
-USERINFO_URL = "http://auth-service/api/auth/api_user_id"
+USERINFO_URL = "http://auth-service/api/auth/internal/userid/"
 
 class jwtmiddleware(BaseMiddleware):
     """
@@ -85,7 +85,7 @@ class jwtmiddleware(BaseMiddleware):
                 return user["auth"]
             timeout = httpx.Timeout(5.0, read=5.0)
             async with httpx.AsyncClient(timeout=timeout) as client:
-                response = await client.get(f"{USERINFO_URL}/{user_id}/")
+                response = await client.get(f"{USERINFO_URL}{user_id}/")
                 response.raise_for_status()
                 user_info = response.json()
                 self.cache.set_user_data(user_id=user_id, data=user_info, service="auth")

@@ -22,8 +22,10 @@ class IsAllowedHost(BasePermission):
 
 class isNginx(BasePermission):
 
-    nginx = gethostbyname("nginx")
-
+    try:
+        nginx = gethostbyname("nginx")
+    except:
+        nginx = ""
     def has_permission(self, request, view):
         incoming = request.META.get('REMOTE_ADDR')
         return incoming == self.nginx

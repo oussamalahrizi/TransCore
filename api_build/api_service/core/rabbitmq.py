@@ -200,6 +200,7 @@ class RabbitmqBase:
                 await self.channel.close()
                 await self.connection.close()
             print("Stopped")
+
 from aio_pika import Message
 
 class QueuePublisher(RabbitmqBase):

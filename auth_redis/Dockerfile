@@ -13,5 +13,4 @@ RUN rm /etc/redis/redis.conf
 ENTRYPOINT ["/bin/init.sh"]
 
 CMD ["redis-server","--protected-mode", "no", "--bind", "0.0.0.0", \
-	 "--port", "6379", "--dir", "/data", "--save", "60", "1", \
-	 "--loglevel", "notice", "--appendonly", "yes", "--appendfilename", "appendonly.aof"]
+	 "--port", "6379"]

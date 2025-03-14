@@ -34,8 +34,9 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
-    'pong_game',
+    'rest_framework',
     'channels',
+    'pong_game',
 ]
 
 MIDDLEWARE = [
@@ -84,6 +85,12 @@ CHANNEL_LAYERS = {
             "hosts": [("game-redis", 6379)],
         },
     },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ]
 }
 
 

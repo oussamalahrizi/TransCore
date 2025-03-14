@@ -3,3 +3,4 @@ frontend/public/node_modules
 auth_build/build/conf/.env
 **/__pycache__/
 **/migrations/
+**/.vscode/

@@ -23,7 +23,7 @@ const getState = async () => {
 }
 
 const enable = async () => {
-    const view = document.getElementById("settings")
+    const view = document.getElementById("acc-security")
     const wrapper = document.createElement("div")
     wrapper.id = "modal-wrapper"
     wrapper.className = "fixed top-0 left-0 min-h-screen w-full flex justify-center items-center bg-black/50"
@@ -32,7 +32,7 @@ const enable = async () => {
     modalController()
 }
 const disable = async () => {
-    const view = document.getElementById("settings")
+    const view = document.getElementById("acc-security")
     const {data, error} = await app.utils.fetchWithAuth("/api/auth/users/disable-2fa/")
     if (error)
     {
@@ -110,8 +110,6 @@ export default async () => {
             console.log(data);
             
         })
-        
-
     }
     catch (error)
     {
