@@ -81,7 +81,7 @@ services:
     networks:
       - TransNetwork
     volumes:
-      - users-data:/var/lib/postgresql/data
+      - /var/lib/postgresql/data
     env_file:
       - "auth_build/build/conf/.env"
 
@@ -131,7 +131,7 @@ services:
       - POSTGRES_USER=your_database_user
       - POSTGRES_PASSWORD=your_database_password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - /var/lib/postgresql/data
 
   api-service:
     build: "api_build/."
@@ -155,7 +155,7 @@ services:
     networks:
       - TransNetwork
     volumes:
-      - api-data:/var/lib/postgresql/data
+      - /var/lib/postgresql/data
     env_file:
       - "api_build/build/conf/.env"
 
@@ -179,7 +179,8 @@ services:
     image: nginx:latest
     pull_policy: build
     build: "nginx/."
-    container_name: nginx_reverse
+    container_name: "nginx_reverse"
+    hostname: "nginx"
     ports:
       - 8000:80
     depends_on:
@@ -212,7 +213,7 @@ services:
     networks:
       - TransNetwork
     volumes:
-      - "auth_redis_data:/data"
+      - "/data"
 
   redisinsight:
     container_name: redisinsight
@@ -224,7 +225,7 @@ services:
     depends_on:
       - auth-redis
     volumes:
-      - "redisinsight_data:/data"
+      - "/data"
 
   frontend:
     container_name: frontend
@@ -288,4 +289,3 @@ services:
     pull_policy: build
     networks:
       - TransNetwork
-    

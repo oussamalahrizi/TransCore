@@ -173,7 +173,8 @@ export const onmessage = (event) => {
       break;
 
     case "send_init_data":
-      console.log("send init data : ", data);
+      console.log("send init data : ", data.user_id);
+      app.gameInfo.player_id = data.user_id;
       break;
     case "error":
       console.error("Game error:", message);

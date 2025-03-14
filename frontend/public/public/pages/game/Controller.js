@@ -507,6 +507,10 @@ export default async () => {
   const gameInfo = app.gameInfo;
   const gameContainer = document.getElementById("game");
 
+  window.addEventListener("beforeunload", (event) => {
+    event.preventDefault();
+    if (gameInfo.ws) gameInfo.ws.close();
+  });
   // Setup scene and game environment
   SetupScene(gameContainer, gameInfo);
 
@@ -522,7 +526,7 @@ export default async () => {
     //       type: "toggle_single_player",
     //     })
     //   );
-    // }
+    // }s
     // if (event.code === "ShiftRight") {
     //   gameInfo.useComposer = !gameInfo.useComposer;
     // }
@@ -539,11 +543,8 @@ export default async () => {
     if (["KeyW", "KeyS"].includes(event.code)) {
       gameInfo.ws.send(
         JSON.stringify({
-          type: "move_paddle",
-          data: {
-            key: event.code,
-            player_id: gameInfo.player_id,
-          },
+          key: event.code,
+          player_id: gameInfo.player_id,
         })
       );
     }

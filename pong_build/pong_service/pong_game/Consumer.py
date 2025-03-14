@@ -2,16 +2,49 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
 from .game import GameState
 from .utils import Game_Cache
+from asgiref.sync import sync_to_async
+from channels.layers import get_channel_layer
+from channels.db import aclose_old_connections
+from channels.exceptions import StopConsumer
+
+
+game_task : dict[str, asyncio.Task] = {}
+
+Game : dict[str, GameState] = {}
+
+layer = get_channel_layer()
+
+
+async def broadcast(Game : GameState):
+    try:
+        while not Game.gameover:
+            Game.updateBall()
+            await layer.group_send(Game.game_id, {
+                'type' : 'gameState',
+                'state' : json.dumps(Game.to_dict())
+            })
+        # print("broad cast over")
+    except asyncio.CancelledError:
+        # print("task was cancelled success")
+        pass
+    finally:
+        # print("sending game end finally")
+        await layer.group_send(Game.game_id, {
+            'type' : 'game_end',
+            'winner' : Game.winner
+        })
+
+
 
 class Consumer(AsyncWebsocketConsumer):
     
-    actions = {}
     cache = Game_Cache
+    game_id = None
+    user = None
+    user_id = None
+    players_ids = []
 
     def __init__(self, *args, **kwargs):
-        self.actions = {
-            'move_paddle' : self.move_paddle
-        }
         super().__init__(*args, **kwargs)
 
     async def connect(self):
@@ -20,13 +53,16 @@ class Consumer(AsyncWebsocketConsumer):
         if error:
             await self.close(code=4001, reason=error)
             return
+        
         self.user = self.scope['user']
         self.user_id = self.user['auth']['id']
+        self.username = self.user['auth']['username']
         self.game_id = self.scope['game_id']
         # check if both users connected to init fresh game state
+        
         res = self.cache.set_player(game_id=self.game_id, user_id=self.user_id)
         if not res:
-            await self.close(code=4003, reason="Same user")
+            await self.close(code=4003, reason="You are already in game")
             return
         await self.channel_layer.group_add(self.game_id, self.channel_name)
         player_count =  self.cache.get_player_count(self.game_id)
@@ -44,27 +80,33 @@ class Consumer(AsyncWebsocketConsumer):
         }))
 
     async def disconnect(self, code):
-        if not self.game_id:
+        # in case middleware error
+        print(f"{self.username} disconnected, code : ", code)
+        if code == 4001:
             return
-        self.game_task.cancel()
-        await self.gameover(self.Game.winner)
-        await self.channel_layer.group_discard(self.game_id, self.channel_name)
-        # remove from cache object
         self.cache.remove_player(self.user_id, self.game_id)
-        # check if there are still players in the cache object
-        players = self.cache.get_players(self.game_id)
-        if len(players) == 0:
+        if code == 4003:
             return
-        # send them close user
-        await self.channel_layer.group_send(self.game_id, {
-            'type' : 'close_user',
-        })
+        # first send result if not game over
+        await self.channel_layer.group_discard(self.game_id, self.channel_name)
+        print(f"{self.username} removed")
+        if Game.get(self.game_id):
+            Game.get(self.game_id).winner = self.cache.get_players(self.game_id)[0]
+            Game.get(self.game_id).gameover = True
+            # print(f'{self.username} game over ? ', Game.get(self.game_id).gameover)
+            game_task.get(self.game_id).cancel()
+            game_task.pop(self.game_id)
+        if game_task.get(self.game_id):
+            game_task.pop(self.game_id)
+        if Game.get(self.game_id):
+            Game.pop(self.game_id)
+     
+
 
     async def close_user(self, event):
         await self.close(reason='Game Over')
         
     async def receive(self, text_data=None , bytes_data=None):
-        socket_data : dict = json.loads(text_data)
         '''
             {
             type : move_paddle,
@@ -73,46 +115,18 @@ class Consumer(AsyncWebsocketConsumer):
                 }
             }
         '''
-        if socket_data.get('type') not in self.actions:
-            await self.send('action not supported')
-            return
-        await self.channel_layer.group_send(self.game_id, {
-            'type' : socket_data.get('type'),
-            'data' : socket_data.get('data')
-        })
+        data = json.loads(text_data)
+        key = data.get('key')
+        player_id = data.get('player_id')
+        instance =  Game.get(self.game_id)
+        instance.update_player_move(player_id, key)
+        print("data: ", json.loads(text_data))
+        # pass
     
 
-    async def move_paddle(self, event):
-        pass
-        # data = event['data']
-        # player_id = data.get
-        
-    async def broadcast(self):
-        try:
-            while not self.Game.gameover:
-                self.Game.updateBall()
-                await self.channel_layer.group_send(self.game_id, {
-                    'type' : 'gameState',
-                    'state' : json.dumps(self.Game.to_dict())
-                })
-            print("game over broadcast")
-            await self.gameover(self.Game.winner)
-            return
-        except asyncio.CancelledError :
-            pass
-
-    async def gameover(self, winner_id : str):
-        print("sending game over")
-
-        await self.channel_layer.group_send(self.game_id, {
-            'type' : 'game_end',
-            'winner' : winner_id 
-        })
-        self.game_task.cancel()
-
-
+    
     async def game_end(self, event):
-        print("sending gameEnd")
+        print("sending gameEnd to : " ,self.username)
         winner = 'You Win!'
         if self.user_id != event['winner']:
             winner = 'You Lost!'
@@ -134,23 +148,16 @@ class Consumer(AsyncWebsocketConsumer):
     async def send_init_data(self, event):
         await self.send(json.dumps({
             'type' : 'send_init_data',
-            'data' : event['data']
+            'user_id' : self.user_id
         }))
         await self.send(json.dumps({
             'type' : 'gameStart'
         }))
 
     async def start_game(self):
-        self.Game = GameState(players=self.players_ids)
+        instance = GameState(players=self.players_ids, game_id=self.game_id)
+        Game[self.game_id] = instance
         await self.channel_layer.group_send(self.game_id, {
             'type' : 'send_init_data',
-            'data' : json.dumps(self.players_ids)
         })
-        self.game_task = asyncio.create_task(self.broadcast())
-
-    async def stop_game(self):
-        pass
-        # if not hasattr(self, 'game_task'):
-        #     return
-        # self.game_task.cancel()
-        # self.channel_layer.group_discard(self.game_id, self.channel_name)
+        game_task[self.game_id] = asyncio.create_task(broadcast(instance))
