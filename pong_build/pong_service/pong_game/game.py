@@ -37,9 +37,10 @@ class Vector3:
 
 class GameState:
 
-    def __init__(self, players : list[str]):
+    def __init__(self, players : list[str], game_id : str):
         self.init_game_state()
         self.players = players
+        self.game_id = game_id
 
     def init_game_state(self):
         self.ball_position = Vector3(0, 0, 0)
@@ -49,8 +50,8 @@ class GameState:
         self.p1_score = 0
         self.p2_score = 0
         self.wall_bounds = {
-            'top' : 4.3,
-            'bottom' : -4.3
+            'bottom' : 4.3,
+            'top' : -4.3
         }
         self.speed = 0.9
         self.ballSpeed = 0.007
@@ -83,10 +84,10 @@ class GameState:
             'p1Score' : self.p1_score,
             'p2Score' : self.p2_score,
             'wall_bounds' : {
-                'top' : 4.3,
-                'bottom' : -4.3
+                'bottom' : 4.3,
+                'top' : -4.3
             },
-            'speed' : 0.9,
+            'speed' : self.speed,
             'ballSpeed' : self.ballSpeed,
             'winner' : None,
             'gameover' : False
@@ -151,14 +152,14 @@ class GameState:
                 )
                 self.ball_velocity.normalize().multiply_scalar(min(current_speed * 1.2, 0.02))
 
-        return None
-    
     def update_player_move(self, player_id, action):
 
         paddle = self.paddle1_position if player_id == self.players[0] else self.paddle2_position
-        if action == 'up' and paddle.z - 1.25 > self.wall_bounds['bottom']:
+        if action == 'KeyW' and paddle.z - 1.5 > self.wall_bounds['top']:
+            print("moved up")
             paddle.z -= self.speed
-        if action == 'down' and paddle.z + 1.25 > self.wall_bounds['top']:
+        elif action == 'KeyS' and paddle.z + 1.5 < self.wall_bounds['bottom']:
+            print("moved down")
             paddle.z += self.speed
 
     def reset_ball(self):
