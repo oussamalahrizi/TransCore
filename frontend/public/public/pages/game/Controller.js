@@ -500,7 +500,7 @@ export default async () => {
     ws: null,
     gameId: null,
     useComposer: false,
-    lastFrame: 0,
+    lastFrame: null,
     player_id: null,
   };
   if (!app.websocket) await sleep(0.5);
@@ -518,6 +518,10 @@ export default async () => {
 
   gameInfo.ws = setupWebSocket();
   if (!gameInfo.ws) return;
+
+  const keystate = [];
+
+  const clock = new THREE.Clock();
 
   gameInfo.renderer.domElement.addEventListener("keydown", (event) => {
     // if (event.code === "Numpad0") {
@@ -540,29 +544,42 @@ export default async () => {
     // }
 
     // Send paddle movement commands
-    if (["KeyW", "KeyS"].includes(event.code)) {
-      gameInfo.ws.send(
-        JSON.stringify({
-          key: event.code,
-          player_id: gameInfo.player_id,
-        })
-      );
-    }
+    keystate[event.code] = true;
+  });
+
+  gameInfo.renderer.domElement.addEventListener("keyup", (event) => {
+    // Send paddle movement commands
+    keystate[event.code] = false;
   });
 
   // Animation loop
-  function animate() {
-    const now = performance.now();
-    const delta = (now - gameInfo.lastFrame) / 1000;
 
-    if (delta / 60) {
-      gameInfo.lastFrame = now;
-      if (gameInfo.useComposer) {
-        gameInfo.composer.render();
-      } else {
-        gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
-      }
+  const send = (key, delta) => {
+    gameInfo.ws.send(
+      JSON.stringify({
+        key: key,
+        player_id: gameInfo.player_id,
+        delta: delta,
+      })
+    );
+  };
+  function animate() {
+    const now = Date.now();
+    const delta = clock.getDelta();
+
+    // // if (!gameInfo.lastFrame) {
+    // gameInfo.lastFrame = now;
+    if (keystate["KeyW"]) {
+      send("KeyW", delta);
+    } else if (keystate["KeyS"]) {
+      send("KeyS", delta);
     }
+    if (gameInfo.useComposer) {
+      gameInfo.composer.render();
+    } else {
+      gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
+    }
+    // }
     requestAnimationFrame(animate);
   }
 
