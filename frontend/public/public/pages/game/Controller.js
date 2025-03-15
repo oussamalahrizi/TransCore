@@ -415,6 +415,7 @@ const SetupScene = (gameContainer, gameInfo) => {
   gameInfo.renderer = new THREE.WebGLRenderer({
     antialias: true, // Enables anti-aliasing
     powerPreference: "high-performance", // Optimizes rendering performance
+    precision : 'highp'
   });
   gameContainer.appendChild(gameInfo.renderer.domElement);
   gameInfo.renderer.domElement.setAttribute("tabindex", "0");
@@ -500,7 +501,7 @@ export default async () => {
     ws: null,
     gameId: null,
     useComposer: false,
-    lastFrame: null,
+    lastFrame: 0,
     player_id: null,
   };
   if (!app.websocket) await sleep(0.5);
@@ -508,7 +509,7 @@ export default async () => {
   const gameContainer = document.getElementById("game");
 
   window.addEventListener("beforeunload", (event) => {
-    event.preventDefault();
+    // event.preventDefault();
     if (gameInfo.ws) gameInfo.ws.close();
   });
   // Setup scene and game environment
@@ -520,8 +521,6 @@ export default async () => {
   if (!gameInfo.ws) return;
 
   const keystate = [];
-
-  const clock = new THREE.Clock();
 
   gameInfo.renderer.domElement.addEventListener("keydown", (event) => {
     // if (event.code === "Numpad0") {
@@ -563,29 +562,44 @@ export default async () => {
       })
     );
   };
-  function animate() {
-    const now = Date.now();
-    const delta = clock.getDelta();
 
-    // // if (!gameInfo.lastFrame) {
-    // gameInfo.lastFrame = now;
-    if (keystate["KeyW"]) {
-      send("KeyW", delta);
-    } else if (keystate["KeyS"]) {
-      send("KeyS", delta);
+  let frameCount = 0;
+  let lastTime = performance.now();
+  let fps = 0;
+
+  function updateFPS() {
+    frameCount++;
+    
+    const currentTime = performance.now();
+    const deltaTime = currentTime - lastTime;
+    
+    // Update FPS calculation approximately once per second
+    if (deltaTime >= 1000) {
+      // Calculate frames per second
+      fps = Math.round((frameCount * 1000) / deltaTime);
+      
+      // Display FPS
+      console.log(`${fps} FPS`)
+      
+      // Reset counters
+      frameCount = 0;
+      lastTime = currentTime;
     }
-    // if (gameInfo.useComposer) {
-    //   gameInfo.composer.render();
-    // } else {
-    //   gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
-    // }
-    // }
-    rendergame(gameInfo);
-    requestAnimationFrame(animate);
   }
 
-  animate();
+  function animate() {
+    const now = performance.now();
 
+    if (keystate["KeyW"])
+          send("KeyW");
+        else if (keystate["KeyS"])
+          send("KeyS");
+        rendergame(gameInfo);
+        gameInfo.lastFrame = now;
+    updateFPS()
+    requestAnimationFrame(animate);
+  }
+  animate()
   // Handle window resize
   window.addEventListener("resize", () => {
     if (gameInfo.camera && gameInfo.renderer) {

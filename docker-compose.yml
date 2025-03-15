@@ -96,6 +96,7 @@ services:
       - users-db
       - auth-redis
       - api-service
+      - rabbitmq
     env_file:
       - "auth_build/build/conf/.env"
     volumes:
