@@ -54,7 +54,7 @@ class GameState:
             'bottom' : -4.3
         }
         self.speed = 5
-        self.ballSpeed = 0.01
+        self.ballSpeed = 0.008
         self.winner = None
         self.gameover = False
 
@@ -151,7 +151,7 @@ class GameState:
                     self.ball_velocity.x * self.ball_velocity.x +
                     self.ball_velocity.z * self.ball_velocity.z
                 )
-                self.ball_velocity.normalize().multiply_scalar(min(current_speed * 1.2, 0.2))
+                self.ball_velocity.normalize().multiply_scalar(min(current_speed * 1.2, 0.1))
 
     def update_player_move(self, player_id, action):
 
