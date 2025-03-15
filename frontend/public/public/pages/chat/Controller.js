@@ -25,35 +25,27 @@ export default () => {
     let users = [];
     let lastMessages = {}; 
 
-    // Initialize the application
-    loadStateFromLocalStorage(); 
-    fetchUsers();
-    connectNotificationSocket();
-    setupEventListeners(); 
 
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // Get references to the buttons
-        const blockButton = document.getElementById('block-button');
-        const inviteToGameButton = document.getElementById('invite-to-game-button');
-        const viewProfileButton = document.getElementById('view-profile-button');
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     const blockButton = document.getElementById('block-button');
+    //     const inviteToGameButton = document.getElementById('invite-to-game-button');
+    //     const viewProfileButton = document.getElementById('view-profile-button');
       
-        // Add event listeners to the buttons
-        blockButton.addEventListener('click', () => {
-          console.log('Block button clicked');
-          alert('User blocked!');
-        });
+    //     blockButton.addEventListener('click', () => {
+    //       console.log('Block button clicked');
+    //       alert('User blocked!');
+    //     });
       
-        inviteToGameButton.addEventListener('click', () => {
-          console.log('Invite to game button clicked');
-          alert('Invitation sent!');
-        });
+    //     inviteToGameButton.addEventListener('click', () => {
+    //       console.log('Invite to game button clicked');
+    //       alert('Invitation sent!');
+    //     });
       
-        viewProfileButton.addEventListener('click', () => {
-          console.log('View profile button clicked');
-          alert('Redirecting to user profile...');
-        });
-      });
+    //     viewProfileButton.addEventListener('click', () => {
+    //       console.log('View profile button clicked');
+    //       alert('Redirecting to user profile...');
+    //     });
+    //   });
 
     document.addEventListener("DOMContentLoaded", () => {
         const sendButton = document.getElementById('send-button');
@@ -72,6 +64,29 @@ export default () => {
             console.error('One or more DOM elements not found');
         }
     });
+
+    // Toggle profile section visibility and adjust chat box width
+    function toggleProfileSection() {
+        const profileSection = document.getElementById('profile-section');
+        const chatBox = document.getElementById('chat-box');
+        // Check if elements exist before modifying
+        if (!profileSection || !chatBox) {
+            console.error('Profile section or chat box not found');
+            return;
+        }
+
+        if (profileSection.classList.contains('hidden')) {
+            profileSection.classList.remove('hidden');
+            chatBox.classList.add('w-1-2');
+        } else {
+            profileSection.classList.add('hidden');
+            chatBox.classList.remove('w-1-2');
+        }
+    }
+
+    // Add event listener to the menu button
+    document.getElementById("menu-button").addEventListener("click", toggleProfileSection);
+
 
     // Reset the chat box on initial load if no user is selected
     if (!selectedChatUser) {
@@ -110,11 +125,166 @@ export default () => {
         })
             .then(response => response.json())
             .then(fetchedUsers => {
-                users = fetchedUsers;
-                console.log("Fetched users:", users);
-                updateUserList(); // Update the user list UI
+                const newUsers = fetchedUsers.filter(user => !users.some(existingUser => existingUser.id === user.id));
+                if (newUsers.length > 0) {
+                    users = [...users, ...newUsers];
+                    console.log("Fetched new users:", newUsers);
+                    updateUserList();
+                }
             })
             .catch(error => console.error("Error fetching users:", error));
+    }
+
+    
+    // Function to filter users (search and unread message filters)
+    function filterUsers() {
+        let filteredUsers = users.filter(user => user.username !== currentUser?.username);
+    
+        const searchQuery = searchInput.value.toLowerCase();
+        if (searchQuery) {
+            filteredUsers = filteredUsers.filter(user => user.username.toLowerCase().includes(searchQuery));
+        }
+    
+        if (filterUnreadCheckbox.checked) {
+            filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
+        }
+    
+        return filteredUsers;
+    }
+
+    
+    // Function to update the user list UI
+    function updateUserList() {
+        const filteredUsers = filterUsers();
+        const userListContainer = document.getElementById('user-list-container');
+        userListContainer.innerHTML = ''; 
+    
+        filteredUsers.forEach(user => userListContainer.appendChild(createUserItem(user)));
+    }
+// Initialize blocked users array
+let blockedUsers = [];
+
+// Function to create a user item
+function createUserItem(user) {
+    const userItem = document.createElement('div');
+    userItem.className = 'user-item';
+
+    const unreadCount = unreadMessages[user.username] || 0;
+    const statusColor = user.isActive = "green"; 
+
+    const lastMessageData = lastMessages[user.username] || {};
+    const lastMessage = lastMessageData.message || "";
+    const lastMessageTimestamp = lastMessageData.timestamp || "";
+
+    userItem.innerHTML = `
+        <div class="user-avatar-container">
+            <img src="${user.profileImage}" alt="${user.username}" class="user-avatar">
+            <span class="active-status" style="background-color: ${statusColor};"></span>
+        </div>
+        <div class="user-info">
+            <div class="username">${user.username}</div>
+            ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
+        </div>
+        <div class="user-meta">
+            ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
+            ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
+        </div>
+    `;
+
+    // If user is blocked, disable interaction
+    if (blockedUsers.includes(user.username)) {
+        userItem.classList.add('blocked');
+        userItem.onclick = () => {
+            alert('You have blocked this user. You cannot chat with them.');
+        };
+    } else {
+        userItem.onclick = () => {
+            startChat(user.username, user.id); 
+            userItem.classList.add('active');
+            updateUserList(); 
+            toggleProfileSection(); 
+        };
+    }
+
+    return userItem;
+}
+
+// When the "Block" button is clicked
+const blockButton = document.getElementById('block-button');
+blockButton.addEventListener('click', () => {
+    console.log('Block button clicked');
+    // Disable further chat interactions
+    const userToBlock = document.getElementById('chat-with-user').textContent; // Get username from the chat header
+    blockedUsers.push(userToBlock); // Add the user to the blocked list
+    alert(`You have blocked ${userToBlock}. You cannot send or receive any messages from them.`);
+
+    // Show select user to chat section
+    const selectUserPrompt = document.getElementById('select-user-prompt');
+    selectUserPrompt.style.display = 'block';
+
+    // Remove current chat and profile
+    document.getElementById('chat-box').style.display = 'none';
+    document.getElementById('profile-section').style.display = 'none';
+    
+    // Optionally, reset the chat input field and other UI elements
+    document.getElementById('chat-input').value = ''; 
+});
+
+// When the "Unblock" button is clicked
+const unblockButton = document.getElementById('unblock-button');
+unblockButton.addEventListener('click', () => {
+    console.log('Unblock button clicked');
+    const userToUnblock = document.getElementById('chat-with-user').textContent; // Get username from the chat header
+    const index = blockedUsers.indexOf(userToUnblock);
+    if (index > -1) {
+        blockedUsers.splice(index, 1); // Remove the user from the blocked list
+        alert(`You have unblocked ${userToUnblock}. You can now send and receive messages.`);
+    }
+    updateUserList(); // Refresh user list to reflect unblock action
+    toggleProfileSection(); // Reopen profile section after unblocking
+});
+    
+    function pollForNewUsers() {
+        setInterval(fetchUsers, 5000);
+    }
+    
+    // Initialize by fetching users and setting up polling
+    function initializeUserList() {
+        fetchUsers(); 
+        pollForNewUsers(); 
+        loadStateFromLocalStorage(); 
+        connectNotificationSocket();
+        setupEventListeners(); 
+    }
+    
+    async function fetchRealUsername(rawUsername) {
+        if (typeof rawUsername !== "string" || !rawUsername) {
+            console.error("Invalid or missing username:", rawUsername);
+            return rawUsername || "Unknown User";
+        }
+
+        const uuidMatch = rawUsername.match(/^user_(.*)$/);
+        if (uuidMatch && uuidMatch[1]) {
+            const rawUuid = uuidMatch[1];
+            
+            try {
+            
+                const user = users.find(user => user.id === rawUuid); 
+                
+                if (user) {
+                
+                    return user.username;
+                } else {
+                    console.error("User not found with UUID:", rawUuid);
+                    return rawUsername; 
+                }
+            } catch (error) {
+                console.error("Error fetching real username:", error);
+                return rawUsername; 
+            }
+        }
+
+        return rawUsername; 
     }
 
     // Connect to the notification WebSocket
@@ -129,7 +299,7 @@ export default () => {
         };
 
         notificationSocket.onmessage = handleNotificationMessage;
-        notificationSocket.onclose = () => setTimeout(connectNotificationSocket, 5000); // Reconnect on close
+        notificationSocket.onclose = () => setTimeout(connectNotificationSocket, 5000); 
         notificationSocket.onerror = (error) => {
             console.error('Notification WebSocket Error:', error);
             notificationSocket.close();
@@ -208,40 +378,15 @@ export default () => {
         return messageMatch?.[1];
     }
 
-    // Fetch the real username from the server using a UUID
-    async function fetchRealUsername(rawUsername) {
-        if (typeof rawUsername !== "string" || !rawUsername) {
-            console.error("Invalid or missing username:", rawUsername);
-            return rawUsername || "Unknown User";
-        }
 
-        const uuidMatch = rawUsername.match(/^user_(.*)$/);
-        if (uuidMatch && uuidMatch[1]) {
-            try {
-                const response = await fetch(`http://localhost:8000/api/auth/api_user_id/${uuidMatch[1]}/?format=json`, {
-                    headers: { "Authorization": `Bearer ${token}` },
-                });
 
-                if (!response.ok) throw new Error("Failed to fetch user data");
-                const userData = await response.json();
-                return userData.username;
-            } catch (error) {
-                console.error("Error fetching real username:", error);
-                return rawUsername;
-            }
-        }
-        return rawUsername;
+    // Handle user info updates
+    function handleUserInfo(data) {
+        currentUser = { id: data.user_id, username: data.username };
     }
 
-// Handle user info updates
-function handleUserInfo(data) {
-    currentUser = { id: data.user_id, username: data.username };
-}
 
-
-
-
-// Display a notification in the UI
+    // Display a notification in the UI
     function showNotification(message, sender) {
         if (!notificationContainer) return;
 
@@ -264,63 +409,6 @@ function handleUserInfo(data) {
         }, 3000);
     }
 
-    function updateUserList() {
-        const filteredUsers = filterUsers();
-        const userListContainer = document.getElementById('user-list-container');
-        userListContainer.innerHTML = ''; // Clear the list
-        filteredUsers.forEach(user => userListContainer.appendChild(createUserItem(user)));
-    }
-
-    function filterUsers() {
-        let filteredUsers = users.filter(user => user.username !== currentUser?.username);
-
-        const searchQuery = searchInput.value.toLowerCase();
-        if (searchQuery) {
-            filteredUsers = filteredUsers.filter(user => user.username.toLowerCase().includes(searchQuery));
-        }
-
-        if (filterUnreadCheckbox.checked) {
-            filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
-        }
-
-        return filteredUsers;
-    }
-
-    // Create a user item for the user list
-    function createUserItem(user) {
-        const userItem = document.createElement('div');
-        userItem.className = 'user-item';
-
-        const unreadCount = unreadMessages[user.username] || 0;
-        const statusColor = user.isActive = "green";
-
-        const lastMessageData = lastMessages[user.username] || {};
-        const lastMessage = lastMessageData.message || "";
-        const lastMessageTimestamp = lastMessageData.timestamp || "";
-
-        userItem.innerHTML = `
-            <div class="user-avatar-container">
-                <img src="${user.profileImage}" alt="${user.username}" class="user-avatar">
-                <span class="active-status" style="background-color: ${statusColor};"></span>
-            </div>
-            <div class="user-info">
-                <div class="username">${user.username}</div>
-                ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
-            </div>
-            <div class="user-meta">
-                ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
-                ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
-            </div>
-        `;
-
-        userItem.onclick = () => {
-            startChat(user.username, user.id); 
-            userItem.classList.add('active');
-            updateUserList(); 
-        };
-
-        return userItem;
-    }
 
     // Handle incoming chat messages
     function handleChatMessage(event) {
@@ -357,97 +445,71 @@ function handleUserInfo(data) {
         socket.onopen = () => {
             console.log('Chat WebSocket connected');
             socket.send(JSON.stringify({ type: "user_id", user_id: selectedChatUserId }));
-            updateUserList(); // Update the user list UI
-            scrollToBottom(); // Scroll to the bottom of the chat
+            updateUserList(); 
+            scrollToBottom(); 
         };
 
         socket.onmessage = handleChatMessage;
-        socket.onclose = () => setTimeout(connectChatSocket, 5000); // Reconnect on close
+        socket.onclose = () => setTimeout(connectChatSocket, 5000); 
         socket.onerror = (error) => {
             console.error('Chat WebSocket Error:', error);
             socket.close();
         };
     }
 
-// Function to reset the chat box when no user is selected
-function resetChatBox() {
-    document.getElementById("messages").innerHTML = ""; 
-    document.getElementById("chat-header").classList.remove("active"); 
-    document.getElementById("input-area").style.display = "none"; 
-    document.getElementById("select-user-prompt").style.display = "flex"; 
-    selectedChatUser = null;
-    selectedChatUserId = null;
-  
-    // Close the existing socket if any
-    if (socket) {
-      socket.close();
-      socket = null;
-    }
+    // Function to reset the chat box when no user is selected
+    function resetChatBox() {
+        document.getElementById("messages").innerHTML = ""; 
+        document.getElementById("chat-header").classList.remove("active"); 
+        document.getElementById("input-area").style.display = "none"; 
+        document.getElementById("select-user-prompt").style.display = "flex"; 
+        selectedChatUser = null;
+        selectedChatUserId = null;
+    
+        // Close the existing socket if any
+        if (socket) {
+        socket.close();
+        socket = null;
+        }
 
-    // Hide the profile section and reset chat box width
-    const profileSection = document.getElementById("profile-section");
-    const chatBox = document.getElementById("chat-box");
-    profileSection.classList.add("hidden");
-    chatBox.classList.remove("w-1/2");
-    chatBox.classList.add("w-3/4");
-}
-// Start a chat with a specific user
-function startChat(chatWith, chatWithId) {
-    selectedChatUser = chatWith;
-    selectedChatUserId = chatWithId;
-    console.log(`Starting user: ${selectedChatUser} (ID: ${selectedChatUserId})`);
-  
-    // Clear the messages container
-    document.getElementById("messages").innerHTML = "";
-  
-    // Update the chat header
-    document.getElementById("chat-with-user").textContent = chatWith;
-    document.getElementById("chat-header").classList.add("active"); // Show chat header
-  
-    // Show the input area and hide the "Select User" prompt
-    document.getElementById("input-area").style.display = "flex";
-    document.getElementById("select-user-prompt").style.display = "none";
-  
-    // Reset unread messages for the selected user
-    unreadMessages[chatWith] = 0;
-  
-    // Update the user list
-    updateUserList();
-  
-    // Close the existing socket if any and connect to the new chat socket
-    if (socket) socket.close();
-    connectChatSocket();
-
-    // Update the profile section with the selected user's info
-    document.getElementById("profile-user-name").textContent = chatWith;
-
-    // Ensure the profile section is hidden by default when starting a chat
-    const profileSection = document.getElementById("profile-section");
-    const chatBox = document.getElementById("chat-box");
-    profileSection.classList.add("hidden");
-    chatBox.classList.remove("w-1/2");
-    chatBox.classList.add("w-3/4");
-}
-
-// Function to toggle the profile section visibility
-function toggleProfileSection() {
-    console.log("Menu button clicked!"); // Debugging
-    const profileSection = document.getElementById("profile-section");
-    const chatBox = document.getElementById("chat-box");
-
-    if (profileSection.classList.contains("hidden")) {
-        profileSection.classList.remove("hidden");
-        chatBox.classList.remove("w-3/4");
-        chatBox.classList.add("w-1/2");
-    } else {
+        // Hide the profile section and reset chat box width
+        const profileSection = document.getElementById("profile-section");
+        const chatBox = document.getElementById("chat-box");
         profileSection.classList.add("hidden");
         chatBox.classList.remove("w-1/2");
         chatBox.classList.add("w-3/4");
     }
-}
 
-// Add event listener to the menu button
-document.getElementById("menu-button").addEventListener("click", toggleProfileSection);
+
+    // Start a chat with a specific user
+    function startChat(chatWith, chatWithId) {
+        selectedChatUser = chatWith;
+        selectedChatUserId = chatWithId;
+        console.log(`Starting user: ${selectedChatUser} (ID: ${selectedChatUserId})`);
+    
+        document.getElementById("messages").innerHTML = "";
+    
+        document.getElementById("chat-with-user").textContent = chatWith;
+        document.getElementById("chat-header").classList.add("active");
+    
+        document.getElementById("input-area").style.display = "flex";
+        document.getElementById("select-user-prompt").style.display = "none";
+    
+        unreadMessages[chatWith] = 0;
+    
+        updateUserList();
+    
+        if (socket) socket.close();
+        connectChatSocket();
+
+        document.getElementById("profile-user-name").textContent = chatWith;
+
+        const profileSection = document.getElementById("profile-section");
+        const chatBox = document.getElementById("chat-box");
+        profileSection.classList.add("hidden");
+        chatBox.classList.remove("w-1/2");
+        chatBox.classList.add("w-3/4");
+    }
 
 
     // Render a chat message in the UI
@@ -539,5 +601,8 @@ document.getElementById("menu-button").addEventListener("click", toggleProfileSe
                 sendButton.disabled = false;
             }, 1000);
         }
-    }
+    }    
+    
+    
+    initializeUserList();
 };

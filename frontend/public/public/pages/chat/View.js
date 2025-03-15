@@ -58,8 +58,11 @@ export default /*html*/ `
             </div>
             <div class="profile-buttons">
                 <button id="block-button" class="profile-button" aria-label="Block user">
-                    <i class="fas fa-ban"></i> Block
-                </button>
+                            <i class="fas fa-ban"></i> Block
+                        </button>
+                        <button id="unblock-button" class="profile-button" aria-label="Unblock user" style="display: none;">
+                            <i class="fas fa-unlock-alt"></i> Unblock
+                        </button>
                 <button id="invite-to-game-button" class="profile-button" aria-label="Invite to game">
                     <i class="fas fa-gamepad"></i> Invite to Game
                 </button>
