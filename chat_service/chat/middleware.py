@@ -1,17 +1,18 @@
+import httpx
+import jwt
 from django.contrib.auth import get_user_model
 from channels.middleware import BaseMiddleware
 from urllib.parse import parse_qs
 from channels.exceptions import DenyConnection
-import jwt
 from channels.db import database_sync_to_async
 import uuid
 import logging
 from django.contrib.auth.models import User
 from .models import Profile  
-import uuid
-import logging
 
 logger = logging.getLogger(__name__)
+
+JWK_URL = "http://auth-service/api/auth/jwk/"
 
 class JWTMiddleware(BaseMiddleware):
     """
@@ -31,8 +32,21 @@ class JWTMiddleware(BaseMiddleware):
 
             logger.info(f"Token received: {token}")
 
+            # Fetch JWK data (public key) for token verification
+            jwk_data = await self.get_jwk_data()
+            if not jwk_data:
+                logger.error("Unable to retrieve JWK from Auth Service")
+                raise DenyConnection("Unable to retrieve JWK from Auth Service")
+
+            public_key = jwk_data.get("public_key")
+            algorithm = jwk_data.get("algorithm")
+            if not public_key or not algorithm:
+                logger.error("Invalid JWK data")
+                raise DenyConnection("Invalid JWK data")
+
+            # Verify the JWT token using the public key
             try:
-                payload = jwt.decode(token, options={"verify_signature": False})
+                payload = jwt.decode(token, key=public_key, algorithms=[algorithm])
                 logger.info(f"Token payload: {payload}")
 
                 if payload.get("typ") != "Bearer":
@@ -91,4 +105,19 @@ class JWTMiddleware(BaseMiddleware):
 
         except Exception as e:
             logger.error(f"Error fetching or creating user: {e}")
+            return None
+
+    async def get_jwk_data(self):
+        """
+        Retrieve the JWK (public key + algorithm) from the Auth Service.
+        Handles timeouts/unreachable hosts. Returns None on error.
+        """
+        try:
+            timeout = httpx.Timeout(5.0, read=5.0)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.get(JWK_URL)
+                response.raise_for_status()
+                return response.json()
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError, httpx.HTTPStatusError):
+            logger.error("Failed to fetch JWK data from Auth Service")
             return None

@@ -52,10 +52,11 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('chat-redis', 6379)],
+            "hosts": [('redis', 6379)],
         }, 
     },
 }
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -116,13 +117,14 @@ WSGI_APPLICATION = 'django_chat.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'users_db'),
-        'USER': os.getenv('POSTGRES_USER', 'auth_admin'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123456'),
-        'HOST': os.getenv('DB_HOST', 'users-db'),  
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': 'chat_database',
+        'USER': 'chat_user',
+        'PASSWORD': 'user123',
+        'HOST': 'postgres',
+        'PORT': '5432',
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
