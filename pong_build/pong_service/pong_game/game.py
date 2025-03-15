@@ -53,8 +53,8 @@ class GameState:
             'top' : 4.3,
             'bottom' : -4.3
         }
-        self.speed = 3.5
-        self.ballSpeed = 0.07
+        self.speed = 5
+        self.ballSpeed = 0.01
         self.winner = None
         self.gameover = False
 
@@ -153,14 +153,14 @@ class GameState:
                 )
                 self.ball_velocity.normalize().multiply_scalar(min(current_speed * 1.2, 0.2))
 
-    def update_player_move(self, player_id, action, delta):
+    def update_player_move(self, player_id, action):
 
         paddle = self.paddle1_position if player_id == self.players[0] else self.paddle2_position
 
         if action == 'KeyW' and paddle.z - 1.3 > self.wall_bounds['bottom']:
-            paddle.z -= self.speed * 1/60
+            paddle.z -= self.speed * 0.016
         elif action == 'KeyS' and paddle.z + 1.3 < self.wall_bounds['top']:
-            paddle.z += self.speed * 1/60
+            paddle.z += self.speed * 0.016
 
     def reset_ball(self):
         self.ball_position = Vector3(0, 0, 0)

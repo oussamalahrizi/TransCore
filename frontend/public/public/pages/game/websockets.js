@@ -97,7 +97,7 @@ function updateGameState(state) {
     app.gameInfo.p2Score = state.p2Score;
     updateScoreDisplay();
   }
-  rendergame(app.gameInfo);
+  // rendergame(app.gameInfo);
 }
 
 async function handleGameEnd(winner) {

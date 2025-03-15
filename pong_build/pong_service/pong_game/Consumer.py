@@ -6,7 +6,7 @@ from asgiref.sync import sync_to_async
 from channels.layers import get_channel_layer
 from channels.db import aclose_old_connections
 from channels.exceptions import StopConsumer
-
+import time
 
 game_task : dict[str, asyncio.Task] = {}
 
@@ -17,13 +17,19 @@ layer = get_channel_layer()
 
 async def broadcast(Game : GameState):
     try:
+        lasttime = time.time()
         while not Game.gameover:
-            Game.updateBall()
+            current = time.time()
+            delta = current - lasttime
+            if delta < 1/120:
+                await asyncio.sleep(1/120 - delta)
+            # Game.updateBall()
             await layer.group_send(Game.game_id, {
                 'type' : 'gameState',
                 'state' : json.dumps(Game.to_dict())
             })
-            await asyncio.sleep(1/60)
+            lasttime = current
+            # await asyncio.sleep(0.0016)
         # print("broad cast over")
     except asyncio.CancelledError:
         # print("task was cancelled success")
@@ -36,7 +42,6 @@ async def broadcast(Game : GameState):
         })
 
 
-
 class Consumer(AsyncWebsocketConsumer):
     
     cache = Game_Cache
@@ -45,6 +50,7 @@ class Consumer(AsyncWebsocketConsumer):
     user_id = None
     players_ids = []
 
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -120,11 +126,8 @@ class Consumer(AsyncWebsocketConsumer):
         key = data.get('key')
         player_id = data.get('player_id')
         instance =  Game.get(self.game_id)
-        delta = float(data.get('delta'))
-        # position1 = float(data.get('position1'))
-        # position2 = float(data.get('position2'))
-        instance.update_player_move(player_id, key, delta)
-        print("data: ", json.loads(text_data))
+        instance.update_player_move(player_id, key)
+        # print("data: ", json.loads(text_data))
         # pass
     
 
