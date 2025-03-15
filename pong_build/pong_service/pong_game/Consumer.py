@@ -21,15 +21,14 @@ async def broadcast(Game : GameState):
         while not Game.gameover:
             current = time.time()
             delta = current - lasttime
-            if delta < 1/120:
-                await asyncio.sleep(1/120 - delta)
-            # Game.updateBall()
+            Game.updateBall()
             await layer.group_send(Game.game_id, {
                 'type' : 'gameState',
                 'state' : json.dumps(Game.to_dict())
             })
+            if delta < 0.0083:
+                await asyncio.sleep(0.0083 - delta) # 120 frames
             lasttime = current
-            # await asyncio.sleep(0.0016)
         # print("broad cast over")
     except asyncio.CancelledError:
         # print("task was cancelled success")

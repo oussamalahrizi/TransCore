@@ -413,9 +413,8 @@ function singlePlayerMode(gameInfo) {
 const SetupScene = (gameContainer, gameInfo) => {
   gameInfo.scene = new THREE.Scene();
   gameInfo.renderer = new THREE.WebGLRenderer({
-    antialias: true, // Enables anti-aliasing
-    powerPreference: "high-performance", // Optimizes rendering performance
-    precision : 'highp'
+    antialias: false,
+    powerPreference: "high-performance",
   });
   gameContainer.appendChild(gameInfo.renderer.domElement);
   gameInfo.renderer.domElement.setAttribute("tabindex", "0");
@@ -588,14 +587,12 @@ export default async () => {
   }
 
   function animate() {
-    const now = performance.now();
 
     if (keystate["KeyW"])
-          send("KeyW");
-        else if (keystate["KeyS"])
-          send("KeyS");
-        rendergame(gameInfo);
-        gameInfo.lastFrame = now;
+      send("KeyW");
+    else if (keystate["KeyS"])
+      send("KeyS");
+    rendergame(gameInfo);
     updateFPS()
     requestAnimationFrame(animate);
   }
@@ -617,5 +614,6 @@ export default async () => {
     if (gameInfo.ws) {
       gameInfo.ws.close();
     }
+    clearInterval(timer)
   };
 };
