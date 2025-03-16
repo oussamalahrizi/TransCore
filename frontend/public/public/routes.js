@@ -9,6 +9,8 @@ import Settings from "./pages/Settings/index.js"
 import Verify from "./pages/verify-2fa/index.js"
 import Game from "./pages/game/index.js"
 import Chat from "./pages/chat/index.js"
+import Profile from "./pages/profile/index.js"
+import matchmaking from "./pages/matchmaking/index.js"
 
 export default {
 	"/auth/verify-2fa" : {
@@ -26,12 +28,20 @@ export default {
 	"/": {
 		view: Home.View,
 		controller: Home.Controller,
-		auth_guard: true
+		auth_guard: true,
+		style : "/public/styles/home.css"
 	},
 	"/profile": {
-		view: Home.View,
-		controller: Home.Controller,
-		auth_guard: true
+		view: Profile.View,
+		controller: Profile.Controller,
+		auth_guard: true,
+		style: "/public/styles/profile.css"
+	},
+	"/matchmaking": {
+		view: matchmaking.View,
+		controller: matchmaking.Controller,
+		auth_guard: true,
+		style: "/public/styles/matchmaking.css"
 	},
 	"/auth/google_callback": {
 		view: AuthGoogle.View,

@@ -1,4 +1,4 @@
-export default /*html*/ `
+export const home =  /*html*/ `
 	<div id="home-view" class="flex flex-col items-center w-full min-h-screen justify-center ">
 		<h1 class="text-6xl font-bold mb-2">
 			Home
@@ -38,4 +38,33 @@ export default /*html*/ `
 		<a href="/non-existing" class="py-2 px-4 m-1 rounded-lg text-white font-semibold bg-blue-500 hover:bg-blue-600 transition duration-300">go to non-existing</a>
 		<a href="/settings" class="py-2 px-4 m-1 rounded-lg text-white font-semibold bg-blue-500 hover:bg-blue-600 transition duration-300">Settings</a>
 	</div>
+`
+
+export default /*html*/ `
+
+<div id="home-view" class="home-container">
+	<div class="inner-container">
+		<div class="left-side">
+			<div class="tournament-view">
+				<div class="content">
+					<h1 class="tournament-title">Ultimate Ping Pang Worlds 2025<h1>
+					<p class="notes" >Ping pong tournament made to make you experience an intense gameplay with a lot of rewards, dont miss it!<p>
+					<div class="button-div">
+						<button id="join-tournament-btn" class="join">Join now<button>
+					</div>
+				</div>
+			</div>
+			<div class="leaderboard-preview">
+			</div>
+		</div>
+		<div class="right-side">
+			<div class="header-div">
+				<h1 class="titles">Friends list<h1>
+			</div class="friend-list-container">
+				<ul class="friend-list">
+				</ul>
+		</div>
+	</div>
+</div>
+
 `
