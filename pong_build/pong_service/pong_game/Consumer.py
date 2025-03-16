@@ -87,7 +87,8 @@ class Consumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         # in case middleware error
-        print(f"{self.username} disconnected, code : ", code)
+        if self.username:
+            print(f"{self.username} disconnected, code : ", code)
         if code == 4001:
             return
         self.cache.remove_player(self.user_id, self.game_id)
