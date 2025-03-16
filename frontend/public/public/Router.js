@@ -45,6 +45,8 @@ const handleAuthGuard = async (content, route) => {
 	}
 };
 
+let cleanup = null
+
 const Router = {
 	init : async () => {
 		// listen for url changes in history events
@@ -100,7 +102,8 @@ const Router = {
 		*/
 
 		// injecting content in the root div and running the controller
-		
+		if (typeof cleanup === "function")
+			cleanup()
 		const root = document.getElementById("root")
 		while (root.firstChild)
 			root.removeChild(root.firstChild);
@@ -115,7 +118,8 @@ const Router = {
 			}
 		}
 		root.innerHTML = content.view;
-		content.controller && content.controller()
+		if(content.controller)
+			cleanup = content.controller()
 		// disabling default behavior for anchor tags
 		const navbar = document.getElementById("nav-bar-outer")
 		if (render === "/game")
