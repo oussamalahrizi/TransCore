@@ -31,6 +31,8 @@ class ProxyUser:
 		return self.__dict__
 
 
+from pprint import pprint
+
 class JWTAuthentication(authentication.BaseAuthentication):
 
 	cache = _Cache
@@ -60,6 +62,9 @@ class JWTAuthentication(authentication.BaseAuthentication):
 	
 	async def get_user_data(self, user_id):
 		try:
+			user_data = self.cache.get_user_data(user_id)
+			if user_data:
+				return user_data["auth"]
 			timeout = httpx.Timeout(5.0, read=5.0)
 			async with httpx.AsyncClient(timeout=timeout) as client:
 				response = await client.get(f"{USER_INFO}{user_id}/")
@@ -114,7 +119,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
 				even tho the token is valid; its gonna expire soon anyway and cant be refreshed
 				since the refresh token associated is blacklisted
 			"""
-			print('user data : ', user)
 			sess_id = payload.get("session_state")
 			sess_cache = await self.get_session_state(user["id"])
 			if sess_cache is None:
