@@ -1,12 +1,22 @@
 from redis import asyncio as aioredis, Redis
 import json
 from channels.layers import get_channel_layer
+
+from pprint import pprint
+
 class Cache:
     """
         for api interaction with other services
         only store user data along side with his presence status
     """
 
+    """
+        user id : {
+            auth : {},
+            status : online
+            group_count : 1
+        }
+    """
 
     def __init__(self):
         self.redis = Redis(host="api-redis", decode_responses=True, retry_on_timeout=True)
@@ -115,10 +125,13 @@ class Cache:
 
     def append_user_friends(self, user_id : str, friend_id : str):
         user_data = self.get_user_data(user_id)
-        if not user_data.get('friends'):
-            user_data['friends'] = [friend_id]
+        auth_data = user_data.get('auth')
+        if not auth_data.get('friends'):
+            auth_data['friends'] = [friend_id]
         else:
-            user_data['friends'].append(friend_id)
-        self.set_user_data(user_id, user_data, 'auth')
+            auth_data['friends'].append(friend_id)
+        user_data["auth"] = auth_data
+        self.redis.set(user_id, json.dumps(user_data))
+        
 
 _Cache = Cache()

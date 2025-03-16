@@ -102,7 +102,7 @@ const fetch_friends = async (view) => {
         }
         console.log(data);
         const pre = view.querySelector("#friends-data")
-        pre.innerText = JSON.stringify(data)
+        pre.innerText = JSON.stringify(data, null, 2)
     } catch (error) {
         if (error instanceof app.utils.AuthError)
         {
