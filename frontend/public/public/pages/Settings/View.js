@@ -1,4 +1,3 @@
-
 export default /*html*/ `
     <div id="settings" class="settings-container">
         <div id=settings-container class="main-div">
@@ -43,29 +42,29 @@ export default /*html*/ `
             <div id="acc-security" class="security">
                 <h4 class="headers">Account security</h4>
                 <p class="notes">Manage your security settings</p>
-                <div class="section">
-                    <div class="logout">
+                <div id="twofa-section" class="section">
+                    <div class="logout" aria-label="Toggle Two-Factor Authentication" title="Click to toggle 2FA">
                         <p class="twofa-title">Enable 2FA</p>
                         <p class="twofanote">This will show a modal to complet 2fa steps</p>
                     </div>
                     <button id="toggle-2fa" class="enable" type="button">Enable</button>
                 </div>
-                <div class="section">
-                    <div class="logout">
+                <div id="blocklist-section" class="section">
+                    <div class="logout" aria-label="View Blocklist" title="Click to view your blocklist">
                         <h1 class="twofa-title">Blocklist<h1>
                         <p class="twofanote">list of all users that you have blocked</p>
                     </div>
                     <button id="blocklist-btn" type="button">
-                        <img src="/public/assets/white-arrow.svg">
+                        <img src="/public/assets/white-arrow.png">
                     </button>
                 </div>
-                <div class="section">
-                    <div class="logout">
+                <div id="logout-section" class="section">
+                    <div class="logout" aria-label="Log out" title="Click to log out">
                         <h1 class="logout-title">Log out<h1>
                         <p class="logout-small">This will take you back to login page</p>
                     </div>
                     <button id="logout-btn" type="button">
-                        <img src="/public/assets/red-arrow.svg">
+                        <img src="/public/assets/red-arrow.png">
                     </button>
                 </div>
             </div>

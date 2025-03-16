@@ -1,0 +1,528 @@
+.matchmaking-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    background-color: #161616;
+    min-height: 100vh;
+    color: #f3f4f6;
+    position: relative;
+}
+
+.matchmaking-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.matchmaking-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+}
+
+.status-text {
+    font-size: 1.2rem;
+    color: #94979C;
+}
+
+.status-text.searching {
+    color: #ff9800;
+}
+
+.status-text.matched {
+    color: #4CAF50;
+}
+
+.players-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 2rem;
+}
+
+.player-card {
+    background: linear-gradient(to top, #1D1D1D, rgba(22, 112, 73, 0.39));
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    width: 30%;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.user-card {
+    transform: perspective(800px) rotateY(10deg);
+}
+
+.opponent-card {
+    transform: perspective(800px) rotateY(-10deg);
+}
+
+.versus-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #029F5B;
+    width: 10%;
+    padding: 0 2rem;
+}
+
+.player-avatar {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.player-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #029F5B;
+}
+
+.online-status {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #4CAF50;
+    border: 2px solid #1D1D1D;
+}
+
+.player-info {
+    width: 100%;
+    text-align: center;
+}
+
+.player-info h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+}
+
+.player-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #94979C;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.player-status {
+    padding: 0.5rem 1rem;
+    background-color: #029F5B;
+    color: white;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.player-status.searching {
+    background-color: #ff9800;
+}
+
+.matchmaking-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.action-button {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 2rem;
+    border: none;
+    background-color: #029F5B;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.action-button:hover {
+    background-color: #057343;
+}
+
+.action-button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.cancel-button {
+    background-color: #E22626;
+}
+
+.cancel-button:hover {
+    background-color: #c41e1e;
+}
+
+.invite-button {
+    background-color: #006400;
+}
+
+.invite-button:hover {
+    background-color: #004d00;
+}
+
+/* Overlay styles */
+.invite-friend-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.invite-friend-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.invite-friend-panel {
+    background: linear-gradient(to top, #1D1D1D, rgba(22, 112, 73, 0.39));
+    border-radius: 0.75rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.invite-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: rgba(22, 112, 73, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.invite-panel-header h2 {
+    margin: 0;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.close-panel {
+    background: none;
+    border: none;
+    color: #94979C;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-panel:hover {
+    color: white;
+}
+
+.invite-panel-content {
+    padding: 1.5rem;
+}
+
+#friend-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: #1D1D1D;
+    border: 1px solid #2D2D2D;
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.friends-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.friend-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: rgba(45, 45, 45, 0.5);
+    transition: background-color 0.2s;
+}
+
+.friend-item:hover {
+    background-color: rgba(45, 45, 45, 0.8);
+}
+
+.friend-item-avatar {
+    position: relative;
+    margin-right: 1rem;
+}
+
+.friend-item-avatar img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.friend-status-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #1D1D1D;
+}
+
+.friend-status-dot.online {
+    background-color: #4CAF50;
+}
+
+.friend-status-dot.offline {
+    background-color: #9E9E9E;
+}
+
+.friend-status-dot.in-game {
+    background-color: #2196F3;
+}
+
+.friend-item-info {
+    flex-grow: 1;
+}
+
+.friend-item-name {
+    display: block;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.friend-item-status {
+    display: block;
+    font-size: 0.8rem;
+    color: #94979C;
+}
+
+.invite-btn {
+    padding: 0.5rem 1rem;
+    background-color: #029F5B;
+    color: white;
+    border: none;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.invite-btn:hover {
+    background-color: #057343;
+}
+
+.friend-item.offline .invite-btn {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+/* Waiting overlay */
+.waiting-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.waiting-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.waiting-panel {
+    background: linear-gradient(to top, #1D1D1D, rgba(22, 112, 73, 0.39));
+    border-radius: 0.75rem;
+    padding: 2rem;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.waiting-panel h2 {
+    color: white;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    width: 100%;
+}
+
+.waiting-panel p {
+    color: #E0E0E0;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    width: 100%;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #029F5B;
+    animation: spin 1s ease-in-out infinite;
+    margin: 0 auto 1.5rem auto;
+    display: block;
+}
+
+.waiting-panel .action-button {
+    margin-top: 0.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.start-match-button {
+    background-color: #FF5722;
+}
+
+.start-match-button:hover {
+    background-color: #E64A19;
+}
+
+.ready-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: #333;
+    border: 2px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.ready-indicator.active {
+    background-color: #4CAF50;
+    border-color: #81C784;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.ready-checkmark {
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.ready-indicator.active .ready-checkmark {
+    opacity: 1;
+}
+
+.kick-button {
+    position: absolute;
+    top: 10px;
+    right: 45px;
+    background-color: #E22626;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s, transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.kick-button:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    background-color: #c41e1e;
+}
+
+.kick-icon {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.kick-text {
+    display: none;
+}
+
+.ready-button {
+    background-color: #4CAF50;
+}
+
+.ready-button:hover {
+    background-color: #3d8b40;
+}
+
+.ready-button.ready-active {
+    background-color: #E22626;
+}
+
+.ready-button.ready-active:hover {
+    background-color: #c41e1e;
+}
+
+.player-card {
+    position: relative;
+} 
