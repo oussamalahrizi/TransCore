@@ -373,9 +373,7 @@ function updateBall(gameInfo) {
 //     }
 //   } else {
 //     if (
-//       ball.position.z > 0 &&
-//       paddle2.position.z <= ball.position.z &&
-//       paddle2.position.z + 1.25 < wall1.position.z
+//       ball.position.z > 0 && paddle2.position.z <= ball.position.z && paddle2.position.z + 1.25 < wall1.position.z
 //     ) {
 //       paddle2.position.z += gameInfo.speed;
 //     } else if (
@@ -481,6 +479,7 @@ const SetupScene = (gameContainer, gameInfo) => {
 
 export default async () => {
   app.gameInfo = {
+    ...app.gameInfo,
     scene: null,
     renderer: null,
     camera: null,
@@ -502,7 +501,9 @@ export default async () => {
     useComposer: false,
     lastFrame: 0,
     player_id: null,
+    SinglePlayer: false,
   };
+  app.gameInfo;
   if (!app.websocket) await sleep(0.5);
   const gameInfo = app.gameInfo;
   const gameContainer = document.getElementById("game");
@@ -515,33 +516,19 @@ export default async () => {
   SetupScene(gameContainer, gameInfo);
 
   // Setup WebSocket connection
-
-  gameInfo.ws = setupWebSocket();
+  console.log(app.gameInfo.SinglePlayer);
+  let url = "";
+  if (app.gameInfo.SinglePlayer) url = "/api/game/pong-single/ws/";
+  else url = "/api/game/pong/ws/";
+  gameInfo.ws = setupWebSocket(url);
   if (!gameInfo.ws) return;
 
   const keystate = [];
 
   gameInfo.renderer.domElement.addEventListener("keydown", (event) => {
-    // if (event.code === "Numpad0") {
-    //   gameInfo.ws.send(
-    //     JSON.stringify({
-    //       type: "toggle_single_player",
-    //     })
-    //   );
-    // }s
     // if (event.code === "ShiftRight") {
     //   gameInfo.useComposer = !gameInfo.useComposer;
     // }
-    // if (event.code === "Enter") {
-    //   gameInfo.ws.send(
-    //     JSON.stringify({
-    //       type: "toggle_pause",
-    //     })
-    //   );
-    //   return;
-    // }
-
-    // Send paddle movement commands
     keystate[event.code] = true;
   });
 
@@ -568,18 +555,18 @@ export default async () => {
 
   function updateFPS() {
     frameCount++;
-    
+
     const currentTime = performance.now();
     const deltaTime = currentTime - lastTime;
-    
+
     // Update FPS calculation approximately once per second
     if (deltaTime >= 1000) {
       // Calculate frames per second
       fps = Math.round((frameCount * 1000) / deltaTime);
-      
+
       // Display FPS
-      console.log(`${fps} FPS`)
-      
+      console.log(`${fps} FPS`);
+
       // Reset counters
       frameCount = 0;
       lastTime = currentTime;
@@ -587,16 +574,13 @@ export default async () => {
   }
 
   function animate() {
-
-    if (keystate["KeyW"])
-      send("KeyW");
-    else if (keystate["KeyS"])
-      send("KeyS");
+    if (keystate["KeyW"]) send("KeyW");
+    else if (keystate["KeyS"]) send("KeyS");
     rendergame(gameInfo);
-    updateFPS()
+    updateFPS();
     requestAnimationFrame(animate);
   }
-  animate()
+  animate();
   // Handle window resize
   window.addEventListener("resize", () => {
     if (gameInfo.camera && gameInfo.renderer) {
@@ -614,6 +598,6 @@ export default async () => {
     if (gameInfo.ws) {
       gameInfo.ws.close();
     }
-    clearInterval(timer)
+    clearInterval(timer);
   };
 };

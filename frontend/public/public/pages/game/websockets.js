@@ -11,7 +11,9 @@ import {
 
 // import { rendergame } from "./Controller.js";
 
-export const setupWebSocket = () => {
+// const seupremote
+
+export const setupWebSocket = (url) => {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   console.log(protocol);
   const gameId = new URLSearchParams(window.location.search).get("game_id");
@@ -30,7 +32,7 @@ export const setupWebSocket = () => {
     return null;
   }
 
-  const wsUrl = `${protocol}//${window.location.host}/api/game/pong/ws/?game_id=${gameId}&token=${token}`;
+  const wsUrl = `${protocol}//${window.location.host}${url}?game_id=${gameId}&token=${token}`;
 
   console.log("socket url", wsUrl);
 
