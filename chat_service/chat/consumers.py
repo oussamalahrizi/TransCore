@@ -1,6 +1,5 @@
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Message, User, Profile
 import json
@@ -10,28 +9,47 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 import uuid
 from .models import Notification
-from django.core.cache import cache  
+from django.core.cache import cache
+
+from django_chat.asgi import publishers
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
+
+    def __init__(self, *args, **kwargs):
+        self.notification = publishers[0]
+        super().__init__(*args, **kwargs)
+    
     async def connect(self):
         self.chat_with_user = self.scope['url_route']['kwargs']['username']
         self.user = self.scope.get("user")
 
-        if not self.user or isinstance(self.user, AnonymousUser):
-            logger.warning("Unauthorized WebSocket connection attempt.")
-            await self.close(code=403)
+        if self.scope.get("error_message"):
+            self.close(code=4001, reason=self.scope.get("error_message"))
             return
 
         self.chat_with_user_id = None
+        to_user = 123
         await self.accept()
-
+        data = {
+                'type' : "send_notification",
+                'data' : {
+                    'user_id' : str(to_user),
+                    'message' : 'Test message'
+                }
+            }
+        await self.notification.publish(data)
         # Send user information (name and ID) to the frontend
         await self.send_user_info()
 
         await self.send_log_message(f"Attempting to connect to a chat room.")
+
+
+    async def disconnect(self, code):
+        if code == 4001:
+            return
 
     async def send_user_info(self):
         """
@@ -218,102 +236,104 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.error(f"Profile with UUID {user_id} not found.")
             return None
 
-class NotificationConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.user = self.scope.get("user")
+# class NotificationConsumer(AsyncWebsocketConsumer):
+#     async def connect(self):
+#         self.user = self.scope.get("user")
 
-        if not self.user or isinstance(self.user, AnonymousUser):
-            await self.close(code=403)
-            logger.warning("Unauthorized WebSocket connection attempt.")
-            return
+#         # if not self.user or isinstance(self.user, AnonymousUser):
+#         #     await self.close(code=403)
+#         #     logger.warning("Unauthorized WebSocket connection attempt.")
+#         #     return
 
-        self.notification_group_name = f"notifications_{self.user.id}"
+#         self.notification_group_name = f"notifications_{self.user.id}"
 
-        # Add user to active users list
-        await self.add_active_user(self.user.id)
+#         # Add user to active users list
+#         await self.add_active_user(self.user.id)
 
-        await self.channel_layer.group_add(
-            self.notification_group_name,
-            self.channel_name
-        )
+#         await self.channel_layer.group_add(
+#             self.notification_group_name,
+#             self.channel_name
+#         )
 
-        await self.accept()
-        logger.info(f"WebSocket connection established for user {self.user.id} in notification group {self.notification_group_name}")
+#         await self.accept()
+#         logger.info(f"WebSocket connection established for user {self.user.id} in notification group {self.notification_group_name}")
 
-        # Send any stored notifications
-        await self.send_unread_notifications(self.user.id)
+#         # Send any stored notifications
+#         await self.send_unread_notifications(self.user.id)
 
-    async def disconnect(self, close_code):
-        if self.user and not isinstance(self.user, AnonymousUser):
-            await self.channel_layer.group_discard(
-                self.notification_group_name,
-                self.channel_name
-            )
+#     async def disconnect(self, close_code):
+#         if close_code == 4001:
+#             return
+#         # if self.user and not isinstance(self.user, AnonymousUser):
+#         #     await self.channel_layer.group_discard(
+#         #         self.notification_group_name,
+#         #         self.channel_name
+#         #     )
 
-            # Remove user from active list
-            await self.remove_active_user(self.user.id)
+#             # Remove user from active list
+#             await self.remove_active_user(self.user.id)
 
-            logger.info(f"Notification WebSocket connection closed for user {self.user.id}")
+#             logger.info(f"Notification WebSocket connection closed for user {self.user.id}")
 
-    async def send_notification(self, event):
-        message = event["message"]
-        recipient_id = event["recipient_id"]
+#     async def send_notification(self, event):
+#         message = event["message"]
+#         recipient_id = event["recipient_id"]
 
-        if await self.is_user_active(recipient_id):
-            # Send notification immediately if the user is active
-            await self.send(text_data=json.dumps({
-                "type": "notification",
-                "message": message
-            }))
-        else:
-            # Store notification for later
-            await self.store_notification(recipient_id, message)
+#         if await self.is_user_active(recipient_id):
+#             # Send notification immediately if the user is active
+#             await self.send(text_data=json.dumps({
+#                 "type": "notification",
+#                 "message": message
+#             }))
+#         else:
+#             # Store notification for later
+#             await self.store_notification(recipient_id, message)
 
-    @sync_to_async
-    def store_notification(self, user_id, message):
-        """ Store notifications for offline users. """
-        Notification.objects.create(user_id=user_id, message=message)
-        logger.info(f"Stored notification for user {user_id}: {message}")
+#     @sync_to_async
+#     def store_notification(self, user_id, message):
+#         """ Store notifications for offline users. """
+#         Notification.objects.create(user_id=user_id, message=message)
+#         logger.info(f"Stored notification for user {user_id}: {message}")
 
 
-    @sync_to_async
-    def send_unread_notifications(self, user_id):
-        """ Send unread notifications when the user connects. """
-        notifications = Notification.objects.filter(user_id=user_id, read=False)
-        logger.debug(f"Unread notifications for user {user_id}: {notifications}")
-        unread_count = 0
-        for notification in notifications:
-            try:
-                self.send(text_data=json.dumps({
-                    "type": "notification",
-                    "message": notification.message
-                }))
-                notification.read = True
-                notification.save()
-                unread_count += 1
-            except Exception as e:
-                logger.error(f"Error sending notification for user {user_id}: {e}")
-        logger.info(f"Sent {unread_count} unread notifications to user {user_id}")
+#     @sync_to_async
+#     def send_unread_notifications(self, user_id):
+#         """ Send unread notifications when the user connects. """
+#         notifications = Notification.objects.filter(user_id=user_id, read=False)
+#         logger.debug(f"Unread notifications for user {user_id}: {notifications}")
+#         unread_count = 0
+#         for notification in notifications:
+#             try:
+#                 self.send(text_data=json.dumps({
+#                     "type": "notification",
+#                     "message": notification.message
+#                 }))
+#                 notification.read = True
+#                 notification.save()
+#                 unread_count += 1
+#             except Exception as e:
+#                 logger.error(f"Error sending notification for user {user_id}: {e}")
+#         logger.info(f"Sent {unread_count} unread notifications to user {user_id}")
 
-    @sync_to_async
-    def add_active_user(self, user_id):
-        """ Mark user as active using cache (Redis). """
-        active_users = cache.get("active_users", set())
-        active_users.add(user_id)
-        cache.set("active_users", active_users, timeout=3600)
-        logger.info(f"User {user_id} marked as active. Active users: {active_users}")
+#     @sync_to_async
+#     def add_active_user(self, user_id):
+#         """ Mark user as active using cache (Redis). """
+#         active_users = cache.get("active_users", set())
+#         active_users.add(user_id)
+#         cache.set("active_users", active_users, timeout=3600)
+#         logger.info(f"User {user_id} marked as active. Active users: {active_users}")
 
-    @sync_to_async
-    def remove_active_user(self, user_id):
-        """ Remove user from active list. """
-        active_users = cache.get("active_users", set())
-        active_users.discard(user_id)
-        cache.set("active_users", active_users, timeout=3600)
-        logger.info(f"User {user_id} removed from active list.")
+#     @sync_to_async
+#     def remove_active_user(self, user_id):
+#         """ Remove user from active list. """
+#         active_users = cache.get("active_users", set())
+#         active_users.discard(user_id)
+#         cache.set("active_users", active_users, timeout=3600)
+#         logger.info(f"User {user_id} removed from active list.")
 
-    @sync_to_async
-    def is_user_active(self, user_id):
-        """ Check if user is active. """
-        active_users = cache.get("active_users", set())
-        logger.debug(f"Active users: {active_users}")
-        return user_id in active_users
+#     @sync_to_async
+#     def is_user_active(self, user_id):
+#         """ Check if user is active. """
+#         active_users = cache.get("active_users", set())
+#         logger.debug(f"Active users: {active_users}")
+#         return user_id in active_users

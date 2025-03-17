@@ -42,6 +42,9 @@ const handleAuthGuard = async (content, route) => {
 				return route
 			return '/auth/login'
 		}
+		console.log(error);
+		
+		return "/500"
 	}
 };
 
@@ -105,9 +108,11 @@ const Router = {
 		if (typeof cleanup === "function")
 			cleanup()
 		const root = document.getElementById("root")
+		console.log(route);
+		
 		while (root.firstChild)
 			root.removeChild(root.firstChild);
-		if (content.style)
+		if (content?.style)
 		{				
 			const loaded = await app.utils.LoadCss(content.style)
 			if (!loaded)

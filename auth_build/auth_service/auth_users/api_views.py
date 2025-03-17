@@ -64,3 +64,10 @@ class GetFriendsAPI(APIView):
     
     def permission_denied(self, request, message=None, code=None):
         raise PermissionDenied(detail="Host not allowed.")
+
+
+# class GetRelation(APIView):
+
+#     def get(self, request, *args, **kwargs):
+#         # /relation/?user1=oussama&user2=nissring
+#         # --> friends

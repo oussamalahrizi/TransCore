@@ -32,18 +32,12 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
     'rest_framework',
-    'channels',
-    'corsheaders',
     'chat',
+    'channels'
 ]
 
 ASGI_APPLICATION = 'django_chat.asgi.application'
@@ -52,7 +46,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis', 6379)],
+            "hosts": [('chat-redis', 6379)],
         }, 
     },
 }
@@ -65,12 +59,7 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'chat.middleware.JWTMiddleware',  # Custom middleware for JWT authentication
 ]
@@ -120,7 +109,7 @@ DATABASES = {
         'NAME': 'chat_database',
         'USER': 'chat_user',
         'PASSWORD': 'user123',
-        'HOST': 'postgres',
+        'HOST': 'chat-db',
         'PORT': '5432',
     }
 }

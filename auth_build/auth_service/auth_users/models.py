@@ -160,10 +160,6 @@ class FriendsManager(models.Manager):
     def get_blocked_users(self, from_user):
         return self.filter(from_user=from_user, status='blocked').all().values_list('to_user', flat=True)
     
-    def accept_friend(self, user):
-        received = self.filter(to_user=user, status='pending').all()
-        print(received)
-    
 class Friends(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="from_user")
