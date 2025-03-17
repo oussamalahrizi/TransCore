@@ -157,6 +157,43 @@ class CheckSentFriend(APIView):
         # data = [req.to_user.username for req in sent_requests]
         return Response(sent_requests)
 
+class ChangeFriend(APIView):
+
+
+    actions = {
+        'accept' : accept,
+
+    }
+    class ChangeSerializer(serializers.Serializer):
+        
+        change = serializers.CharField(max_length=10, required=True)
+
+        def validate_change(self, value):
+            choices = ['accept', 'reject', 'unfriend', 'block']
+            if value not in choices:
+                raise serializers.ValidationError("invalid relation change value")
+            return value
+    
+    def accept(self, relation : Friends):
+        pass
+    def reject(self, relation : Friends):
+        pass
+
+    def unfriend(self, relation : Friends):
+        pass
+    def block(self, relation : Friends):
+        pass
+
+    def make_action(self, action : str):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.ChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.data
+
+
+
+
 
 class BanSelf(APIView):
     permission_classes = [IsAuthenticated]
