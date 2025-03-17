@@ -21,14 +21,14 @@ export const setupWebSocket = (url) => {
 
   if (!gameId) {
     console.error("No game ID provided");
-    showError("No game ID provided");
+    app.utils.showToast("No game ID provided");
     return null;
   }
 
   const token = app.utils.getCookie("access_token"); // Assuming you store JWT in localStorage
   if (!token) {
     console.error("No authentication token found");
-    showError("Please log in to play");
+    app.utils.showToast("Please log in to play");
     return null;
   }
 

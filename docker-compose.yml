@@ -10,36 +10,7 @@ volumes:
       type: "none"
       device: "./images"
 
-  users-data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/users_data"
-  api-data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/api_data"
-  auth_redis_data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/auth_redis_data"
-  api_redis_data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/api_redis_data"
-  redisinsight_data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/redisinsight"
+
   frontend-volume:
     driver: local
     driver_opts:
@@ -58,13 +29,6 @@ volumes:
       o: "bind"
       type: "none"
       device: "./api_build/api_service"
-
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-
-  portainer_data:
 
   match-code:
     driver: local
@@ -102,36 +66,24 @@ services:
       - "auth-service-code:/var/app"
       - "images:/var/images"
 
-
-
-
-
-
-  redis:
+  chat-redis:
     image: redis:latest
     container_name: redis
-    ports:
-      - "6380:6379"
     networks:
       - TransNetwork
-    volumes:
-      - redis_data:/data
 
-  postgres:
+  chat-db:
     image: postgres:13
     container_name: postgres
     networks:
       - TransNetwork
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_DB: chat_database
       POSTGRES_USER: chat_user
       POSTGRES_PASSWORD: user123
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - /var/lib/postgresql/data
 
   chat-service:
     build: "chat_service/."
@@ -141,19 +93,12 @@ services:
     networks:
       - TransNetwork
     depends_on:
-      - redis
-      - postgres
+      - chat-redis
+      - chat-db
     env_file:
       - "./chat_service/.env"
     volumes:
       - ./chat_service:/chatco
-
-
-
-
-
-
-
 
   api-service:
     build: "api_build/."
@@ -267,7 +212,7 @@ services:
     image: portainer/portainer-ce:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - portainer_data:/data
+      - /data
     ports:
       - 9000:9000
 

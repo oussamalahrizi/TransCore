@@ -2,6 +2,7 @@ import Home from "./pages/Home/index.js";
 import authLogin from "./pages/AuthLogin/index.js";
 import authRegister from "./pages/AuthRegister/index.js";
 import NotFound from "./pages/NotFound/index.js";
+import ServerError from "./pages/ServerError/index.js";
 import AuthGoogle from "./pages/GoogleCallback/index.js";
 import AuthIntra from "./pages/IntraCallback/index.js";
 import PasswordReset from "./pages/PasswordReset/index.js";
@@ -22,6 +23,12 @@ export default {
   },
   "/404": {
     view: NotFound.View,
+    controller: null,
+    auth_guard: false,
+    style: "/public/styles/notfound.css",
+  },
+  "/500": {
+    view: ServerError.View,
     controller: null,
     auth_guard: false,
     style: "/public/styles/notfound.css",
