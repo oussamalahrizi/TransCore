@@ -501,7 +501,7 @@ export default async () => {
     useComposer: false,
     lastFrame: 0,
     player_id: null,
-    SinglePlayer: false,
+    SinglePlayer: true,
   };
   app.gameInfo;
   if (!app.websocket) await sleep(0.5);

@@ -1,5 +1,5 @@
 from .Consumer import Consumer
-from Singleconsumer import SingleConsumer
+from .Singleconsumer import SingleConsumer
 from django.urls import path
 
 from rest_framework.views import APIView

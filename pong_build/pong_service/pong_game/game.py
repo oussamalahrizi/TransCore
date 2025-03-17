@@ -54,7 +54,7 @@ class GameState:
             'bottom' : -4.3
         }
         self.speed = 5
-        self.ballSpeed = 0.008
+        self.ballSpeed = 0.02
         self.winner = None
         self.gameover = False
         self.singleplayer = False
@@ -110,13 +110,17 @@ class GameState:
         if self.ball_position.x <= -7.5 or self.ball_position.x >= 7.5:
             if self.ball_position.x < 0:
                 self.p2_score += 1
-                if self.p2_score > 4:
+                if self.p2_score > 1:
                     self.gameover = True
-                    self.winner = self.players[1]
+                    if not self.singleplayer:
+                        self.winner = self.players[1]
+                    else:
+                        self.winner = "loser"
+                        
 
             else:
                 self.p1_score += 1
-                if self.p1_score > 4:
+                if self.p1_score > 1:
                     self.gameover = True
                     self.winner = self.players[0]
     
@@ -175,6 +179,6 @@ class GameState:
         paddle = self.paddle2_position
         ball = self.ball_position
         if ball.z > 0 and paddle.z <= ball.z and paddle.z + 1.25 < self.wall_bounds['top']:
-            paddle += self.speed * 0.016
-        elif ball < 0 and paddle.z >= ball.z and paddle.z - 1.25 > self.wall_bounds['bottom']:
-            paddle -= self.speed * 0.016
+            paddle.z += self.speed * 0.016
+        elif ball.z < 0 and paddle.z >= ball.z and paddle.z - 1.25 > self.wall_bounds['bottom']:
+            paddle.z -= self.speed * 0.016

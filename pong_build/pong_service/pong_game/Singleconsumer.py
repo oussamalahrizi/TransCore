@@ -1,9 +1,9 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
-from .game import GameState
+from core.asgi import GameState
 from .utils import Game_Cache
 from asgiref.sync import sync_to_async
-from .Consumer import game_task, Game
+from core.asgi import game_task, Game
 import time
 from channels.layers import get_channel_layer
 
@@ -11,13 +11,14 @@ layer = get_channel_layer()
 async def broadcastSingle(instance: GameState):
     try:
         lasttime = time.time()
+        print("gameover ? :", instance.gameover)
         while not instance.gameover:
             current = time.time()
             delta = current - lasttime
             # if bdelta >= 1:
-            instance.updateBot()
                 # bdelta = current - lasttime
             instance.updateBall()
+            instance.updateBot()
             await layer.group_send(instance.game_id, {
                 'type' : 'gameState',
                 'state' : json.dumps(instance.to_dict())
@@ -26,12 +27,12 @@ async def broadcastSingle(instance: GameState):
                 await asyncio.sleep(0.0083 - delta) # 120 frames
             lasttime = current
 
-    except:
-        pass
+    except Exception as e:
+        print(e)
     finally:
-        await layer.group_send(Game.game_id, {
+        await layer.group_send(instance.game_id, {
             'type' : 'game_end',
-            'winner' : Game.winner
+            'winner' : instance.winner
         })
 
 
@@ -65,6 +66,7 @@ class SingleConsumer(AsyncWebsocketConsumer):
             await self.close(code=4003, reason="You are already in game")
             return
         await self.channel_layer.group_add(self.game_id, self.channel_name)
+        self.players_ids = self.cache.get_players(self.game_id)
         await self.send(json.dumps({
             'type' : 'waiting',
             'player_id' : self.user_id
@@ -77,6 +79,8 @@ class SingleConsumer(AsyncWebsocketConsumer):
             print(f"{self.username} disconnected, code : ", code)
         if code == 4001:
             return
+        winner = self.cache.get_players(self.game_id)
+        Game.get(self.game_id).winner = winner
         self.cache.remove_player(self.user_id, self.game_id)
         if code == 4003:
             return
@@ -84,7 +88,10 @@ class SingleConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.game_id, self.channel_name)
         print(f"{self.username} removed")
         if Game.get(self.game_id):
-            Game.get(self.game_id).winner = self.cache.get_players(self.game_id)[0]
+            # players = self.cache.get_player_count(self.game_id);
+            # print(players)
+            Game.get(self.game_id).winner = winner
+            print(Game.get(self.game_id).winner)
             Game.get(self.game_id).gameover = True
             game_task.get(self.game_id).cancel()
             game_task.pop(self.game_id)
