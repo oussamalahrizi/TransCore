@@ -1,6 +1,6 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
-from .game import GameState
+from core.asgi import GameState
 from .utils import Game_Cache
 from asgiref.sync import sync_to_async
 from channels.layers import get_channel_layer
@@ -8,9 +8,9 @@ from channels.db import aclose_old_connections
 from channels.exceptions import StopConsumer
 import time
 
-game_task : dict[str, asyncio.Task] = {}
+# game_task : dict[str, asyncio.Task] = {}
 
-Game : dict[str, GameState] = {}
+# Game : dict[str, GameState] = {}
 
 layer = get_channel_layer()
 
