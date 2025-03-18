@@ -1,10 +1,6 @@
 export default () => {
     // Retrieve the access token from cookies
-    const token = app.utils.getCookie("access_token");
-    if (!token) {
-        console.error("Access token not found in cookies.");
-        return;
-    }
+    
 
     // DOM Elements
     const chatBox = document.getElementById('chat-box');
@@ -24,7 +20,7 @@ export default () => {
     let selectedChatUserId = null; 
     let socket = null; 
     let notificationSocket = null; 
-    let unreadMessages = {};
+    let unreadMessages = {}
     let users = [];
     let lastMessages = {}; 
     let blockedUsers = new Set(JSON.parse(localStorage.getItem('blockedUsers')) || []);
@@ -114,6 +110,7 @@ export default () => {
 
     // Fetch users from the server
     function fetchUsers() {
+        const token = app.utils.getCookie("access_token");
         fetch("http://localhost:8000/api/auth/users/?format=json", {
             headers: { "Authorization": `Bearer ${token}` },
         })
@@ -255,8 +252,6 @@ window.addEventListener('load', () => {
 });
     
 
-
-
     function pollForNewUsers() {
         setInterval(fetchUsers, 5000);
     }
@@ -300,96 +295,96 @@ window.addEventListener('load', () => {
         return rawUsername; 
     }
 
-    // Connect to the notification WebSocket
-    function connectNotificationSocket() {
-        if (notificationSocket?.readyState === WebSocket.OPEN) return;
+    // // Connect to the notification WebSocket
+    // function connectNotificationSocket() {
+    //     if (notificationSocket?.readyState === WebSocket.OPEN) return;
 
-        notificationSocket = new WebSocket(`ws://localhost:8000/api/chat/ws/notifications/?token=${token}`);
+    //     notificationSocket = new WebSocket(`ws://localhost:8000/api/chat/ws/notifications/?token=${token}`);
 
-        notificationSocket.onopen = () => {
-            console.log('Notification WebSocket connected');
-            notificationSocket.send(JSON.stringify({ type: "fetch_notifications" }));
-        };
+    //     notificationSocket.onopen = () => {
+    //         console.log('Notification WebSocket connected');
+    //         notificationSocket.send(JSON.stringify({ type: "fetch_notifications" }));
+    //     };
 
-        notificationSocket.onmessage = handleNotificationMessage;
-        notificationSocket.onclose = () => setTimeout(connectNotificationSocket, 5000); 
-        notificationSocket.onerror = (error) => {
-            console.error('Notification WebSocket Error:', error);
-            notificationSocket.close();
-        };
-    }
+    //     notificationSocket.onmessage = handleNotificationMessage;
+    //     notificationSocket.onclose = () => setTimeout(connectNotificationSocket, 5000); 
+    //     notificationSocket.onerror = (error) => {
+    //         console.error('Notification WebSocket Error:', error);
+    //         notificationSocket.close();
+    //     };
+    // }
 
-    // Handle incoming notification messages
-    async function handleNotificationMessage(event) {
-        try {
-            const data = JSON.parse(event.data);
-            console.log("Notification received:", data);
+    // // Handle incoming notification messages
+    // async function handleNotificationMessage(event) {
+    //     try {
+    //         const data = JSON.parse(event.data);
+    //         console.log("Notification received:", data);
 
-            if (data.type === "user_info") {
-                handleUserInfo(data); 
-            } else if (data.type === "notification") {
-                handleNewNotification(data); 
-            } else if (data.type === "active_notifications") {
-                handleActiveNotifications(data); 
-            }
-        } catch (error) {
-            console.error("Error parsing notification message:", error);
-        }
-    }
+    //         if (data.type === "user_info") {
+    //             handleUserInfo(data); 
+    //         } else if (data.type === "notification") {
+    //             handleNewNotification(data); 
+    //         } else if (data.type === "active_notifications") {
+    //             handleActiveNotifications(data); 
+    //         }
+    //     } catch (error) {
+    //         console.error("Error parsing notification message:", error);
+    //     }
+    // }
 
-    // Handle new notifications
-    async function handleNewNotification(data) {
-        const rawUsername = extractUsername(data.username, data.message);
-        if (rawUsername) {
-            const realUsername = await fetchRealUsername(rawUsername);
-            const messageContent = data.message.replace(`New message from ${rawUsername}:`, "").trim();
-            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    // // Handle new notifications
+    // async function handleNewNotification(data) {
+    //     const rawUsername = extractUsername(data.username, data.message);
+    //     if (rawUsername) {
+    //         const realUsername = await fetchRealUsername(rawUsername);
+    //         const messageContent = data.message.replace(`New message from ${rawUsername}:`, "").trim();
+    //         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
-            lastMessages[realUsername] = { message: messageContent, timestamp };
-            if (realUsername !== selectedChatUser) {
-                unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
-            }
+    //         lastMessages[realUsername] = { message: messageContent, timestamp };
+    //         if (realUsername !== selectedChatUser) {
+    //             unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
+    //         }
 
-            showNotification(messageContent, realUsername); 
-            playNotificationSound();
-            updateUserList(); 
-        } else {
-            console.warn("Could not extract username from the message:", data.message);
-            showNotification(data.message, "Unknown User"); 
-            playNotificationSound();
-        }
-    }
+    //         showNotification(messageContent, realUsername); 
+    //         playNotificationSound();
+    //         updateUserList(); 
+    //     } else {
+    //         console.warn("Could not extract username from the message:", data.message);
+    //         showNotification(data.message, "Unknown User"); 
+    //         playNotificationSound();
+    //     }
+    // }
 
-    // Handle active notifications
-    async function handleActiveNotifications(data) {
-        for (const notification of data.notifications || []) {
-            const rawUsername = extractUsername(notification.sender, notification.message);
-            if (rawUsername) {
-                const realUsername = await fetchRealUsername(rawUsername);
-                const messageContent = notification.message.replace(`New message from ${rawUsername}:`, "").trim();
-                const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    // // Handle active notifications
+    // async function handleActiveNotifications(data) {
+    //     for (const notification of data.notifications || []) {
+    //         const rawUsername = extractUsername(notification.sender, notification.message);
+    //         if (rawUsername) {
+    //             const realUsername = await fetchRealUsername(rawUsername);
+    //             const messageContent = notification.message.replace(`New message from ${rawUsername}:`, "").trim();
+    //             const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
-                lastMessages[realUsername] = { message: messageContent, timestamp };
-                if (realUsername !== selectedChatUser) {
-                    unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
-                }
-                showNotification(messageContent, realUsername);
-                playNotificationSound(); 
-            } else {
-                console.warn("Could not extract username from the message:", notification.message);
-                showNotification(notification.message, "Unknown User"); 
-                playNotificationSound();
-            }
-        }
-        updateUserList(); 
-    }
+    //             lastMessages[realUsername] = { message: messageContent, timestamp };
+    //             if (realUsername !== selectedChatUser) {
+    //                 unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
+    //             }
+    //             showNotification(messageContent, realUsername);
+    //             playNotificationSound(); 
+    //         } else {
+    //             console.warn("Could not extract username from the message:", notification.message);
+    //             showNotification(notification.message, "Unknown User"); 
+    //             playNotificationSound();
+    //         }
+    //     }
+    //     updateUserList(); 
+    // }
 
-    // Extract username from a message
-    function extractUsername(username, message) {
-        if (username) return username;
-        const messageMatch = message?.match(/New message from (\S+):/);
-        return messageMatch?.[1];
-    }
+    // // Extract username from a message
+    // function extractUsername(username, message) {
+    //     if (username) return username;
+    //     const messageMatch = message?.match(/New message from (\S+):/);
+    //     return messageMatch?.[1];
+    // }
 
 
 
@@ -473,7 +468,7 @@ window.addEventListener('load', () => {
     // Connect to the chat WebSocket
     function connectChatSocket() {
         if (socket?.readyState === WebSocket.OPEN) return;
-
+        const token = app.utils.getCookie("access_token");
         socket = new WebSocket(`ws://localhost:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
 
         socket.onopen = () => {
@@ -484,7 +479,11 @@ window.addEventListener('load', () => {
         };
 
         socket.onmessage = handleChatMessage;
-        socket.onclose = () => setTimeout(connectChatSocket, 5000); 
+        socket.onclose = (e) => {
+            app.utils.showToast(e.reason)
+            console.log(e.reason);
+            
+        }
         socket.onerror = (error) => {
             console.error('Chat WebSocket Error:', error);
             socket.close();
@@ -591,11 +590,11 @@ window.addEventListener('load', () => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // Play a notification sound
-    function playNotificationSound() {
-        // const audio = new Audio('notification.mp3');
-        // audio.play().catch(error => console.error("Error playing notification sound:", error));
-    }
+    // // Play a notification sound
+    // function playNotificationSound() {
+    //     // const audio = new Audio('notification.mp3');
+    //     // audio.play().catch(error => console.error("Error playing notification sound:", error));
+    // }
 
     // Set up event listeners for UI interactions
     function setupEventListeners() {

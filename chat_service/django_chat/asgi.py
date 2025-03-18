@@ -1,17 +1,16 @@
 import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
 import asyncio
 from .rabbitms_publisher import NotificationPub, RabbitmqBase
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_chat.settings')
 
-from chat.routing import websocket_urlpatterns
 
 notifspub = NotificationPub(host="rabbitmq", port=5672, queue_name="notifications")
 
 publishers : list[RabbitmqBase] = [notifspub]
+
 async def lifespan(scope, receive, send):
     if scope['type'] == 'lifespan':
         tasks = []
@@ -35,11 +34,15 @@ async def lifespan(scope, receive, send):
 
 app = get_asgi_application()
 
+from chat.routing import websocket_urlpatterns
+from chat.middleware import JWTMiddleware
+
 application = ProtocolTypeRouter({
     "http": app,
-    "websocket": AuthMiddlewareStack(  
+    "websocket": JWTMiddleware(  
         URLRouter(
             websocket_urlpatterns
         )
     ),
+    'lifespan' : lifespan
 })

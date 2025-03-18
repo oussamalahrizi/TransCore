@@ -27,4 +27,4 @@ ENTRYPOINT [ "/bin/init.sh" ]
 
 # CMD ["bash", "-c", "sleep 4 && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8001"]
 
-CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8001" ,"django_chat.asgi:application", "--reload"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8001" ,"django_chat.asgi:application", "--lifespan", "on",  "--reload"]
