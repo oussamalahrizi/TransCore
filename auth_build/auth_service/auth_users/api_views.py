@@ -1,6 +1,7 @@
 
 from .models import User, Friends
 
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import serializers
 from rest_framework.request import Request
@@ -66,8 +67,36 @@ class GetFriendsAPI(APIView):
         raise PermissionDenied(detail="Host not allowed.")
 
 
-# class GetRelation(APIView):
+class GetRelation(APIView):
 
-#     def get(self, request, *args, **kwargs):
-#         # /relation/?user1=oussama&user2=nissring
-#         # --> friends
+    permission_classes = [IsAllowedHost]
+    authentication_classes = []
+
+    def get_relation(self, user, other):
+        try:
+            relation = self.filter(from_user=user, to_user=other).get()
+            return relation
+        except Friends.DoesNotExist:
+            try:
+                relation = self.filter(from_user=other, to_user=user).get()
+                return relation
+            except Friends.DoesNotExist:
+                return None
+
+    def get(self, request : Request, *args, **kwargs):
+        try:
+            current = request.query_params.get("user1")
+            other = request.query_params.get("user2")
+            current = get_object_or_404(User, username=current)
+            other = get_object_or_404(User, username=other)
+            relation : Friends = self.get_relation(current, other)
+            if not relation or relation.status != "accepted" :
+                return Response(status=status.HTTP_404_NOT_FOUND, 
+                                data={"detail" : "User are not friends."})
+            return Response(data={"detail" : "User are friends."})
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND,
+                            data={"detail" : f"User Not Found.{kwargs.get("username")}"})
+
+    def permission_denied(self, request, message=None, code=None):
+        raise PermissionDenied(detail="Host not allowed.")

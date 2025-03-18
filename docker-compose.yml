@@ -37,7 +37,7 @@ volumes:
 
 services:
   users-db:
-    image: postgres
+    image: postgres:17
     container_name: users_db
     networks:
       - TransNetwork
@@ -71,7 +71,7 @@ services:
       - TransNetwork
 
   chat-db:
-    image: postgres:13
+    image: postgres:17
     container_name: chat_db
     networks:
       - TransNetwork
@@ -98,6 +98,16 @@ services:
     volumes:
       - ./chat_service:/chatco
 
+  api-db:
+    image: postgres:17
+    container_name: api_db
+    networks:
+      - TransNetwork
+    volumes:
+      - /var/lib/postgresql/data
+    env_file:
+      - "api_build/build/conf/.env"
+
   api-service:
     build: "api_build/."
     pull_policy: build
@@ -114,15 +124,6 @@ services:
     env_file:
       - "api_build/build/conf/.env"
 
-  api-db:
-    image: postgres
-    container_name: api_db
-    networks:
-      - TransNetwork
-    volumes:
-      - /var/lib/postgresql/data
-    env_file:
-      - "api_build/build/conf/.env"
 
   api-redis:
     build: "api_redis"

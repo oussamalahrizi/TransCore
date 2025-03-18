@@ -159,6 +159,10 @@ class CheckSentFriend(APIView):
 
 class ChangeFriend(APIView):
 
+    {
+        'change' : 'accept'
+    }
+
     permission_classes = [IsAuthenticated]
 
     actions = {}
@@ -221,7 +225,6 @@ class ChangeFriend(APIView):
         return "Success"
         
     def block(self, user : User, other : User):
-        
         relation : Friends = self.get_relation(user, other)
         if relation:
             if relation.status == "blocked":
@@ -244,11 +247,19 @@ class ChangeFriend(APIView):
     def post(self, request : Request, *args, **kwargs):
         try:
             user : User = request.user
+            other = kwargs.get('username')
+            if not other:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : 'Missing Username'})
+            other : User = get_object_or_404(User, username=other)
             serializer = self.ChangeSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             change = serializer.data["change"]
             res = self.actions[change](user)
             return Response(status=status.HTTP_201_CREATED, data={"detail" : res})
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND,
+                            data={"detail" : f'User Not Found, {kwargs.get("username")}'})
         except Exception as e:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : str(e)})
 
