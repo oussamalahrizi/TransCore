@@ -44,7 +44,7 @@ export const setupWebSocket = (url) => {
 
   ws.onclose = (event) => {
     console.log("Disconnected from game server:", event.reason);
-    app.utils.showToast(event.reason);
+    if (window.location.pathname === "/game") app.utils.showToast(event.reason);
   };
 
   ws.onerror = (error) => {
@@ -112,6 +112,7 @@ async function handleGameEnd(winner) {
   gameContainer.appendChild(view);
   await sleep(2);
   view.remove();
+  app.Router.navigate("/");
 }
 
 function updateScoreDisplay() {
@@ -190,6 +191,9 @@ export const onmessage = (event) => {
       console.log("send init data : ", data.user_id);
       app.gameInfo.player_id = data.user_id;
       break;
+    // case "redirect":
+    //   window.location.href = data.url;
+    //   break;
     case "error":
       console.error("Game error:", message);
       break;

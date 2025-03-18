@@ -95,6 +95,7 @@ class SingleConsumer(AsyncWebsocketConsumer):
             Game.get(self.game_id).gameover = True
             game_task.get(self.game_id).cancel()
             game_task.pop(self.game_id)
+
         if game_task.get(self.game_id):
             game_task.pop(self.game_id)
         if Game.get(self.game_id):

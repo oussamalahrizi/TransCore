@@ -501,7 +501,7 @@ export default async () => {
     useComposer: false,
     lastFrame: 0,
     player_id: null,
-    SinglePlayer: true,
+    // SinglePlayer: true,
   };
   app.gameInfo;
   if (!app.websocket) await sleep(0.5);
@@ -516,9 +516,9 @@ export default async () => {
   SetupScene(gameContainer, gameInfo);
 
   // Setup WebSocket connection
-  console.log(app.gameInfo.SinglePlayer);
+  console.log("singleplayer status : ", app.gameInfo.Singleplayer);
   let url = "";
-  if (app.gameInfo.SinglePlayer) url = "/api/game/pong-single/ws/";
+  if (app.gameInfo.Singleplayer) url = "/api/game/pong-single/ws/";
   else url = "/api/game/pong/ws/";
   gameInfo.ws = setupWebSocket(url);
   if (!gameInfo.ws) return;

@@ -1,19 +1,19 @@
 export default () => {
   // Game mode variables - all initially set to false;
   app.gameInfo = {
-    SinglePlayer: false,
+    Singleplayer: false,
     Multiplayer: false,
     Tournament: false,
   };
 
   // URLs for each game mode
   const SINGLEPLAYER_URL = "/game?game_id=123"; // Replace with your actual URL
-  const MULTIPLAYER_URL = "/game?game_id=123"; // Replace with your actual URL
+  const MULTIPLAYER_URL = "/"; // Replace with your actual URL
   const TOURNAMENT_URL = "/game?game_id=123"; // Replace with your actual URL
 
   // Function to reset all mode variables
   function resetModes() {
-    app.gameInfo.SinglePlayer = false;
+    app.gameInfo.Singleplayer = false;
     app.gameInfo.Multiplayer = false;
     app.gameInfo.Tournament = false;
 
@@ -34,13 +34,14 @@ export default () => {
 
     switch (cardNumber) {
       case 1:
-        app.gameInfo.SinglePlayer = true;
+        app.gameInfo.Singleplayer = true;
         redirectURL = SINGLEPLAYER_URL;
         console.log("Singleplayer mode selected");
         break;
       case 2:
         app.gameInfo.Multiplayer = true;
         redirectURL = MULTIPLAYER_URL;
+        app.utils.showToast("You are now in queue", "orange");
         console.log("Multiplayer mode selected");
         break;
       case 3:
@@ -57,9 +58,7 @@ export default () => {
     selectedCard.classList.add("selected");
 
     // Add visual feedback before redirecting
-    setTimeout(() => {
-      window.location.href = redirectURL;
-    }, 500); // Redirect after 500ms to show the selection effect
+    app.Router.navigate(redirectURL);
   }
 
   // Wait for the DOM to be fully loaded before adding event listeners
