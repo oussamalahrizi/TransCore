@@ -142,26 +142,36 @@ class SendFriendRequest(APIView):
 class CheckReceivedFriend(APIView):
     permission_classes = [IsAuthenticated]
 
+    class ReceivedFriendSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ['id', 'username', 'icon_url']
+
     def get(self, request: Request, *args, **kwargs):
         current_user = request.user
         data = Friends.objects.get_received_reqs(current_user)
-        return Response(data)
+        ser = self.ReceivedFriendSerializer(data, many=True)
+        ser.is_valid(raise_exception=True)
+        return Response(ser.data)
 
 
 class CheckSentFriend(APIView):
     permission_classes = [IsAuthenticated]
 
+    class SentFriendSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ['id', 'username', 'icon_url']
+
     def get(self, request : Request, *args, **kwargs):
         current_user = request.user
         sent_requests = Friends.objects.get_sent_reqs(current_user)
-        # data = [req.to_user.username for req in sent_requests]
-        return Response(sent_requests)
+        ser = self.SentFriendSerializer(sent_requests, many=True)
+        ser.is_valid(raise_exception=True)
+        return Response(ser.data)
 
 class ChangeFriend(APIView):
 
-    {
-        'change' : 'accept'
-    }
 
     permission_classes = [IsAuthenticated]
 

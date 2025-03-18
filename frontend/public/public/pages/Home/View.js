@@ -61,6 +61,14 @@ export default /*html*/ `
 			<div class="header-div">
 				<h1 class="titles">Friends list<h1>
 			</div class="friend-list-container">
+			<div class="svgs-div">
+				<button id="add-friend-btn">
+					<img src="/public/assets/addfriend.svg" height="24" width="24">
+				</button>
+				<button id="received-btn">
+					<img src="/public/assets/recieved.svg" height="24" width="24">
+				</button>
+			</div class="friend-list-container">
 				<ul class="friend-list">
 				</ul>
 		</div>
