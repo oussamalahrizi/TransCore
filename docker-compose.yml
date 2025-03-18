@@ -9,8 +9,6 @@ volumes:
       o: "bind"
       type: "none"
       device: "./images"
-
-
   frontend-volume:
     driver: local
     driver_opts:
@@ -74,10 +72,9 @@ services:
 
   chat-db:
     image: postgres:13
-    container_name: postgres
+    container_name: chat_db
     networks:
       - TransNetwork
-    restart: unless-stopped
     environment:
       POSTGRES_DB: chat_database
       POSTGRES_USER: chat_user
@@ -95,6 +92,7 @@ services:
     depends_on:
       - chat-redis
       - chat-db
+      - rabbitmq
     env_file:
       - "./chat_service/.env"
     volumes:
