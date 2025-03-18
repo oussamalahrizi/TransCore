@@ -1,77 +1,55 @@
-import httpx
 import jwt
-from django.contrib.auth import get_user_model
-from channels.middleware import BaseMiddleware
-from urllib.parse import parse_qs
-from channels.exceptions import DenyConnection
+import httpx
 import logging
+from channels.middleware import BaseMiddleware
+from channels.exceptions import DenyConnection
+from urllib.parse import parse_qs
 
 logger = logging.getLogger(__name__)
 
+# URLs 
 JWK_URL = "http://auth-service/api/auth/jwk/"
-AUTH_USER = "http://auth-service/api/auth/internal/userid"
-AUTH_USERNAME = "http://auth-service/api/auth/internal/username" 
+USERINFO_URL = "http://api-service/api/main/user/"
+USER_BY_USERNAME_URL = "http://api-service/api/main/user/username/"
 
 class JWTMiddleware(BaseMiddleware):
-    """
-    Custom JWT middleware that accepts JWTs and authenticates users.
-    """
-
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: dict, receive, send):
         try:
-            
             query_string = scope.get("query_string", b"").decode("utf-8")
             query_params = parse_qs(query_string)
-            token_list = query_params.get("token")
+            token = query_params.get("token")
 
-            if not token_list or not token_list[0]:
-                logger.error("Missing token in query")
+            if not token:
                 raise DenyConnection("Missing token in query")
+            token = token[0]
 
-            token = token_list[0]
-            logger.info(f"Token received: {token}")
-
-            # Fetch JWK data (public key) for token verification
-            jwk_data = await self.get_jwk_data()
-            if not jwk_data or not isinstance(jwk_data, dict):
-                logger.error("Invalid JWK response")
+            jwk_data = await self.fetch_jwk_data()
+            if not jwk_data:
                 raise DenyConnection("Unable to retrieve JWK from Auth Service")
 
             public_key = jwk_data.get("public_key")
             algorithm = jwk_data.get("algorithm")
             if not public_key or not algorithm:
-                logger.error("Invalid JWK data format")
-                raise DenyConnection("Invalid JWK data")
+                raise DenyConnection("Invalid JWK data format")
 
-            # Verify the JWT token
             try:
                 payload = jwt.decode(token, key=public_key, algorithms=[algorithm])
-                logger.info(f"Token payload: {payload}")
-
                 if payload.get("typ") != "Bearer":
-                    logger.error("Invalid token type")
                     raise jwt.InvalidTokenError("Invalid token type")
             except jwt.ExpiredSignatureError:
-                logger.error("Token expired")
                 raise DenyConnection("Token expired")
             except jwt.InvalidTokenError as e:
-                logger.error(f"Invalid token: {e}")
-                raise DenyConnection("Invalid token")
+                raise DenyConnection(f"Invalid token: {e}")
 
             user_id = payload.get("user_id")
             if not user_id:
-                logger.error("Missing user_id in token payload")
-                raise DenyConnection("Invalid payload structure")
+                raise DenyConnection("Missing user_id in token payload")
 
-            # Retrieve user data
-            user_data = await self.get_user_data(user_id)
-            scope["user"] = user_data  # Store user info in scope
+            user_info = await self.fetch_user_info(user_id)
+            if not user_info:
+                raise DenyConnection("Failed to fetch authenticated user info")
 
-            # Fetch additional data for recipient
-            username = user_data.get("username")
-            if username:
-                recipient_data = await self.get_user_data_by_username(username)
-                scope["other"] = recipient_data  # Store additional data in scope
+            scope["user"] = user_info
 
         except DenyConnection as e:
             logger.error(f"Connection denied: {e}")
@@ -79,51 +57,66 @@ class JWTMiddleware(BaseMiddleware):
 
         return await super().__call__(scope, receive, send)
 
-    async def get_jwk_data(self):
+  
+
+    async def fetch_jwk_data(self):
         """
         Retrieve the JWK (public key + algorithm) from the Auth Service.
+        Handles timeouts/unreachable hosts. Returns None on error.
         """
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            timeout = httpx.Timeout(5.0, read=5.0)
+            async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(JWK_URL)
                 response.raise_for_status()
                 return response.json()
-        except (httpx.HTTPError, httpx.TimeoutException) as e:
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError) as e:
             logger.error(f"Failed to fetch JWK data: {e}")
             return None
 
-    async def get_user_data(self, user_id: str):
+    async def fetch_user_info(self, user_id: str):
         """
-        Retrieve user data from the Auth Service.
+        Retrieve user info from the Auth Service asynchronously.
+        Handles timeouts/unreachable hosts. Returns None on error.
         """
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(f"{AUTH_USER}/{user_id}/")
+            timeout = httpx.Timeout(5.0, read=5.0)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.get(f"{USERINFO_URL}{user_id}/")
                 response.raise_for_status()
-                return response.json()
-        except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
-            raise DenyConnection("Failed to get User Info from API Service")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.NOT_FOUND:
-                raise DenyConnection("User Not found")
-            raise DenyConnection("Internal Server Error")
-        except:
-            raise DenyConnection("Internal Server Error")
+                user_info = response.json()
 
-    async def get_user_data_by_username(self, username: str):
-        """
-        Retrieve recipient data using username.
-        """
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(f"{AUTH_USERNAME}/{username}/")
-                response.raise_for_status()
-                return response.json()
-        except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
-            raise DenyConnection("Failed to get User Info from API Service")
+                if "id" not in user_info:
+                    user_info["id"] = user_id  
+
+                return user_info
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError) as e:
+            logger.error(f"Failed to fetch user info: {e}")
+            return None
         except httpx.HTTPStatusError as e:
             if e.response.status_code == httpx.codes.NOT_FOUND:
-                raise DenyConnection("User Not found")
-            raise DenyConnection("Internal Server Error")
-        except:
-            raise DenyConnection("Internal Server Error")
+                logger.error(f"User not found: {user_id}")
+            else:
+                logger.error(f"HTTP error fetching user info: {e}")
+            return None
+
+    async def fetch_user_by_username(self, username: str):
+        """
+        Retrieve user info by username from the Auth Service asynchronously.
+        Handles timeouts/unreachable hosts. Returns None on error.
+        """
+        try:
+            timeout = httpx.Timeout(5.0, read=5.0)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.get(f"{USER_BY_USERNAME_URL}{username}/")
+                response.raise_for_status()
+                return response.json()
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError) as e:
+            logger.error(f"Failed to fetch user by username: {e}")
+            return None
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == httpx.codes.NOT_FOUND:
+                logger.error(f"User not found: {username}")
+            else:
+                logger.error(f"HTTP error fetching user by username: {e}")
+            return None
