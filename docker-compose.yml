@@ -9,37 +9,6 @@ volumes:
       o: "bind"
       type: "none"
       device: "./images"
-
-  users-data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/users_data"
-  api-data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/api_data"
-  auth_redis_data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/auth_redis_data"
-  api_redis_data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/api_redis_data"
-  redisinsight_data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/redisinsight"
   frontend-volume:
     driver: local
     driver_opts:
@@ -58,14 +27,6 @@ volumes:
       o: "bind"
       type: "none"
       device: "./api_build/api_service"
-  postgres_data:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/tmp/chat_db"
-
-  portainer_data:
 
   match-code:
     driver: local
@@ -96,28 +57,16 @@ services:
       - users-db
       - auth-redis
       - api-service
+      - rabbitmq
     env_file:
       - "auth_build/build/conf/.env"
     volumes:
       - "auth-service-code:/var/app"
       - "images:/var/images"
 
-  chat-service:
-    build: "chat_service/."
-    pull_policy: build
-    image: "chat_image:latest"
-    container_name: chat_service
-    networks:
-      - TransNetwork
-    depends_on:
-      - chat-redis
-      - chat-db
-    volumes:
-      - "./chat_service:/chatco"
-
   chat-redis:
     image: redis:latest
-    container_name: "chat_redis"
+    container_name: redis
     networks:
       - TransNetwork
 
@@ -127,11 +76,27 @@ services:
     networks:
       - TransNetwork
     environment:
-      - POSTGRES_DB=your_database_name
-      - POSTGRES_USER=your_database_user
-      - POSTGRES_PASSWORD=your_database_password
+      POSTGRES_DB: chat_database
+      POSTGRES_USER: chat_user
+      POSTGRES_PASSWORD: user123
     volumes:
       - /var/lib/postgresql/data
+
+  chat-service:
+    build: "chat_service/."
+    pull_policy: build
+    image: chat_image:latest
+    container_name: chat_service
+    networks:
+      - TransNetwork
+    depends_on:
+      - chat-redis
+      - chat-db
+      - rabbitmq
+    env_file:
+      - "./chat_service/.env"
+    volumes:
+      - ./chat_service:/chatco
 
   api-service:
     build: "api_build/."
@@ -245,7 +210,7 @@ services:
     image: portainer/portainer-ce:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - portainer_data:/data
+      - /data
     ports:
       - 9000:9000
 

@@ -26,24 +26,18 @@ SECRET_KEY = 'm%c30v(4=6q!_ouzf5xx9l7n89pl0#l16lo6+z*g4!49-63@t#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
     'rest_framework',
-    'channels',
-    'corsheaders',
-    'chat',
+    'chat',  
+    'channels',  
 ]
 
 ASGI_APPLICATION = 'django_chat.asgi.application'
@@ -56,6 +50,7 @@ CHANNEL_LAYERS = {
         }, 
     },
 }
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -64,25 +59,10 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'chat.middleware.JWTMiddleware',  # Custom middleware for JWT authentication
 ]
 
-# settings.py
-CSRF_COOKIE_HTTPONLY = False  # Allow CSRF cookies to be accessible for WebSocket authentication
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:8001",
-]
-CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'django_chat.urls'
 
@@ -116,13 +96,14 @@ WSGI_APPLICATION = 'django_chat.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'users_db'),
-        'USER': os.getenv('POSTGRES_USER', 'auth_admin'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123456'),
-        'HOST': os.getenv('DB_HOST', 'users-db'),  
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': os.getenv('POSTGRES_DB' ,'chat_database'),
+        'USER': os.getenv('POSTGRES_USER' ,'chat_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD' ,'user123'),
+        'HOST': os.getenv('POSTGRES_HOST' ,'chat-db'),
+        'PORT': '5432'
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

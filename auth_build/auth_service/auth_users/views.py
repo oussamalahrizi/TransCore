@@ -157,6 +157,101 @@ class CheckSentFriend(APIView):
         # data = [req.to_user.username for req in sent_requests]
         return Response(sent_requests)
 
+class ChangeFriend(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    actions = {}
+
+    def __init__(self, **kwargs):
+        self.actions = {
+            'accept' : self.accept,
+            'reject' : self.reject,
+            'unfriend' : self.unfriend,
+            'block' : self.block,
+        }
+        super().__init__(**kwargs)
+    class ChangeSerializer(serializers.Serializer):
+        
+        change = serializers.CharField(max_length=10, required=True)
+
+        def validate_change(self, value):
+            choices = ['accept', 'reject', 'unfriend', 'block']
+            if value not in choices:
+                raise serializers.ValidationError("invalid relation change value")
+            return value
+    
+    def get_relation(self, user, other):
+        try:
+            relation = self.filter(from_user=user, to_user=other).get()
+            return relation
+        except Friends.DoesNotExist:
+            try:
+                relation = self.filter(from_user=other, to_user=user).get()
+                return relation
+            except Friends.DoesNotExist:
+                return None
+
+    def accept(self, user : User, other : User):
+        try:
+            relation : Friends = Friends.objects.filter(from_user=other, to_user=user).all()
+            if relation.status != "pending":
+                raise Exception(f"Your current relation is : {relation.status}")
+            relation.status = "accepted"
+            relation.save()
+            return "Success"
+        except Friends.DoesNotExist:
+            raise Exception("You didn't receive any friend request from this user.")
+    def reject(self, user : User, other : User):
+        try:
+            relation : Friends = Friends.objects.filter(from_user=other, to_user=user).all()
+            if relation.status != "pending":
+                raise Exception(f"Your current relation is : {relation.status}")
+            relation.delete()
+            return "Success"
+        except Friends.DoesNotExist:
+            raise Exception("You didn't receive any friend request from this user.")
+
+    def unfriend(self, user : User, other : User):
+       
+        relation : Friends = self.get_relation(user, other)
+        if not relation:
+            raise Exception("You are not even friends.")
+        relation.delete()
+        return "Success"
+        
+    def block(self, user : User, other : User):
+        
+        relation : Friends = self.get_relation(user, other)
+        if relation:
+            if relation.status == "blocked":
+                return "User already blocked you hehe"
+            relation.status = "blocked"
+            relation.save()
+            return "Success"
+        relation = Friends.objects.create(from_user=user, to_user=other, status="blocked")
+        relation.save()
+        return "Success"
+    
+    def unblock(self, user : User, other : User):
+        relation : Friends = self.get_relation(user, other)
+        if not relation:
+            raise Exception("You are not even friends or blocking each other")
+        relation.status = "accepted"
+        relation.save()
+        return "Success"
+
+    def post(self, request : Request, *args, **kwargs):
+        try:
+            user : User = request.user
+            serializer = self.ChangeSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            change = serializer.data["change"]
+            res = self.actions[change](user)
+            return Response(status=status.HTTP_201_CREATED, data={"detail" : res})
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : str(e)})
+
 
 class BanSelf(APIView):
     permission_classes = [IsAuthenticated]

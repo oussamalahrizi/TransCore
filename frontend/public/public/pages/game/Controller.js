@@ -10,7 +10,7 @@ import {
 } from "three/addons";
 // import game from '.';
 
-import { setupWebSocket, sleep } from "./websockets.js";
+import { setupWebSocket, sleep, rendergame } from "./websockets.js";
 
 class BuildTerrain {
   constructor(Scene) {
@@ -351,54 +351,52 @@ function updateBall(gameInfo) {
   });
 }
 
-function Playermovements(Terrain, gameInfo) {
-  const paddle1 = Terrain.paddlemesh;
-  const paddle2 = Terrain.paddlemesh1;
-  const ball = Terrain.ballmesh;
-  const wall = Terrain.wallmesh;
-  const wall1 = Terrain.wallmesh1;
+// function Playermovements(Terrain, gameInfo) {
+//   const paddle1 = Terrain.paddlemesh;
+//   const paddle2 = Terrain.paddlemesh1;
+//   const ball = Terrain.ballmesh;
+//   const wall = Terrain.wallmesh;
+//   const wall1 = Terrain.wallmesh1;
 
-  if (!gameInfo.singlePlayer) {
-    if (
-      gameInfo.keyState["ArrowUp"] &&
-      paddle2.position.z - 1.25 > wall.position.z
-    ) {
-      paddle2.position.z -= gameInfo.speed;
-    }
-    if (
-      gameInfo.keyState["ArrowDown"] &&
-      paddle2.position.z + 1.25 < wall1.position.z
-    ) {
-      paddle2.position.z += gameInfo.speed;
-    }
-  } else {
-    if (
-      ball.position.z > 0 &&
-      paddle2.position.z <= ball.position.z &&
-      paddle2.position.z + 1.25 < wall1.position.z
-    ) {
-      paddle2.position.z += gameInfo.speed;
-    } else if (
-      ball.position.z < 0 &&
-      paddle2.position.z >= ball.position.z &&
-      paddle2.position.z - 1.25 > wall.position.z
-    ) {
-      paddle2.position.z -= gameInfo.speed;
-    }
-  }
-  if (
-    gameInfo.keyState["KeyW"] &&
-    paddle1.position.z - 1.25 > wall.position.z
-  ) {
-    paddle1.position.z -= gameInfo.speed;
-  }
-  if (
-    gameInfo.keyState["KeyS"] &&
-    paddle1.position.z + 1.25 < wall1.position.z
-  ) {
-    paddle1.position.z += gameInfo.speed;
-  }
-}
+//   if (!gameInfo.singlePlayer) {
+//     if (
+//       gameInfo.keyState["ArrowUp"] &&
+//       paddle2.position.z - 1.25 > wall.position.z
+//     ) {
+//       paddle2.position.z -= gameInfo.speed;
+//     }
+//     if (
+//       gameInfo.keyState["ArrowDown"] &&
+//       paddle2.position.z + 1.25 < wall1.position.z
+//     ) {
+//       paddle2.position.z += gameInfo.speed;
+//     }
+//   } else {
+//     if (
+//       ball.position.z > 0 && paddle2.position.z <= ball.position.z && paddle2.position.z + 1.25 < wall1.position.z
+//     ) {
+//       paddle2.position.z += gameInfo.speed;
+//     } else if (
+//       ball.position.z < 0 &&
+//       paddle2.position.z >= ball.position.z &&
+//       paddle2.position.z - 1.25 > wall.position.z
+//     ) {
+//       paddle2.position.z -= gameInfo.speed;
+//     }
+//   }
+//   if (
+//     gameInfo.keyState["KeyW"] &&
+//     paddle1.position.z - 1.25 > wall.position.z
+//   ) {
+//     paddle1.position.z -= gameInfo.speed;
+//   }
+//   if (
+//     gameInfo.keyState["KeyS"] &&
+//     paddle1.position.z + 1.25 < wall1.position.z
+//   ) {
+//     paddle1.position.z += gameInfo.speed;
+//   }
+// }
 
 function singlePlayerMode(gameInfo) {
   gameInfo.singlePlayer = !gameInfo.singlePlayer;
@@ -413,8 +411,8 @@ function singlePlayerMode(gameInfo) {
 const SetupScene = (gameContainer, gameInfo) => {
   gameInfo.scene = new THREE.Scene();
   gameInfo.renderer = new THREE.WebGLRenderer({
-    antialias: true, // Enables anti-aliasing
-    powerPreference: "high-performance", // Optimizes rendering performance
+    antialias: false,
+    powerPreference: "high-performance",
   });
   gameContainer.appendChild(gameInfo.renderer.domElement);
   gameInfo.renderer.domElement.setAttribute("tabindex", "0");
@@ -481,6 +479,7 @@ const SetupScene = (gameContainer, gameInfo) => {
 
 export default async () => {
   app.gameInfo = {
+    ...app.gameInfo,
     scene: null,
     renderer: null,
     camera: null,
@@ -500,50 +499,36 @@ export default async () => {
     ws: null,
     gameId: null,
     useComposer: false,
-    lastFrame: null,
+    lastFrame: 0,
     player_id: null,
+    // SinglePlayer: true,
   };
+  app.gameInfo;
   if (!app.websocket) await sleep(0.5);
   const gameInfo = app.gameInfo;
   const gameContainer = document.getElementById("game");
 
   window.addEventListener("beforeunload", (event) => {
-    event.preventDefault();
+    // event.preventDefault();
     if (gameInfo.ws) gameInfo.ws.close();
   });
   // Setup scene and game environment
   SetupScene(gameContainer, gameInfo);
 
   // Setup WebSocket connection
-
-  gameInfo.ws = setupWebSocket();
+  console.log("singleplayer status : ", app.gameInfo.Singleplayer);
+  let url = "";
+  if (app.gameInfo.Singleplayer) url = "/api/game/pong-single/ws/";
+  else url = "/api/game/pong/ws/";
+  gameInfo.ws = setupWebSocket(url);
   if (!gameInfo.ws) return;
 
   const keystate = [];
 
-  const clock = new THREE.Clock();
-
   gameInfo.renderer.domElement.addEventListener("keydown", (event) => {
-    // if (event.code === "Numpad0") {
-    //   gameInfo.ws.send(
-    //     JSON.stringify({
-    //       type: "toggle_single_player",
-    //     })
-    //   );
-    // }s
     // if (event.code === "ShiftRight") {
     //   gameInfo.useComposer = !gameInfo.useComposer;
     // }
-    // if (event.code === "Enter") {
-    //   gameInfo.ws.send(
-    //     JSON.stringify({
-    //       type: "toggle_pause",
-    //     })
-    //   );
-    //   return;
-    // }
-
-    // Send paddle movement commands
     keystate[event.code] = true;
   });
 
@@ -563,28 +548,39 @@ export default async () => {
       })
     );
   };
-  function animate() {
-    const now = Date.now();
-    const delta = clock.getDelta();
 
-    // // if (!gameInfo.lastFrame) {
-    // gameInfo.lastFrame = now;
-    if (keystate["KeyW"]) {
-      send("KeyW", delta);
-    } else if (keystate["KeyS"]) {
-      send("KeyS", delta);
+  let frameCount = 0;
+  let lastTime = performance.now();
+  let fps = 0;
+
+  function updateFPS() {
+    frameCount++;
+
+    const currentTime = performance.now();
+    const deltaTime = currentTime - lastTime;
+
+    // Update FPS calculation approximately once per second
+    if (deltaTime >= 1000) {
+      // Calculate frames per second
+      fps = Math.round((frameCount * 1000) / deltaTime);
+
+      // Display FPS
+      console.log(`${fps} FPS`);
+
+      // Reset counters
+      frameCount = 0;
+      lastTime = currentTime;
     }
-    if (gameInfo.useComposer) {
-      gameInfo.composer.render();
-    } else {
-      gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
-    }
-    // }
-    requestAnimationFrame(animate);
   }
 
+  function animate() {
+    if (keystate["KeyW"]) send("KeyW");
+    else if (keystate["KeyS"]) send("KeyS");
+    rendergame(gameInfo);
+    updateFPS();
+    requestAnimationFrame(animate);
+  }
   animate();
-
   // Handle window resize
   window.addEventListener("resize", () => {
     if (gameInfo.camera && gameInfo.renderer) {
@@ -602,5 +598,6 @@ export default async () => {
     if (gameInfo.ws) {
       gameInfo.ws.close();
     }
+    clearInterval(timer);
   };
 };

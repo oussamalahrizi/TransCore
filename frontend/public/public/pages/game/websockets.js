@@ -9,7 +9,11 @@ import {
   UnrealBloomPass,
 } from "three/addons";
 
-export const setupWebSocket = () => {
+// import { rendergame } from "./Controller.js";
+
+// const seupremote
+
+export const setupWebSocket = (url) => {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   console.log(protocol);
   const gameId = new URLSearchParams(window.location.search).get("game_id");
@@ -17,18 +21,18 @@ export const setupWebSocket = () => {
 
   if (!gameId) {
     console.error("No game ID provided");
-    showError("No game ID provided");
+    app.utils.showToast("No game ID provided");
     return null;
   }
 
   const token = app.utils.getCookie("access_token"); // Assuming you store JWT in localStorage
   if (!token) {
     console.error("No authentication token found");
-    showError("Please log in to play");
+    app.utils.showToast("Please log in to play");
     return null;
   }
 
-  const wsUrl = `${protocol}//${window.location.host}/api/game/pong/ws/?game_id=${gameId}&token=${token}`;
+  const wsUrl = `${protocol}//${window.location.host}${url}?game_id=${gameId}&token=${token}`;
 
   console.log("socket url", wsUrl);
 
@@ -40,7 +44,7 @@ export const setupWebSocket = () => {
 
   ws.onclose = (event) => {
     console.log("Disconnected from game server:", event.reason);
-    app.utils.showToast(event.reason);
+    if (window.location.pathname === "/game") app.utils.showToast(event.reason);
   };
 
   ws.onerror = (error) => {
@@ -49,6 +53,14 @@ export const setupWebSocket = () => {
   ws.onmessage = onmessage;
   return ws;
 };
+
+export function rendergame(gameInfo) {
+  if (gameInfo.useComposer) {
+    gameInfo.composer.render();
+  } else {
+    gameInfo.renderer.render(gameInfo.scene, gameInfo.camera);
+  }
+}
 
 function updateGameState(state) {
   // Update ball position
@@ -87,6 +99,7 @@ function updateGameState(state) {
     app.gameInfo.p2Score = state.p2Score;
     updateScoreDisplay();
   }
+  // rendergame(app.gameInfo);
 }
 
 async function handleGameEnd(winner) {
@@ -99,6 +112,7 @@ async function handleGameEnd(winner) {
   gameContainer.appendChild(view);
   await sleep(2);
   view.remove();
+  app.Router.navigate("/");
 }
 
 function updateScoreDisplay() {
@@ -177,6 +191,9 @@ export const onmessage = (event) => {
       console.log("send init data : ", data.user_id);
       app.gameInfo.player_id = data.user_id;
       break;
+    // case "redirect":
+    //   window.location.href = data.url;
+    //   break;
     case "error":
       console.error("Game error:", message);
       break;

@@ -1,3 +1,4 @@
+import { hideModalWithAnimation } from "/public/modalAnimations.js";
 
 export const ModalView = /*html*/ `
     <div class="fa-container">
@@ -45,12 +46,6 @@ const fetchCode = async (code) => {
     return true
 }
 
-/**
- * 
- * @param {Event} e 
- * @param {HTMLElement} modal 
- * @param {HTMLElement} view 
- */
 const handleVerify = async (e, modal, view) => {
     await app.utils.ButtonHandler(e.target, async () => {
         const input = modal.querySelector("#code-input")
@@ -62,21 +57,44 @@ const handleVerify = async (e, modal, view) => {
         const bool = await fetchCode(input.value)
         if (!bool)
             return
-        view.removeChild(modal)
-        view.dispatchEvent(new CustomEvent("refresh_state"))
+            
+        if (window.twoFAEnabledCallback && typeof window.twoFAEnabledCallback === 'function') {
+            try {
+                console.log("Calling twoFAEnabledCallback");
+                window.twoFAEnabledCallback();
+            } catch (err) {
+                console.error("Error in twoFAEnabledCallback", err);
+            }
+        } else {
+            console.log("twoFAEnabledCallback not found");
+        }
+        
+        if (typeof hideModalWithAnimation === 'function') {
+            hideModalWithAnimation(modal, () => {
+                view.removeChild(modal);
+            });
+        } else {
+            view.removeChild(modal);
+        }
     })
 }
 
 export const controller = async () => {
     try {
-        const view = document.getElementById("acc-security")
+        const view = document.getElementById("settings")
         const modal = view.querySelector("#modal-wrapper")
         console.log("modal controller");
         const cross = modal.querySelector("#close-modal")
         cross.addEventListener("click", () => {
-            view.removeChild(modal)
+            if (typeof hideModalWithAnimation === 'function') {
+                hideModalWithAnimation(modal, () => {
+                    view.removeChild(modal);
+                });
+            } else {
+                view.removeChild(modal);
+            }
         })
-        // fetch image
+        
         const img_container = modal.querySelector("#img_container")
         const loading = document.createElement("div")
         loading.innerHTML = LoadingView 
@@ -98,5 +116,4 @@ export const controller = async () => {
             return
         }
     }
-
 }

@@ -1,0 +1,63 @@
+
+.profile-modal {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.profile-modal.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.friend-options-modal {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.friend-options-modal.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+
+#modal-wrapper, #blocklist-modal-wrapper {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  display: flex !important; 
+  justify-content: center !important;
+  align-items: center !important;
+  position: fixed !important; 
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 9999 !important; 
+}
+
+#modal-wrapper.show, #blocklist-modal-wrapper.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+
+.fa-container {
+  margin: 0 auto;
+  position: relative;
+  z-index: 10000; 
+}
+
+
+.modal-content, .friend-modal-content {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition-delay: 0.1s;
+}
+
+.show .modal-content, .show .friend-modal-content {
+  opacity: 1;
+  transform: translateY(0);
+} 

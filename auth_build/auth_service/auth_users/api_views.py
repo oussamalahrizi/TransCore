@@ -47,11 +47,7 @@ class GetUserServiceName(RetrieveAPIView):
         raise PermissionDenied(detail="Host not allowed.")
 
 class GetFriendsAPI(APIView):
-    class FriendsSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = User
-            fields =  ['id', 'username', 'email', 'icon_url']
-
+    serializer = UserDetailSerializer
     permission_classes = [IsAllowedHost]
     authentication_classes = []
     
@@ -61,10 +57,17 @@ class GetFriendsAPI(APIView):
             user : User = get_object_or_404(User, id=id)
             friends = Friends.objects.get_friends(user)
             objects = User.objects.filter(id__in=friends)
-            ser = self.FriendsSerializer(objects, many=True)
+            ser = self.serializer(objects, many=True)
             return Response(data=ser.data)
         except Http404:
             return Response(data={"detail" : 'User Not Found'})
     
     def permission_denied(self, request, message=None, code=None):
         raise PermissionDenied(detail="Host not allowed.")
+
+
+# class GetRelation(APIView):
+
+#     def get(self, request, *args, **kwargs):
+#         # /relation/?user1=oussama&user2=nissring
+#         # --> friends
