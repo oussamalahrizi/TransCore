@@ -1,153 +1,177 @@
-.root-class
-{
-	font-family: "Inter", serif;
-	width: 100%;
-	height: 100%;
-	min-height: 100vh;
-	margin-left: auto;
-    margin-right: auto;
+.root-class {
+  font-family: "Inter", serif;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .sign-in-link {
-    display: flex;
-    color: rgba(107, 114, 128, 1);
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
-    text-decoration: none;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-radius: 250rem;
-    border: 1px solid rgba(107, 114, 128, 1);
-    justify-content: center;
-    align-items: center;
-    transition: 0.3s;
+  display: flex;
+  color: rgba(107, 114, 128, 1);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  text-decoration: none;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-radius: 250rem;
+  border: 1px solid rgba(107, 114, 128, 1);
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s;
 }
 
 .sign-in-link:hover {
-    background-color: rgba(55, 65, 81, 1);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.415);
+  background-color: rgba(55, 65, 81, 1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.415);
 }
 
 .sign-in-link:hover .signin-icon {
-    filter: brightness(1.5);
+  filter: brightness(1.5);
 }
 
 .signin-text {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: rgba(107, 114, 128, 1);
-    margin: 0;
-    line-height: 1;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgba(107, 114, 128, 1);
+  margin: 0;
+  line-height: 1;
 }
 
 .signin-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-right: 0.75rem;
-    transition: filter 0.2s;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.75rem;
+  transition: filter 0.2s;
 }
 
 .profile-modal {
-    position: absolute;
-    background: linear-gradient(to top, #1D1D1D, rgba(22, 112, 73, 0.39));
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 8px 24px rgb(49, 50, 49);
-    z-index: 9999;
-    width: 180px;
-    margin-top: 8px;
-    font-size: 14px;
-    overflow: hidden;
+  position: absolute;
+  background: linear-gradient(to top, #1d1d1d, rgba(22, 112, 73, 0.39));
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px rgb(49, 50, 49);
+  z-index: 9999;
+  width: 180px;
+  margin-top: 8px;
+  font-size: 14px;
+  overflow: hidden;
 
-    &::before {
-        position: absolute;
-        top: -16px;
-        left: 9px;
-        border: 8px solid transparent;
-        border-bottom-color: rgba(22, 112, 73, 0.39);
-        content: '';
-    }
-    &::after {
-        position: absolute;
-        top: -14px;
-        left: 10px;
-        border: 7px solid transparent;
-        border-bottom-color: rgba(22, 112, 73, 0.39);
-        content: '';
-    }
+  &::before {
+    position: absolute;
+    top: -16px;
+    left: 9px;
+    border: 8px solid transparent;
+    border-bottom-color: rgba(22, 112, 73, 0.39);
+    content: "";
+  }
+  &::after {
+    position: absolute;
+    top: -14px;
+    left: 10px;
+    border: 7px solid transparent;
+    border-bottom-color: rgba(22, 112, 73, 0.39);
+    content: "";
+  }
 }
 
 .profile-modal .modal-content {
-    width: 100%;
-    background-color: #1D1D1D;
-    border: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
+  width: 100%;
+  background-color: #1d1d1d;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-modal .menu-item {
-    margin: 0;
-    padding: 0;
-    border: none;
-    width: 100%;
-    transition: background-color 0.2s;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    position: relative;
+  margin: 0;
+  padding: 0;
+  border: none;
+  width: 100%;
+  transition: background-color 0.2s;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  position: relative;
 }
 
 .profile-modal .menu-item:first-child {
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
 }
 
 .profile-modal .menu-item:last-child {
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
 .profile-modal .menu-item:hover {
-    background-color: rgba(45, 45, 45, 0.7);
+  background-color: rgba(45, 45, 45, 0.7);
 }
 
 .profile-modal .icon-container {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-modal a {
-    color: aliceblue;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    text-decoration: none;
-    border: none;
+  color: aliceblue;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
 }
 
 .profile-modal .menu-icon {
-    width: 16px;
-    height: 16px;
-    color: #8b949e;
-    filter: invert(60%) sepia(14%) saturate(207%) hue-rotate(177deg) brightness(87%) contrast(84%);
+  width: 16px;
+  height: 16px;
+  color: #8b949e;
+  filter: invert(60%) sepia(14%) saturate(207%) hue-rotate(177deg)
+    brightness(87%) contrast(84%);
 }
 
 .profile-modal .menu-divider {
-    height: 1px;
-    margin: 0;
-    background-color: #2D2D2D;
-    border: none;
+  height: 1px;
+  margin: 0;
+  background-color: #2d2d2d;
+  border: none;
+}
+
+.playnow {
+  text-align: center;
+  line-height: 1.5rem;
+  background-color: #029f5b;
+  border-width: 1px;
+  border-color: #373a41;
+  color: #fff;
+  border-radius: 0.5rem;
+  /* margin-top: 0.75rem; */
+  margin-left: 2rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+  font-weight: 600;
+  transition: 0.25s;
+}
+
+.playnow:hover {
+  opacity: 1;
+  background-color: #057343;
+  color: #fff;
 }

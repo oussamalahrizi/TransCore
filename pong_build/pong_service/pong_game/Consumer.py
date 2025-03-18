@@ -1,6 +1,6 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
-from core.asgi import GameState
+from core.asgi import GameState, Game, game_task
 from .utils import Game_Cache
 from asgiref.sync import sync_to_async
 from channels.layers import get_channel_layer
