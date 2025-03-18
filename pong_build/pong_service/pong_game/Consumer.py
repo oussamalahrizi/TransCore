@@ -2,17 +2,22 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
 from core.asgi import GameState, Game, game_task
 from .utils import Game_Cache
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, database_sync_to_async
 from channels.layers import get_channel_layer
 from channels.db import aclose_old_connections
 from channels.exceptions import StopConsumer
 import time
+from .services import GameService
 
 # game_task : dict[str, asyncio.Task] = {}
 
 # Game : dict[str, GameState] = {}
 
 layer = get_channel_layer()
+
+@database_sync_to_async
+def record_match_async(player1_id, player2_id, winner_id, p1_score, p2_score):
+    return GameService.record_match(player1_id, player2_id, winner_id, p1_score, p2_score)
 
 
 async def broadcast(Game : GameState):
@@ -34,7 +39,14 @@ async def broadcast(Game : GameState):
         # print("task was cancelled success")
         pass
     finally:
-        # print("sending game end finally")
+        p1_score = Game.p1_score
+        p2_score = Game.p2_score
+        player1_id = Game.players[0]
+        player2_id = Game.players[1]
+        winner_id = Game.winner
+        
+        await record_match_async(player1_id, player2_id, winner_id, p1_score, p2_score)
+        
         await layer.group_send(Game.game_id, {
             'type' : 'game_end',
             'winner' : Game.winner
