@@ -44,7 +44,7 @@ class GameState:
 
     def init_game_state(self):
         self.ball_position = Vector3(0, 0, 0)
-        self.ball_velocity = Vector3(0.7, 0, 0.7)
+        self.ball_velocity = Vector3(0.02, 0, 0.02)
         self.paddle1_position = Vector3(-6.35, 0, 0)
         self.paddle2_position = Vector3(6.35, 0, 0)
         self.p1_score = 0
@@ -102,6 +102,7 @@ class GameState:
 
         # Ball Collided with the Walls
         self.ball_position.add(self.ball_velocity)
+        # print(self.)
         if (self.ball_position.z <= self.wall_bounds['bottom'] + 0.5 or 
             self.ball_position.z >= self.wall_bounds['top'] - 0.5):
             self.ball_velocity.z *= -1
@@ -110,7 +111,7 @@ class GameState:
         if self.ball_position.x <= -7.5 or self.ball_position.x >= 7.5:
             if self.ball_position.x < 0:
                 self.p2_score += 1
-                if self.p2_score > 1:
+                if self.p2_score > 4:
                     self.gameover = True
                     if not self.singleplayer:
                         self.winner = self.players[1]
@@ -120,7 +121,7 @@ class GameState:
 
             else:
                 self.p1_score += 1
-                if self.p1_score > 1:
+                if self.p1_score > 4:
                     self.gameover = True
                     self.winner = self.players[0]
     
@@ -158,7 +159,7 @@ class GameState:
                     self.ball_velocity.x * self.ball_velocity.x +
                     self.ball_velocity.z * self.ball_velocity.z
                 )
-                self.ball_velocity.normalize().multiply_scalar(min(current_speed * 1.2, 0.1))
+                self.ball_velocity.normalize().multiply_scalar(min(current_speed * 1.1, 0.1))
 
     def update_player_move(self, player_id, action):
         if not self.singleplayer:

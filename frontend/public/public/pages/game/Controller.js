@@ -415,8 +415,10 @@ const SetupScene = (gameContainer, gameInfo) => {
     powerPreference: "high-performance",
   });
   gameContainer.appendChild(gameInfo.renderer.domElement);
-  gameInfo.renderer.domElement.setAttribute("tabindex", "0");
-  gameInfo.renderer.domElement.focus();
+  if (app.gameInfo.Singleplayer === false) {
+    gameInfo.renderer.domElement.setAttribute("tabindex", "0");
+    gameInfo.renderer.domElement.focus();
+  }
   gameInfo.renderer.setSize(window.innerWidth, window.innerHeight);
   gameInfo.renderer.setPixelRatio(window.devicePixelRatio); // Matches screen resolution
   gameInfo.renderer.shadowMap.enabled = true;
@@ -542,9 +544,8 @@ export default async () => {
   const send = (key, delta) => {
     gameInfo.ws.send(
       JSON.stringify({
-        key: key,
-        player_id: gameInfo.player_id,
-        delta: delta,
+        type: "move_paddle",
+        data: { key: key, player_id: gameInfo.player_id, delta: delta },
       })
     );
   };
@@ -572,13 +573,13 @@ export default async () => {
       lastTime = currentTime;
     }
   }
-
+  let animationId = null;
   function animate() {
     if (keystate["KeyW"]) send("KeyW");
     else if (keystate["KeyS"]) send("KeyS");
     rendergame(gameInfo);
     updateFPS();
-    requestAnimationFrame(animate);
+    animationId = requestAnimationFrame(animate);
   }
   animate();
   // Handle window resize
@@ -594,10 +595,13 @@ export default async () => {
   });
 
   // Cleanup on unmount
-  return () => {
-    if (gameInfo.ws) {
+  return function () {
+    if (gameInfo.ws.readyState === WebSocket.OPEN) {
       gameInfo.ws.close();
+      cancelAnimationFrame(animationId);
+      animationId = null;
     }
-    clearInterval(timer);
+
+    // clearInterval(timer);
   };
 };
