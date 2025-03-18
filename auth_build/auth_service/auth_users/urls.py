@@ -13,7 +13,8 @@ from .views import (
    ResetPassword,
    PasswordVerify,
    CDNVerify,
-   sendNotif
+   sendNotif,
+   ChangeFriend
 )
 
 from .AuthViews import (
@@ -79,7 +80,7 @@ urlpatterns += [
    path('friends/', GetFriends.as_view(), name='friend-list'),
    path('friends/received/', CheckReceivedFriend.as_view(), name='recv-list'),
    path('friends/sent/', CheckSentFriend.as_view(), name='sent-list'),
-   path('friends/change/', CheckSentFriend.as_view(), name='change-friends-relations'),
+   path('friends/change/<str:username>/', ChangeFriend.as_view(), name='change-friends-relations'),
    path('add_friend/<str:username>/', SendFriendRequest.as_view(), name='add-friend'),
    path('swagger/', schema_view.with_ui(), name='schema-swagger-ui'),
    path('cdn_verify/', CDNVerify.as_view(), name='cdn-nginx'),
