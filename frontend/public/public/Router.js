@@ -42,8 +42,13 @@ const handleAuthGuard = async (content, route) => {
 				return route
 			return '/auth/login'
 		}
+		console.log(error);
+		
+		return "/500"
 	}
 };
+
+let cleanup = null
 
 const Router = {
 	init : async () => {
@@ -100,11 +105,14 @@ const Router = {
 		*/
 
 		// injecting content in the root div and running the controller
-		
+		if (typeof cleanup === "function")
+			cleanup()
 		const root = document.getElementById("root")
+		console.log(route);
+		
 		while (root.firstChild)
 			root.removeChild(root.firstChild);
-		if (content.style)
+		if (content?.style)
 		{				
 			const loaded = await app.utils.LoadCss(content.style)
 			if (!loaded)
@@ -115,7 +123,8 @@ const Router = {
 			}
 		}
 		root.innerHTML = content.view;
-		content.controller && content.controller()
+		if(content.controller)
+			cleanup = content.controller()
 		// disabling default behavior for anchor tags
 		const navbar = document.getElementById("nav-bar-outer")
 		if (render === "/game")

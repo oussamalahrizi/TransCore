@@ -11,10 +11,12 @@ class IsAllowedHost(BasePermission):
     try:
         api = gethostbyname("api-service")
         match = gethostbyname("match-service")
+        chat = gethostbyname("chat-service")
     except:
         api = ""
         match = ""
-    allowed_hosts = [api, match]
+        chat = ""
+    allowed_hosts = [api, match, chat]
 
     def has_permission(self, request, view):
         incoming_host = request.META.get('REMOTE_ADDR')

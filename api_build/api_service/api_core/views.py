@@ -106,31 +106,31 @@ async def fetch_friends_auth(user_id : str):
         print(response.status_code)
         raise Exception("Internal Server Error")
 
+from pprint import pprint
+
 class GetFriends(APIView):
 
     cache = _Cache
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    def fetch_friends(self, user_id, data):
+    def fetch_friends(self, user_id, data : dict):
         final = []
-        friends = data.get('friends')
+        auth_data : dict = data.get("auth")
+        friends = auth_data.get('friends')
         if not friends:
             friends = async_to_sync(fetch_friends_auth)(user_id) # [ { id : 123, username : oussama}, { id : 456, username : lahrizi}]
             for f in friends:
+                print("friend : ", f['username'])
+                pprint(f)
                 self.cache.set_user_data(f['id'], f, 'auth')
                 self.cache.append_user_friends(user_id, f['id'])
             data = self.cache.get_user_data(user_id)
-        print('data now : ')
-        print(data)
-        return []
-        # append their status
-        friends = data.get('friends')
+            auth_data = data.get("auth")
+            friends = auth_data.get('friends')
         final = []
-        for f in friends:
-            user : dict = self.cache.get_user_data(f['id'])
-            if user.get('friends'):
-                user.pop("friends")
+        for id in friends:
+            user : dict = self.cache.get_user_data(id)
             final.append(user)
         return final
 
@@ -149,7 +149,6 @@ class GetFriends(APIView):
                                 data={"detail" : 'User Not Found'})
             self.cache.set_user_data(user_id, fetch_data, "auth")
             user_data = self.cache.get_user_data(user_id)
-        print('user data get friends : ', user_data)
         # now we have auth data
         friends = self.fetch_friends(user_id, user_data)
         # friends guaranteed a list now

@@ -1,0 +1,52 @@
+#profile-icon {
+  display: flex;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 250rem;
+  border: 1px solid rgba(107, 114, 128, 1);
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s;
+}
+
+#profile-icon:hover {
+  background-color: rgba(55, 65, 81, 1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.415);
+}
+
+#profile-icon img {
+  width: 2rem;
+  height: 2rem;
+  margin-right: 0.75rem;
+}
+
+#profile-icon h1 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgba(107, 114, 128, 1);
+}
+
+.profile-placeholder-link {
+  display: flex;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.profile-placeholder-link:hover {
+  background-color: rgba(55, 65, 81, 1);
+}
+
+.profile-placeholder-link img {
+  width: 2rem;
+  height: 2rem;
+  margin-right: 0.75rem;
+}
+
+.profile-placeholder-link h1 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgba(107, 114, 128, 1);
+} 

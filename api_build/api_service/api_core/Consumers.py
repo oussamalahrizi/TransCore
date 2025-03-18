@@ -20,15 +20,16 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		self.group_name = f"notification_{self.user["id"]}"
 		await sync_to_async(self.cache.set_user_online)(self.user["id"])
 		await self.channel_layer.group_add(self.group_name, self.channel_name)
-		print(f"{self.user['username']} connected")	
+		print(f"{self.user['username']} connected")
 
 	async def disconnect(self, code):
+		if code == 4001:
+			return
 		if hasattr(self, 'group_name'):
-			self.channel_layer.group_discard(self.group_name, self.channel_name)
-		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
+			await self.channel_layer.group_discard(self.group_name, self.channel_name)
 		# publish to the match making consumer to remove player from queue if player is offline
 		status = self.cache.get_user_status(self.user['id'])
-		if status == 'offline':
+		if status == 'inqueue':
 			body = {
 				'type' : 'remove_pqueue',
 				'data' : {
@@ -36,6 +37,7 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 				}
 			}
 			await queue_publisher.publish(body)
+		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
 		print(f"{self.user['username']} disconnected")
 	
 	@database_sync_to_async

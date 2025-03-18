@@ -1,10 +1,6 @@
 export default () => {
     // Retrieve the access token from cookies
-    const token = app.utils.getCookie("access_token");
-    if (!token) {
-        console.error("Access token not found in cookies.");
-        return;
-    }
+    
 
     // DOM Elements
     const chatBox = document.getElementById('chat-box');
@@ -14,6 +10,9 @@ export default () => {
     const notificationContainer = document.getElementById('notification-container');
     const searchInput = document.getElementById('search-user');
     const filterUnreadCheckbox = document.getElementById('filter-unread');
+    document.getElementById("menu-button").addEventListener("click", toggleProfileSection);
+    document.getElementById('block-button').addEventListener('click', toggleBlockStatus);
+    document.getElementById('unblock-button').addEventListener('click', toggleBlockStatus);
 
     // State variables
     let currentUser = null; 
@@ -21,39 +20,26 @@ export default () => {
     let selectedChatUserId = null; 
     let socket = null; 
     let notificationSocket = null; 
-    let unreadMessages = {};
+    let unreadMessages = {}
     let users = [];
     let lastMessages = {}; 
-
-    // Initialize the application
-    loadStateFromLocalStorage(); 
-    fetchUsers();
-    connectNotificationSocket();
-    setupEventListeners(); 
+    let blockedUsers = new Set(JSON.parse(localStorage.getItem('blockedUsers')) || []);
 
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Get references to the buttons
-        const blockButton = document.getElementById('block-button');
-        const inviteToGameButton = document.getElementById('invite-to-game-button');
-        const viewProfileButton = document.getElementById('view-profile-button');
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     const inviteToGameButton = document.getElementById('invite-to-game-button');
+    //     const viewProfileButton = document.getElementById('view-profile-button');
+
+    //     inviteToGameButton.addEventListener('click', () => {
+    //       console.log('Invite to game button clicked');
+    //       alert('Invitation sent!');
+    //     });
       
-        // Add event listeners to the buttons
-        blockButton.addEventListener('click', () => {
-          console.log('Block button clicked');
-          alert('User blocked!');
-        });
-      
-        inviteToGameButton.addEventListener('click', () => {
-          console.log('Invite to game button clicked');
-          alert('Invitation sent!');
-        });
-      
-        viewProfileButton.addEventListener('click', () => {
-          console.log('View profile button clicked');
-          alert('Redirecting to user profile...');
-        });
-      });
+    //     viewProfileButton.addEventListener('click', () => {
+    //       console.log('View profile button clicked');
+    //       alert('Redirecting to user profile...');
+    //     });
+    //   });
 
     document.addEventListener("DOMContentLoaded", () => {
         const sendButton = document.getElementById('send-button');
@@ -72,6 +58,25 @@ export default () => {
             console.error('One or more DOM elements not found');
         }
     });
+
+    // Toggle profile section visibility and adjust chat box width
+    function toggleProfileSection() {
+        const profileSection = document.getElementById('profile-section');
+        const chatBox = document.getElementById('chat-box');
+        if (!profileSection || !chatBox) {
+            console.error('Profile section or chat box not found');
+            return;
+        }
+
+        if (profileSection.classList.contains('hidden')) {
+            profileSection.classList.remove('hidden');
+            chatBox.classList.add('w-1-2');
+        } else {
+            profileSection.classList.add('hidden');
+            chatBox.classList.remove('w-1-2');
+        }
+    }
+
 
     // Reset the chat box on initial load if no user is selected
     if (!selectedChatUser) {
@@ -105,110 +110,161 @@ export default () => {
 
     // Fetch users from the server
     function fetchUsers() {
+        const token = app.utils.getCookie("access_token");
         fetch("http://localhost:8000/api/auth/users/?format=json", {
             headers: { "Authorization": `Bearer ${token}` },
         })
             .then(response => response.json())
             .then(fetchedUsers => {
-                users = fetchedUsers;
-                console.log("Fetched users:", users);
-                updateUserList(); // Update the user list UI
+                const newUsers = fetchedUsers.filter(user => !users.some(existingUser => existingUser.id === user.id));
+                if (newUsers.length > 0) {
+                    users = [...users, ...newUsers];
+                    console.log("Fetched new users:", newUsers);
+                    updateUserList();
+                }
             })
             .catch(error => console.error("Error fetching users:", error));
     }
 
-    // Connect to the notification WebSocket
-    function connectNotificationSocket() {
-        if (notificationSocket?.readyState === WebSocket.OPEN) return;
-
-        notificationSocket = new WebSocket(`ws://localhost:8000/api/chat/ws/notifications/?token=${token}`);
-
-        notificationSocket.onopen = () => {
-            console.log('Notification WebSocket connected');
-            notificationSocket.send(JSON.stringify({ type: "fetch_notifications" }));
-        };
-
-        notificationSocket.onmessage = handleNotificationMessage;
-        notificationSocket.onclose = () => setTimeout(connectNotificationSocket, 5000); // Reconnect on close
-        notificationSocket.onerror = (error) => {
-            console.error('Notification WebSocket Error:', error);
-            notificationSocket.close();
-        };
-    }
-
-    // Handle incoming notification messages
-    async function handleNotificationMessage(event) {
-        try {
-            const data = JSON.parse(event.data);
-            console.log("Notification received:", data);
-
-            if (data.type === "user_info") {
-                handleUserInfo(data); 
-            } else if (data.type === "notification") {
-                handleNewNotification(data); 
-            } else if (data.type === "active_notifications") {
-                handleActiveNotifications(data); 
-            }
-        } catch (error) {
-            console.error("Error parsing notification message:", error);
+    
+    // Function to filter users (search and unread message filters)
+    function filterUsers() {
+        let filteredUsers = users.filter(user => user.username !== currentUser?.username);
+    
+        const searchQuery = searchInput.value.toLowerCase();
+        if (searchQuery) {
+            filteredUsers = filteredUsers.filter(user => user.username.toLowerCase().includes(searchQuery));
         }
-    }
-
-    // Handle new notifications
-    async function handleNewNotification(data) {
-        const rawUsername = extractUsername(data.username, data.message);
-        if (rawUsername) {
-            const realUsername = await fetchRealUsername(rawUsername);
-            const messageContent = data.message.replace(`New message from ${rawUsername}:`, "").trim();
-            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-
-            lastMessages[realUsername] = { message: messageContent, timestamp };
-            if (realUsername !== selectedChatUser) {
-                unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
-            }
-
-            showNotification(messageContent, realUsername); 
-            playNotificationSound();
-            updateUserList(); 
-        } else {
-            console.warn("Could not extract username from the message:", data.message);
-            showNotification(data.message, "Unknown User"); 
-            playNotificationSound();
+    
+        if (filterUnreadCheckbox.checked) {
+            filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
         }
+    
+        return filteredUsers;
     }
 
-    // Handle active notifications
-    async function handleActiveNotifications(data) {
-        for (const notification of data.notifications || []) {
-            const rawUsername = extractUsername(notification.sender, notification.message);
-            if (rawUsername) {
-                const realUsername = await fetchRealUsername(rawUsername);
-                const messageContent = notification.message.replace(`New message from ${rawUsername}:`, "").trim();
-                const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                lastMessages[realUsername] = { message: messageContent, timestamp };
-                if (realUsername !== selectedChatUser) {
-                    unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
-                }
-                showNotification(messageContent, realUsername);
-                playNotificationSound(); 
-            } else {
-                console.warn("Could not extract username from the message:", notification.message);
-                showNotification(notification.message, "Unknown User"); 
-                playNotificationSound();
-            }
-        }
-        updateUserList(); 
+    
+    // Function to update the user list UI
+    function updateUserList() {
+        const filteredUsers = filterUsers();
+        const userListContainer = document.getElementById('user-list-container');
+        userListContainer.innerHTML = ''; 
+    
+        filteredUsers.forEach(user => userListContainer.appendChild(createUserItem(user)));
     }
 
-    // Extract username from a message
-    function extractUsername(username, message) {
-        if (username) return username;
-        const messageMatch = message?.match(/New message from (\S+):/);
-        return messageMatch?.[1];
-    }
 
-    // Fetch the real username from the server using a UUID
+
+function saveBlockedUsers() {
+    localStorage.setItem('blockedUsers', JSON.stringify([...blockedUsers]));
+}
+
+function createUserItem(user) {
+    const userItem = document.createElement('div');
+    const isBlocked = blockedUsers.has(user.username); 
+    userItem.className = `user-item ${isBlocked ? 'blocked' : ''}`;
+
+    const unreadCount = isBlocked ? 0 : unreadMessages[user.username] || 0; 
+    const statusColor = user.isActive ? "green" : "grey";
+    const lastMessage = isBlocked ? "" : lastMessages[user.username]?.message || ""; 
+    const lastMessageTimestamp = isBlocked ? "" : lastMessages[user.username]?.timestamp || ""; 
+
+    userItem.innerHTML = `
+        <div class="user-avatar-container">
+            <img src="${user.profileImage}" alt="${user.username}" class="user-avatar">
+            <span class="active-status" style="background-color: ${statusColor};"></span>
+        </div>
+        <div class="user-info">
+            <div class="username">${user.username}</div>
+            ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
+        </div>
+        <div class="user-meta">
+            ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
+            ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
+        </div>
+    `;
+
+    userItem.onclick = () => {
+        startChat(user.username, user.id);
+        userItem.classList.add('active');
+        updateUserList();
+        toggleProfileSection();
+        updateBlockUI(user.username);
+    };
+
+    return userItem;
+}
+
+function toggleBlockStatus() {
+    const user = document.getElementById('chat-with-user').textContent;
+    const isBlocked = blockedUsers.has(user);
+
+    if (isBlocked) {
+        blockedUsers.delete(user);
+    } else {
+        blockedUsers.add(user);
+    }
+    saveBlockedUsers();
+
+    updateBlockUI(user);
+}
+
+function updateBlockUI(user) {
+    const isBlocked = blockedUsers.has(user);
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const blockButton = document.getElementById('block-button');
+    const unblockButton = document.getElementById('unblock-button');
+
+    chatInput.disabled = isBlocked;
+    sendButton.disabled = isBlocked;
+
+    blockButton.style.display = isBlocked ? 'none' : 'inline-block';
+    unblockButton.style.display = isBlocked ? 'inline-block' : 'none';
+}
+
+// Load blockedUsers from localStorage when the page loads
+function loadBlockedUsers() {
+    const storedBlockedUsers = JSON.parse(localStorage.getItem('blockedUsers'));
+    if (storedBlockedUsers) {
+        blockedUsers = new Set(storedBlockedUsers);
+    }
+}
+
+// Load lastMessages and unreadMessages from localStorage when the page loads
+function loadMessages() {
+    const storedLastMessages = JSON.parse(localStorage.getItem('lastMessages'));
+    const storedUnreadMessages = JSON.parse(localStorage.getItem('unreadMessages'));
+
+    if (storedLastMessages) {
+        Object.assign(lastMessages, storedLastMessages);
+    }
+    if (storedUnreadMessages) {
+        Object.assign(unreadMessages, storedUnreadMessages);
+    }
+}
+
+
+// Load blockedUsers and messages when the page loads
+window.addEventListener('load', () => {
+    loadBlockedUsers();
+    loadMessages();
+});
+    
+
+    function pollForNewUsers() {
+        setInterval(fetchUsers, 5000);
+    }
+    
+    // Initialize by fetching users and setting up polling
+    function initializeUserList() {
+        fetchUsers(); 
+        pollForNewUsers(); 
+        loadStateFromLocalStorage(); 
+        connectNotificationSocket();
+        setupEventListeners(); 
+    }
+    
     async function fetchRealUsername(rawUsername) {
         if (typeof rawUsername !== "string" || !rawUsername) {
             console.error("Invalid or missing username:", rawUsername);
@@ -217,119 +273,180 @@ export default () => {
 
         const uuidMatch = rawUsername.match(/^user_(.*)$/);
         if (uuidMatch && uuidMatch[1]) {
+            const rawUuid = uuidMatch[1];
+            
             try {
-                const response = await fetch(`http://localhost:8000/api/auth/api_user_id/${uuidMatch[1]}/?format=json`, {
-                    headers: { "Authorization": `Bearer ${token}` },
-                });
-
-                if (!response.ok) throw new Error("Failed to fetch user data");
-                const userData = await response.json();
-                return userData.username;
+            
+                const user = users.find(user => user.id === rawUuid); 
+                
+                if (user) {
+                
+                    return user.username;
+                } else {
+                    console.error("User not found with UUID:", rawUuid);
+                    return rawUsername; 
+                }
             } catch (error) {
                 console.error("Error fetching real username:", error);
-                return rawUsername;
+                return rawUsername; 
             }
         }
-        return rawUsername;
+
+        return rawUsername; 
     }
 
-// Handle user info updates
-function handleUserInfo(data) {
-    currentUser = { id: data.user_id, username: data.username };
-}
+    // // Connect to the notification WebSocket
+    // function connectNotificationSocket() {
+    //     if (notificationSocket?.readyState === WebSocket.OPEN) return;
+
+    //     notificationSocket = new WebSocket(`ws://localhost:8000/api/chat/ws/notifications/?token=${token}`);
+
+    //     notificationSocket.onopen = () => {
+    //         console.log('Notification WebSocket connected');
+    //         notificationSocket.send(JSON.stringify({ type: "fetch_notifications" }));
+    //     };
+
+    //     notificationSocket.onmessage = handleNotificationMessage;
+    //     notificationSocket.onclose = () => setTimeout(connectNotificationSocket, 5000); 
+    //     notificationSocket.onerror = (error) => {
+    //         console.error('Notification WebSocket Error:', error);
+    //         notificationSocket.close();
+    //     };
+    // }
+
+    // // Handle incoming notification messages
+    // async function handleNotificationMessage(event) {
+    //     try {
+    //         const data = JSON.parse(event.data);
+    //         console.log("Notification received:", data);
+
+    //         if (data.type === "user_info") {
+    //             handleUserInfo(data); 
+    //         } else if (data.type === "notification") {
+    //             handleNewNotification(data); 
+    //         } else if (data.type === "active_notifications") {
+    //             handleActiveNotifications(data); 
+    //         }
+    //     } catch (error) {
+    //         console.error("Error parsing notification message:", error);
+    //     }
+    // }
+
+    // // Handle new notifications
+    // async function handleNewNotification(data) {
+    //     const rawUsername = extractUsername(data.username, data.message);
+    //     if (rawUsername) {
+    //         const realUsername = await fetchRealUsername(rawUsername);
+    //         const messageContent = data.message.replace(`New message from ${rawUsername}:`, "").trim();
+    //         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    //         lastMessages[realUsername] = { message: messageContent, timestamp };
+    //         if (realUsername !== selectedChatUser) {
+    //             unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
+    //         }
+
+    //         showNotification(messageContent, realUsername); 
+    //         playNotificationSound();
+    //         updateUserList(); 
+    //     } else {
+    //         console.warn("Could not extract username from the message:", data.message);
+    //         showNotification(data.message, "Unknown User"); 
+    //         playNotificationSound();
+    //     }
+    // }
+
+    // // Handle active notifications
+    // async function handleActiveNotifications(data) {
+    //     for (const notification of data.notifications || []) {
+    //         const rawUsername = extractUsername(notification.sender, notification.message);
+    //         if (rawUsername) {
+    //             const realUsername = await fetchRealUsername(rawUsername);
+    //             const messageContent = notification.message.replace(`New message from ${rawUsername}:`, "").trim();
+    //             const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    //             lastMessages[realUsername] = { message: messageContent, timestamp };
+    //             if (realUsername !== selectedChatUser) {
+    //                 unreadMessages[realUsername] = (unreadMessages[realUsername] || 0) + 1;
+    //             }
+    //             showNotification(messageContent, realUsername);
+    //             playNotificationSound(); 
+    //         } else {
+    //             console.warn("Could not extract username from the message:", notification.message);
+    //             showNotification(notification.message, "Unknown User"); 
+    //             playNotificationSound();
+    //         }
+    //     }
+    //     updateUserList(); 
+    // }
+
+    // // Extract username from a message
+    // function extractUsername(username, message) {
+    //     if (username) return username;
+    //     const messageMatch = message?.match(/New message from (\S+):/);
+    //     return messageMatch?.[1];
+    // }
 
 
 
+    // Handle user info updates
+    function handleUserInfo(data) {
+        currentUser = { id: data.user_id, username: data.username };
+    }
 
-// Display a notification in the UI
-    function showNotification(message, sender) {
-        if (!notificationContainer) return;
 
-        const notificationElement = document.createElement('div');
-        notificationElement.className = 'notification-item';
+    // Display a notification in the UI
+    async function showNotification(message, sender) {
+        try {
+            const realUsername = await fetchRealUsername(sender);
 
-        const senderUser = users.find(user => user.username === sender);
-        const profileImage = senderUser ? senderUser.profileImage : 'images.png';
+            if (blockedUsers.has(realUsername)) {
+                console.log(`Notification from blocked user ${realUsername} is ignored.`);
+                return; 
+            }
 
-        notificationElement.innerHTML = `
-            <img src="${profileImage}" alt="${sender}">
-            <span>${message}</span>
+            if (!notificationContainer) return;
+
+            const notificationElement = document.createElement('div');
+            notificationElement.className = 'notification-item';
+
+            const senderUser = users.find(user => user.username === realUsername);
+            const profileImage = senderUser ? senderUser.profileImage : 'images.png';
+
+            notificationElement.innerHTML = `
+            <img src="${profileImage}" alt="${realUsername}">
+            <div>
+                <strong>${realUsername}:</strong>
+                <span>${message}</span>
+            </div>
         `;
 
-        notificationContainer.appendChild(notificationElement);
+            notificationContainer.appendChild(notificationElement);
 
-        setTimeout(() => {
-            notificationElement.style.opacity = '0';
-            setTimeout(() => notificationContainer.removeChild(notificationElement), 500);
-        }, 3000);
-    }
-
-    function updateUserList() {
-        const filteredUsers = filterUsers();
-        const userListContainer = document.getElementById('user-list-container');
-        userListContainer.innerHTML = ''; // Clear the list
-        filteredUsers.forEach(user => userListContainer.appendChild(createUserItem(user)));
-    }
-
-    function filterUsers() {
-        let filteredUsers = users.filter(user => user.username !== currentUser?.username);
-
-        const searchQuery = searchInput.value.toLowerCase();
-        if (searchQuery) {
-            filteredUsers = filteredUsers.filter(user => user.username.toLowerCase().includes(searchQuery));
+            setTimeout(() => {
+                notificationElement.style.opacity = '0';
+                setTimeout(() => notificationContainer.removeChild(notificationElement), 500);
+            }, 3000);
+        } catch (error) {
+            console.error("Error showing notification:", error);
         }
-
-        if (filterUnreadCheckbox.checked) {
-            filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
-        }
-
-        return filteredUsers;
     }
 
-    // Create a user item for the user list
-    function createUserItem(user) {
-        const userItem = document.createElement('div');
-        userItem.className = 'user-item';
-
-        const unreadCount = unreadMessages[user.username] || 0;
-        const statusColor = user.isActive = "green";
-
-        const lastMessageData = lastMessages[user.username] || {};
-        const lastMessage = lastMessageData.message || "";
-        const lastMessageTimestamp = lastMessageData.timestamp || "";
-
-        userItem.innerHTML = `
-            <div class="user-avatar-container">
-                <img src="${user.profileImage}" alt="${user.username}" class="user-avatar">
-                <span class="active-status" style="background-color: ${statusColor};"></span>
-            </div>
-            <div class="user-info">
-                <div class="username">${user.username}</div>
-                ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
-            </div>
-            <div class="user-meta">
-                ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
-                ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
-            </div>
-        `;
-
-        userItem.onclick = () => {
-            startChat(user.username, user.id); 
-            userItem.classList.add('active');
-            updateUserList(); 
-        };
-
-        return userItem;
-    }
 
     // Handle incoming chat messages
-    function handleChatMessage(event) {
+    async function handleChatMessage(event) {
         try {
             const data = JSON.parse(event.data);
             console.log("Received message:", data);
 
             if (data.type === "chat_message") {
                 const { sender, message, timestamp } = data;
+
+                const realUsername = await fetchRealUsername(sender);
+
+                if (blockedUsers.has(realUsername)) {
+                    console.log(`Message from blocked user ${realUsername} is ignored.`);
+                    return;
+                }
 
                 if (selectedChatUser) {
                     updateLastMessage(selectedChatUser, message, timestamp);
@@ -351,103 +468,79 @@ function handleUserInfo(data) {
     // Connect to the chat WebSocket
     function connectChatSocket() {
         if (socket?.readyState === WebSocket.OPEN) return;
-
+        const token = app.utils.getCookie("access_token");
         socket = new WebSocket(`ws://localhost:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
 
         socket.onopen = () => {
             console.log('Chat WebSocket connected');
             socket.send(JSON.stringify({ type: "user_id", user_id: selectedChatUserId }));
-            updateUserList(); // Update the user list UI
-            scrollToBottom(); // Scroll to the bottom of the chat
+            updateUserList(); 
+            scrollToBottom(); 
         };
 
         socket.onmessage = handleChatMessage;
-        socket.onclose = () => setTimeout(connectChatSocket, 5000); // Reconnect on close
+        socket.onclose = (e) => {
+            app.utils.showToast(e.reason)
+            console.log(e.reason);
+            
+        }
         socket.onerror = (error) => {
             console.error('Chat WebSocket Error:', error);
             socket.close();
         };
     }
 
-// Function to reset the chat box when no user is selected
-function resetChatBox() {
-    document.getElementById("messages").innerHTML = ""; 
-    document.getElementById("chat-header").classList.remove("active"); 
-    document.getElementById("input-area").style.display = "none"; 
-    document.getElementById("select-user-prompt").style.display = "flex"; 
-    selectedChatUser = null;
-    selectedChatUserId = null;
-  
-    // Close the existing socket if any
-    if (socket) {
-      socket.close();
-      socket = null;
-    }
+    // Function to reset the chat box when no user is selected
+    function resetChatBox() {
+        document.getElementById("messages").innerHTML = ""; 
+        document.getElementById("chat-header").classList.remove("active"); 
+        document.getElementById("input-area").style.display = "none"; 
+        document.getElementById("select-user-prompt").style.display = "flex"; 
+        selectedChatUser = null;
+        selectedChatUserId = null;
+    
+        if (socket) {
+        socket.close();
+        socket = null;
+        }
 
-    // Hide the profile section and reset chat box width
-    const profileSection = document.getElementById("profile-section");
-    const chatBox = document.getElementById("chat-box");
-    profileSection.classList.add("hidden");
-    chatBox.classList.remove("w-1/2");
-    chatBox.classList.add("w-3/4");
-}
-// Start a chat with a specific user
-function startChat(chatWith, chatWithId) {
-    selectedChatUser = chatWith;
-    selectedChatUserId = chatWithId;
-    console.log(`Starting user: ${selectedChatUser} (ID: ${selectedChatUserId})`);
-  
-    // Clear the messages container
-    document.getElementById("messages").innerHTML = "";
-  
-    // Update the chat header
-    document.getElementById("chat-with-user").textContent = chatWith;
-    document.getElementById("chat-header").classList.add("active"); // Show chat header
-  
-    // Show the input area and hide the "Select User" prompt
-    document.getElementById("input-area").style.display = "flex";
-    document.getElementById("select-user-prompt").style.display = "none";
-  
-    // Reset unread messages for the selected user
-    unreadMessages[chatWith] = 0;
-  
-    // Update the user list
-    updateUserList();
-  
-    // Close the existing socket if any and connect to the new chat socket
-    if (socket) socket.close();
-    connectChatSocket();
-
-    // Update the profile section with the selected user's info
-    document.getElementById("profile-user-name").textContent = chatWith;
-
-    // Ensure the profile section is hidden by default when starting a chat
-    const profileSection = document.getElementById("profile-section");
-    const chatBox = document.getElementById("chat-box");
-    profileSection.classList.add("hidden");
-    chatBox.classList.remove("w-1/2");
-    chatBox.classList.add("w-3/4");
-}
-
-// Function to toggle the profile section visibility
-function toggleProfileSection() {
-    console.log("Menu button clicked!"); // Debugging
-    const profileSection = document.getElementById("profile-section");
-    const chatBox = document.getElementById("chat-box");
-
-    if (profileSection.classList.contains("hidden")) {
-        profileSection.classList.remove("hidden");
-        chatBox.classList.remove("w-3/4");
-        chatBox.classList.add("w-1/2");
-    } else {
+        const profileSection = document.getElementById("profile-section");
+        const chatBox = document.getElementById("chat-box");
         profileSection.classList.add("hidden");
         chatBox.classList.remove("w-1/2");
         chatBox.classList.add("w-3/4");
     }
-}
 
-// Add event listener to the menu button
-document.getElementById("menu-button").addEventListener("click", toggleProfileSection);
+
+    // Start a chat with a specific user
+    function startChat(chatWith, chatWithId) {
+        selectedChatUser = chatWith;
+        selectedChatUserId = chatWithId;
+        console.log(`Starting user: ${selectedChatUser} (ID: ${selectedChatUserId})`);
+    
+        document.getElementById("messages").innerHTML = "";
+    
+        document.getElementById("chat-with-user").textContent = chatWith;
+        document.getElementById("chat-header").classList.add("active");
+    
+        document.getElementById("input-area").style.display = "flex";
+        document.getElementById("select-user-prompt").style.display = "none";
+    
+        unreadMessages[chatWith] = 0;
+    
+        updateUserList();
+    
+        if (socket) socket.close();
+        connectChatSocket();
+
+        document.getElementById("profile-user-name").textContent = chatWith;
+
+        const profileSection = document.getElementById("profile-section");
+        const chatBox = document.getElementById("chat-box");
+        profileSection.classList.add("hidden");
+        chatBox.classList.remove("w-1/2");
+        chatBox.classList.add("w-3/4");
+    }
 
 
     // Render a chat message in the UI
@@ -497,18 +590,18 @@ document.getElementById("menu-button").addEventListener("click", toggleProfileSe
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // Play a notification sound
-    function playNotificationSound() {
-        // const audio = new Audio('notification.mp3');
-        // audio.play().catch(error => console.error("Error playing notification sound:", error));
-    }
+    // // Play a notification sound
+    // function playNotificationSound() {
+    //     // const audio = new Audio('notification.mp3');
+    //     // audio.play().catch(error => console.error("Error playing notification sound:", error));
+    // }
 
     // Set up event listeners for UI interactions
     function setupEventListeners() {
         sendButton.onclick = sendMessage;
 
         chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' ) { 
                 e.preventDefault();
                 sendMessage();
             }
@@ -539,5 +632,8 @@ document.getElementById("menu-button").addEventListener("click", toggleProfileSe
                 sendButton.disabled = false;
             }, 1000);
         }
-    }
+    }    
+    
+    
+    initializeUserList();
 };

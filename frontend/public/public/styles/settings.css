@@ -1,5 +1,3 @@
-
-
 .settings-container
 {
     display: flex;
@@ -202,11 +200,17 @@
     border-radius: 2rem;
     font-weight: 600;
     cursor: pointer;
+    transition: 0.3s;
 }
 
+.profile-card button:hover
+{
+    background-color: #057343;
+    transition: 0.25s;
+}
 .profile-card input
 {
-    background-image: url("/public/assets/defaultprofile.png");
+    background-image: url("/public/assets/dog.png");
     background-size: cover;
     color: transparent;
     cursor: pointer;
@@ -219,7 +223,7 @@
 }
 
 .profile-card input[type="file"]::-webkit-file-upload-button {
-    visibility: hidden; /* Hide the button */
+    visibility: hidden;
 }
 
 .header
@@ -275,6 +279,19 @@
 {
     display: flex;
     flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.logout:hover
+{
+    transform: translateX(5px);
+}
+
+#logout-section:hover
+{
+    background-color: rgba(226, 38, 38, 0.05);
+    transition: background-color 0.3s ease;
 }
 
 .twofanote
@@ -302,8 +319,6 @@
     width: 100%;
 }
 
-/**/
-
 .fa-container
 {
     color: white;
@@ -314,6 +329,7 @@
     max-width: 24rem;
     width: 100%;
     padding: 1rem;
+    box-shadow: 0 0 10px rgba(52, 101, 62, 0.847);
 }
 
 .fa-elements-container
@@ -381,7 +397,6 @@
 
 .fa-verifybutton
 {
-    /* width: 100%; */
     text-align: center;
     background-color: #029F5B;
     border-width: 1px;
@@ -467,4 +482,131 @@
     width: 2rem;
     height: 2rem;
     animation: spin 1s linear infinite;
+}
+
+.blocklist-container {
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.blocklist-container::-webkit-scrollbar {
+    display: none;
+}
+
+.blocklist-items {
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+    background-color: #222222;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.blocklist-items::-webkit-scrollbar {
+    display: none;
+}
+
+.empty-blocklist {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    color: #94969C;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.blocked-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #313131;
+}
+
+.blocked-user-item:last-child {
+    border-bottom: none;
+}
+
+.blocked-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.blocked-user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #333333;
+}
+
+.blocked-user-name {
+    color: #CECFD2;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.unblock-btn {
+    background-color: #2D2D2D;
+    color: #E22626;
+    border: 1px solid #E22626;
+    border-radius: 1rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.unblock-btn:hover {
+    background-color: rgba(226, 38, 38, 0.15);
+}
+
+.error-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    color: #E22626;
+    font-size: 0.9rem;
+}
+
+#twofa-section:hover {
+    background-color: rgba(2, 159, 91, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+#twofa-section .logout:hover {
+    transform: translateX(5px);
+}
+
+#blocklist-section:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+#blocklist-section .logout:hover {
+    transform: translateX(5px);
+}
+
+#logout-section:hover {
+    background-color: rgba(226, 38, 38, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+.logout {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.logout:hover {
+    transform: translateX(5px);
 }

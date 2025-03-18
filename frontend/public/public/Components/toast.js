@@ -18,7 +18,7 @@ const view = (message) =>  /*html*/ `
 export const showToast = (message, color='red') => {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     const toast = document.createElement('div');
-    toast.className = `max-w-xs bg-${color}-500 text-white rounded-xl shadow-lg mt-4`;
+    toast.className = `max-w-xs bg-${color}-500 text-white rounded-xl shadow-lg mt-14`;
     toast.innerHTML = view(message);
     toastContainer.insertBefore(toast, toastContainer.firstChild);
     const remove = () => {
