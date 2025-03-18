@@ -85,26 +85,6 @@ const sendNotif = async () => {
     }
 }
 
-const fetch_friends = async (view) => {
-    try {
-        const {data, error} = await app.utils.fetchWithAuth("/api/auth/friends/")
-        if (error)
-        {
-            app.utils.showToast(error)
-            return
-        }
-        const pre = view.querySelector("#friends-data")
-        pre.innerText = data
-    } catch (error) {
-        if (error instanceof app.utils.AuthError)
-        {
-            app.Router.navigate("/auth/login")
-            return
-        }
-        console.log(error);
-    }
-}
-
 const add_friend = async (view, e, form) => {
     try {
         e.preventDefault()
@@ -153,52 +133,111 @@ const findMatch = async () => {
     }
 }
 
-const renderFriendsList = (friendsData, container) => {
-    if (!Array.isArray(friendsData) || !container) return;
+const renderFriendsList = async (container) => {
     
     const statusOrder = {
         "online": 1,
-        "in-queue": 2,
-        "in-game": 3,
+        "inqueue": 2,
+        "ingame": 3,
         "offline": 4
     };
-
-    friendsData.sort((a, b) => {
-        return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
-    });
-    
-    let friendList = container.querySelector('.friend-list');
-    if (!friendList) {
-        friendList = document.createElement('ul');
-        friendList.className = 'friend-list';
-        container.appendChild(friendList);
-    } else {
-        friendList.innerHTML = '';
-    }
-    
-    friendsData.forEach(friend => {
-        const friendItem = document.createElement('li');
-        friendItem.className = 'friend-item';
-        friendItem.dataset.friendId = friend.id;
-        
-        friendItem.innerHTML = `
-            <img class="profile-photo" src="${friend.photoUrl}" alt="Profile photo of ${friend.name}">
-            <div class="friend-info">
-                <span class="friend-name">${friend.name}</span>
-                <span class="friend-status ${friend.status}">
-                    <span class="status-circle"></span> ${friend.status.replace('-', ' ').charAt(0).toUpperCase() + friend.status.replace('-', ' ').slice(1)}
-                </span>
-            </div>
-        `;
-        
-        friendItem.addEventListener('click', (e) => {
-            e.preventDefault();
-            showFriendModal(friend, e.currentTarget);
+    try {
+        const {data, error} = await app.utils.fetchWithAuth("/api/main/friends/")
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        const friendsData = data;
+        friendsData.sort((a, b) => {
+            return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
         });
+        let friendList = container.querySelector('.friend-list');
+        if (!friendList) {
+            friendList = document.createElement('ul');
+            friendList.className = 'friend-list';
+            container.appendChild(friendList);
+        } else {
+            friendList.innerHTML = '';
+        }
         
-        friendList.appendChild(friendItem);
-    });
+        friendsData.forEach(friend => {
+            const friendItem = document.createElement('li');
+            friendItem.className = 'friend-item';
+            friendItem.dataset.friendId = friend.auth.id;
+            if (!friend.auth.icon_url)
+                friend.auth.icon_url = "/public/assets/dog.png"
+            friendItem.innerHTML = `
+                <img class="profile-photo" src="${friend.auth.icon_url}" alt="Profile photo of ${friend.auth.username}">
+                <div class="friend-info">
+                    <span class="friend-name">${friend.auth.username}</span>
+                    <span class="friend-status ${friend.status}">
+                        <span class="status-circle"></span> ${friend.status.replace('-', ' ').charAt(0).toUpperCase() + friend.status.replace('-', ' ').slice(1)}
+                    </span>
+                </div>
+            `;
+            
+            friendItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                showFriendModal(friend, e.currentTarget);
+            });
+            
+            friendList.appendChild(friendItem);
+        })
+    }
+    catch (error) {
+        if (error instanceof app.utils.AuthError)
+        {
+            app.Router.navigate("/auth/login")
+            return
+        }
+    }
 }
+
+const leaderboardData = [
+    {
+      rank: 1,
+      name: "Player One",
+      photoUrl: "/public/assets/dog.png",
+      score: 2000
+    },
+    {
+      rank: 2,
+      name: "Player Two",
+      photoUrl: "/public/assets/dog.png",
+      score: 1800
+    },
+    {
+      rank: 3,
+      name: "Player Three",
+      photoUrl: "/public/assets/dog.png",
+      score: 1600
+    },
+    {
+      rank: 4,
+      name: "Player Four",
+      photoUrl: "/public/assets/dog.png",
+      score: 1400
+    },
+    {
+      rank: 5,
+      name: "Player Five",
+      photoUrl: "/public/assets/dog.png",
+      score: 1200
+    },
+    {
+        rank: 6,
+        name: "Player Six",
+        photoUrl: "/public/assets/dog.png",
+        score: 1000
+    },
+    {
+        rank: 7,
+        name: "Player Seven",
+        photoUrl: "/public/assets/dog.png",
+        score: 800
+    }
+];
 
 const showFriendModal = (friend, element) => {
     const existingModal = document.getElementById("friend-modal");
@@ -443,89 +482,353 @@ const showFriendModal = (friend, element) => {
     });
 }
 
-const friendsData = [
-    {
-      id: 1,
-      name: "Alice",
-      photoUrl: "/public/assets/dog.png",
-      status: "online"
-    },
-    {
-      id: 2,
-      name: "Bob",
-      photoUrl: "/public/assets/dog.png",
-      status: "offline"
-    },
-    {
-      id: 3,
-      name: "Charlie",
-      photoUrl: "/public/assets/dog.png",
-      status: "in-queue"
-    },
-    {
-      id: 4,
-      name: "Dana",
-      photoUrl: "/public/assets/dog.png",
-      status: "in-game"
-    },
-    {
-      id: 5,
-      name: "Evan",
-      photoUrl: "/public/assets/dog.png",
-      status: "online"
-    },
-    {
-        id: 6,
-        name: "Imad",
-        photoUrl: "/public/assets/dog.png",
-        status: "online"
-      }
-];
-
-const leaderboardData = [
-    {
-      rank: 1,
-      name: "Player One",
-      photoUrl: "/public/assets/dog.png",
-      score: 2000
-    },
-    {
-      rank: 2,
-      name: "Player Two",
-      photoUrl: "/public/assets/dog.png",
-      score: 1800
-    },
-    {
-      rank: 3,
-      name: "Player Three",
-      photoUrl: "/public/assets/dog.png",
-      score: 1600
-    },
-    {
-      rank: 4,
-      name: "Player Four",
-      photoUrl: "/public/assets/dog.png",
-      score: 1400
-    },
-    {
-      rank: 5,
-      name: "Player Five",
-      photoUrl: "/public/assets/dog.png",
-      score: 1200
-    },
-    {
-        rank: 6,
-        name: "Player Six",
-        photoUrl: "/public/assets/dog.png",
-        score: 1000
-    },
-    {
-        rank: 7,
-        name: "Player Seven",
-        photoUrl: "/public/assets/dog.png",
-        score: 800
+const showAddFriendModal = async () => {
+    // Check if modal already exists and remove it
+    const existingModal = document.getElementById("add-friend-modal");
+    if (existingModal) {
+        existingModal.remove();
     }
-];
+    // Create modal container
+    const addFriendModal = document.createElement("div");
+    addFriendModal.id = "add-friend-modal";
+    addFriendModal.className = "add-friend-modal";
+    
+    // Fetch pending friend requests
+    let pendingRequests = [];
+    try {
+        const {data, error} = await app.utils.fetchWithAuth("/api/auth/friends/sent/");
+        if (!error) {
+            pendingRequests = data || [];
+        } else {
+            app.utils.showToast(error, "red");
+        }
+    } catch (error) {
+        console.error("Error fetching pending friend requests:", error);
+        if (error instanceof app.utils.AuthError) {
+            app.Router.navigate("/auth/login");
+            return;
+        }
+    }
+    
+    // Create modal content
+    addFriendModal.innerHTML = `
+        <div class="add-friend-modal-content">
+            <div class="add-friend-header">
+                <h3>Add Friend</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="add-friend-form-container">
+                <form id="add-friend-form" class="add-friend-form">
+                    <input 
+                        type="text" 
+                        id="friend-username" 
+                        name="username" 
+                        placeholder="Enter username" 
+                        required
+                        autofocus
+                    />
+                    <button type="submit" class="send-request-btn">Send Request</button>
+                </form>
+            </div>
+            <div class="pending-requests-container">
+                <h4>Pending Requests</h4>
+                <div class="pending-requests-list">
+                    ${pendingRequests.length ? 
+                        pendingRequests.map(request => `
+                            <div class="pending-request-item">
+                                <div class="pending-request-info">
+                                    <img src="${request.icon_url || '/public/assets/dog.png'}" class="pending-avatar" alt="${request.username}">
+                                    <span class="pending-username">${request.username}</span>
+                                </div>
+                                <span class="pending-status">Pending</span>
+                                <button class="cancel-request-btn" data-request-id="${request.id}">Cancel</button>
+                            </div>
+                        `).join('') 
+                        : 
+                        '<div class="no-pending-requests">No pending friend requests</div>'
+                    }
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to DOM
+    document.body.appendChild(addFriendModal);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        addFriendModal.classList.add('show');
+        // Focus the input field
+        const usernameInput = document.getElementById('friend-username');
+        if (usernameInput) {
+            usernameInput.focus();
+        }
+    }, 10);
+    
+    // Close button functionality
+    const closeBtn = addFriendModal.querySelector(".close-modal-btn");
+    closeBtn.addEventListener("click", () => {
+        addFriendModal.classList.remove('show');
+        setTimeout(() => {
+            addFriendModal.remove();
+        }, 300);
+    });
+    
+    // Add friend form submission
+    const addFriendForm = document.getElementById("add-friend-form");
+    addFriendForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(addFriendForm);
+        const username = formData.get("username");
+        
+        if (!username) {
+            app.utils.showToast("Please enter a username", "red");
+            return;
+        }
+        
+        try {
+            const {data, error} = await app.utils.fetchWithAuth(`/api/auth/add_friend/${username}/`);
+            if (error) {
+                app.utils.showToast(error, "red");
+                return;
+            }
+            
+            app.utils.showToast(`Friend request sent to ${username}`, "green");
+            
+            // Clear the form
+            addFriendForm.reset();
+            
+            // Refresh the modal to show the new pending request
+            addFriendModal.classList.remove('show');
+            setTimeout(() => {
+                addFriendModal.remove();
+                showAddFriendModal();
+            }, 300);
+            
+        } catch (error) {
+            if (error instanceof app.utils.AuthError) {
+                app.Router.navigate("/auth/login");
+                return;
+            }
+            console.error("Error sending friend request:", error);
+            app.utils.showToast("Failed to send friend request", "red");
+        }
+    });
+    
+    // Cancel request button functionality
+    const cancelBtns = addFriendModal.querySelectorAll(".cancel-request-btn");
+    cancelBtns.forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const requestId = btn.dataset.requestId;
+            try {
+                const {data, error} = await app.utils.fetchWithAuth(`/api/main/cancel-friend-request/${requestId}/`, {
+                    method: 'DELETE'
+                });
+                
+                if (error) {
+                    app.utils.showToast(error, "red");
+                    return;
+                }
+                
+                app.utils.showToast("Friend request cancelled", "orange");
+                
+                // Refresh the modal
+                addFriendModal.classList.remove('show');
+                setTimeout(() => {
+                    addFriendModal.remove();
+                    showAddFriendModal();
+                }, 300);
+                
+            } catch (error) {
+                if (error instanceof app.utils.AuthError) {
+                    app.Router.navigate("/auth/login");
+                    return;
+                }
+                console.error("Error cancelling friend request:", error);
+                app.utils.showToast("Failed to cancel friend request", "red");
+            }
+        });
+    });
+    
+    // Close when clicking outside the modal
+    addFriendModal.addEventListener("click", (e) => {
+        if (e.target === addFriendModal) {
+            addFriendModal.classList.remove('show');
+            setTimeout(() => {
+                addFriendModal.remove();
+            }, 300);
+        }
+    });
+};
+
+const showReceivedRequestsModal = async () => {
+    // Check if modal already exists and remove it
+    const existingModal = document.getElementById("received-requests-modal");
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal container
+    const receivedModal = document.createElement("div");
+    receivedModal.id = "received-requests-modal";
+    receivedModal.className = "received-requests-modal";
+    
+    // Fetch received friend requests
+    let receivedRequests = [];
+    try {
+        const {data, error} = await app.utils.fetchWithAuth("/api/main/friend-requests/received/");
+        if (!error) {
+            receivedRequests = data || [];
+        } else {
+            app.utils.showToast(error, "red");
+        }
+    } catch (error) {
+        console.error("Error fetching received friend requests:", error);
+        if (error instanceof app.utils.AuthError) {
+            app.Router.navigate("/auth/login");
+            return;
+        }
+    }
+    
+    // Create modal content
+    receivedModal.innerHTML = `
+        <div class="received-requests-modal-content">
+            <div class="received-requests-header">
+                <h3>Friend Requests</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="received-requests-container">
+                ${receivedRequests.length ? 
+                    '<div class="received-requests-list">' +
+                    receivedRequests.map(request => `
+                        <div class="received-request-item">
+                            <div class="received-request-info">
+                                <img src="${request.sender.icon_url || '/public/assets/dog.png'}" class="received-avatar" alt="${request.sender.username}">
+                                <span class="received-username">${request.sender.username}</span>
+                            </div>
+                            <div class="received-request-actions">
+                                <button class="accept-request-btn" data-request-id="${request.id}">Accept</button>
+                                <button class="decline-request-btn" data-request-id="${request.id}">Decline</button>
+                            </div>
+                        </div>
+                    `).join('') +
+                    '</div>'
+                    : 
+                    '<div class="no-received-requests">No new friend requests</div>'
+                }
+            </div>
+        </div>
+    `;
+    
+    // Add modal to DOM
+    document.body.appendChild(receivedModal);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        receivedModal.classList.add('show');
+    }, 10);
+    
+    // Close button functionality
+    const closeBtn = receivedModal.querySelector(".close-modal-btn");
+    closeBtn.addEventListener("click", () => {
+        receivedModal.classList.remove('show');
+        setTimeout(() => {
+            receivedModal.remove();
+        }, 300);
+    });
+    
+    // Accept request button functionality
+    const acceptBtns = receivedModal.querySelectorAll(".accept-request-btn");
+    acceptBtns.forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const requestId = btn.dataset.requestId;
+            const requestItem = btn.closest('.received-request-item');
+            const username = requestItem.querySelector('.received-username').textContent;
+            
+            try {
+                const {data, error} = await app.utils.fetchWithAuth(`/api/main/accept-friend-request/${requestId}/`, {
+                    method: 'POST'
+                });
+                
+                if (error) {
+                    app.utils.showToast(error, "red");
+                    return;
+                }
+                
+                app.utils.showToast(`You are now friends with ${username}`, "green");
+                
+                // Update the UI by refreshing the modal
+                receivedModal.classList.remove('show');
+                setTimeout(() => {
+                    receivedModal.remove();
+                    showReceivedRequestsModal();
+                    
+                    // Also refresh the friends list to show the new friend
+                    const friendsContainer = document.querySelector('.right-side');
+                    if (friendsContainer) {
+                        renderFriendsList(friendsContainer);
+                    }
+                }, 300);
+                
+            } catch (error) {
+                if (error instanceof app.utils.AuthError) {
+                    app.Router.navigate("/auth/login");
+                    return;
+                }
+                console.error("Error accepting friend request:", error);
+                app.utils.showToast("Failed to accept friend request", "red");
+            }
+        });
+    });
+    
+    // Decline request button functionality
+    const declineBtns = receivedModal.querySelectorAll(".decline-request-btn");
+    declineBtns.forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const requestId = btn.dataset.requestId;
+            const requestItem = btn.closest('.received-request-item');
+            const username = requestItem.querySelector('.received-username').textContent;
+            
+            try {
+                const {data, error} = await app.utils.fetchWithAuth(`/api/main/decline-friend-request/${requestId}/`, {
+                    method: 'DELETE'
+                });
+                
+                if (error) {
+                    app.utils.showToast(error, "red");
+                    return;
+                }
+                
+                app.utils.showToast(`Friend request from ${username} declined`, "orange");
+                
+                // Refresh the modal
+                receivedModal.classList.remove('show');
+                setTimeout(() => {
+                    receivedModal.remove();
+                    showReceivedRequestsModal();
+                }, 300);
+                
+            } catch (error) {
+                if (error instanceof app.utils.AuthError) {
+                    app.Router.navigate("/auth/login");
+                    return;
+                }
+                console.error("Error declining friend request:", error);
+                app.utils.showToast("Failed to decline friend request", "red");
+            }
+        });
+    });
+    
+    // Close when clicking outside the modal
+    receivedModal.addEventListener("click", (e) => {
+        if (e.target === receivedModal) {
+            receivedModal.classList.remove('show');
+            setTimeout(() => {
+                receivedModal.remove();
+            }, 300);
+        }
+    });
+};
 
 export default () => {
     const tournament_btn = document.getElementById("join-tournament-btn");
@@ -547,9 +850,28 @@ export default () => {
             status = false;
         }
     })
+    
+    // Add event listener for add friend button
+    const addFriendBtn = document.getElementById("add-friend-btn");
+    if (addFriendBtn) {
+        addFriendBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            showAddFriendModal();
+        });
+    }
+    
+    // Add event listener for received requests button
+    const receivedRequestsBtn = document.getElementById("received-btn");
+    if (receivedRequestsBtn) {
+        receivedRequestsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            showReceivedRequestsModal();
+        });
+    }
+    
     const friendsContainer = document.querySelector('.right-side');
     if (friendsContainer) {
-        renderFriendsList(friendsData, friendsContainer);
+        renderFriendsList(friendsContainer);
     }
     
     const leaderboardContainer = document.querySelector('.left-side');

@@ -147,12 +147,76 @@
 
 .header-div
 {
-    background-color: rgba(21, 82, 55, 0.39);
+    background-color: transparent;
     border-radius: 0.5rem;
     border-bottom-left-radius: 0.25rem;
     border-bottom-right-radius: 0.25rem;
     justify-content: center;
     align-items: center;
+}
+
+.svgs-div
+{
+    display: flex;
+    /* border-top: #1D1D1D solid 1px;
+    border-bottom: #1D1D1D solid 1px; */
+    /* border-left:  rgba(17, 90, 58, 0.39) solid 0.25rem;
+    border-right: rgba(17, 90, 58, 0.39) solid 0.25rem; */
+    /* background-color: #1D1D1D; */
+    padding: 4px 0;
+    justify-content: space-around;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+#add-friend-btn, #received-btn {
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#add-friend-btn::before, #received-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(17, 90, 58, 0.39);
+    border-radius: 8px;
+    transform: scale(0);
+    transition: transform 0.3s ease;
+    z-index: -1;
+}
+
+#add-friend-btn:hover::before, #received-btn:hover::before {
+    transform: scale(1);
+}
+
+#add-friend-btn:hover, #received-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#add-friend-btn:active, #received-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#add-friend-btn img, #received-btn img {
+    transition: transform 0.3s ease;
+    filter: brightness(0.9);
+}
+
+#add-friend-btn:hover img, #received-btn:hover img {
+    transform: scale(1.1);
+    filter: brightness(1.1);
 }
 
 .titles
@@ -712,3 +776,339 @@
         border-bottom: 1px solid #333;
     }
 }
+
+/* Add Friend Modal Styles */
+.add-friend-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.add-friend-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.add-friend-modal-content {
+    width: 100%;
+    max-width: 450px;
+    background-color: #1D1D1D;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.add-friend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(to right, #029F5B, rgba(22, 112, 73, 0.8));
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.add-friend-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.close-modal-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.add-friend-form-container {
+    padding: 20px;
+    border-bottom: 1px solid #333;
+}
+
+.add-friend-form {
+    display: flex;
+    gap: 10px;
+}
+
+.add-friend-form input {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #2D2D2D;
+    color: white;
+    font-size: 14px;
+    outline: none;
+}
+
+.add-friend-form input:focus {
+    border-color: rgba(22, 112, 73, 0.8);
+    box-shadow: 0 0 0 2px rgba(22, 112, 73, 0.3);
+}
+
+.add-friend-form input::placeholder {
+    color: #888;
+}
+
+.send-request-btn {
+    padding: 10px 15px;
+    background-color: #029F5B;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.send-request-btn:hover {
+    background-color: #017d47;
+}
+
+.pending-requests-container {
+    padding: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.pending-requests-container h4 {
+    color: white;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.pending-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pending-request-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #2D2D2D;
+    border-radius: 6px;
+    justify-content: space-between;
+}
+
+.pending-request-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pending-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.pending-username {
+    color: white;
+    font-weight: 500;
+}
+
+.pending-status {
+    color: #f59e0b;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.cancel-request-btn {
+    padding: 5px 10px;
+    background-color: #3D3D3D;
+    color: #e74c3c;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.cancel-request-btn:hover {
+    background-color: rgba(231, 76, 60, 0.2);
+}
+
+.no-pending-requests {
+    color: #888;
+    text-align: center;
+    padding: 20px 0;
+    font-style: italic;
+}
+
+/* End of Add Friend Modal Styles */
+
+/* Received Requests Modal Styles */
+.received-requests-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.received-requests-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.received-requests-modal-content {
+    width: 100%;
+    max-width: 450px;
+    background-color: #1D1D1D;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.received-requests-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(to right, #f59e0b, rgba(237, 137, 54, 0.8));
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.received-requests-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.received-requests-container {
+    padding: 20px;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.received-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.received-request-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: #2D2D2D;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.received-request-item:hover {
+    background-color: #333;
+}
+
+.received-request-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.received-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(237, 137, 54, 0.5);
+}
+
+.received-username {
+    color: white;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.received-request-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.accept-request-btn, .decline-request-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.accept-request-btn {
+    background-color: #029F5B;
+    color: white;
+}
+
+.accept-request-btn:hover {
+    background-color: #017d47;
+    transform: translateY(-2px);
+}
+
+.decline-request-btn {
+    background-color: #3D3D3D;
+    color: #e74c3c;
+}
+
+.decline-request-btn:hover {
+    background-color: rgba(231, 76, 60, 0.2);
+    transform: translateY(-2px);
+}
+
+.accept-request-btn:active, .decline-request-btn:active {
+    transform: translateY(0);
+}
+
+.no-received-requests {
+    color: #888;
+    text-align: center;
+    padding: 30px 0;
+    font-style: italic;
+}
+
+/* End of Received Requests Modal Styles */
