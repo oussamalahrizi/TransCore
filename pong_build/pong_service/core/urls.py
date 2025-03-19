@@ -17,5 +17,5 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', include("pong_game.urls")),
+    path('api/game/pong/', include("pong_game.urls")),
 ]
