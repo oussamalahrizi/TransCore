@@ -49,7 +49,6 @@ class Cache:
     def set_user_online(self, user_id: str):
         user_data = self.get_user_data(user_id)
         if user_data:
-            print('set user online : ', user_data)
             user_data["status"] = "online"
             if user_data.get("group_count"):
                 user_data["group_count"] += 1
@@ -76,7 +75,7 @@ class Cache:
             if user_data["group_count"] <= 0 and user_data["status"] == 'online':
                 user_data["status"] = "offline"
                 user_data.pop('group_count')
-            if user_data["auth"]:
+            if user_data.get("auth"):
                 self.redis.set(user_id, json.dumps(user_data))
             else:
                 self.redis.delete(user_id)

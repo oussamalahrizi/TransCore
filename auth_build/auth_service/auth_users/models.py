@@ -61,7 +61,7 @@ class User(AbstractBaseUser):
     username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     
-    auth_provider = models.ManyToManyField(AuthProvider, related_name="auth_provider")
+    auth_provider = models.ManyToManyField(AuthProvider, related_name="users")
     icon_url = models.URLField(blank=True, null=True)
     password = models.CharField(max_length=128, blank=True, null=True)
     is_superuser = models.BooleanField(default=False)

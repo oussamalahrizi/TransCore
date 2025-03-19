@@ -45,8 +45,6 @@ class RegisterEmail(LoginMixin, CreateAPIView):
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
-
-
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		self.perform_create(serializer)
@@ -62,19 +60,19 @@ class LoginView(LoginMixin, CreateAPIView):
 
 	def get(self, request : Request):
 		execution = request.query_params.get("execution")
-		username = request.query_params.get("username")
-		if execution is None or username is None:
+		id = request.query_params.get("id")
+		if execution is None or id is None:
 			return Response(data={"detail" : "missing query params"})
-		token = self.cache.execution_2fa_action(username, action="get")
+		token = self.cache.execution_2fa_action(id, action="get")
 		if token is None:
 			return Response(data={"detail" : "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 		try:
-			user: User = get_object_or_404(User, username=username)
-			self.cache.execution_2fa_action(user.username, action="delete")
+			user: User = get_object_or_404(User, id=id)
+			self.cache.execution_2fa_action(user.id, action="delete")
 			if not user.is_active:
 				return Response(status=status.HTTP_403_FORBIDDEN,
 					data={"detail" : "Your Account has been permanently banned."})
-			self.disconnect_user(user.username)
+			self.disconnect_user(user.id)
 			return self.Helper(user)
 		except Http404:
 			return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -116,7 +114,7 @@ class LogoutView(APIView):
 			return Response({"detail": "Refresh token not found."}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Blacklist the refresh token
-		self.cache.blacklist_token(refresh_token, request.user.username)
+		self.cache.blacklist_token(refresh_token, request.user.id)
 		self.cache.delete_access_session(request.user.id)
 		# Delete from cookies
 		response = Response({"detail": "Logout successful."}, status=status.HTTP_200_OK)
@@ -271,25 +269,25 @@ class VerifyOTP(APIView):
 
 	class OTPSerializer(serializers.Serializer):
 		code = serializers.CharField(required=True)
-		username = serializers.CharField(required=True)
+		id = serializers.CharField(required=True)
 
 	cache = _AuthCache
 	authentication_classes = []
 	permission_classes = []
 
-	def post(self, request, *args, **kwargs):
+	def post(self, request : Request, *args, **kwargs):
 		try:
 			instance = self.OTPSerializer(data=request.data)
 			instance.is_valid(raise_exception=True)
-			user : User = get_object_or_404(User, username=instance.validated_data["username"])
-			if self.cache.didUserRequest(user.username) is False:
+			user : User = get_object_or_404(User, id=instance.validated_data["id"])
+			if self.cache.didUserRequest(user.id) is False:
 				return Response({"detail" : f"{user.username} did not request a code."},
 									status=status.HTTP_403_FORBIDDEN)
 			secret = user.two_factor_secret
 			val = pyotp.TOTP(secret).verify(instance.validated_data["code"])
 			if not val :
 				return Response(data={"detail" : "invalid OTP code."}, status=status.HTTP_403_FORBIDDEN)
-			sec = self.cache.execution_2fa_action(user.username, "get")
+			sec = self.cache.execution_2fa_action(user.id, "get")
 			response = Response()
 			response.data = {"Location" : f"/api/auth/login/?username={user.username}&execution={sec}"}
 			return response
@@ -305,7 +303,11 @@ class GoogleCallback(GoogleMixin, APIView):
 
 	@sync_to_async
 	def cleanup(self, user_data, request):
-		user : User = self.getUser(user_data)
+		try:
+			user : User = self.getUser(user_data)
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST,
+				   data=str(e))
 		if not user.is_active:
 			return Response(status=status.HTTP_403_FORBIDDEN,
 				   data={"detail" : "Your Account has been permanently banned."})
@@ -361,7 +363,11 @@ class IntraCallback(IntraMixin, APIView):
 
 	@sync_to_async
 	def cleanup(self, user_data, request):
-		user : User = self.getUser(user_data)
+		try:
+			user : User = self.getUser(user_data)
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST,
+				   data=str(e))
 		if not user.is_active:
 			return Response(status=status.HTTP_403_FORBIDDEN,
 				data={"detail" : "Your Account has been permanently banned."})

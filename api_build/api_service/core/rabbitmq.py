@@ -60,20 +60,53 @@ class AsyncRabbitMQConsumer:
             print(f"Stopped {self.queue_name}")
 
 
+from pprint import pprint
+
 class APIConsumer(AsyncRabbitMQConsumer):
 
     cache = _Cache
 
+    def __init__(self, host, port, queue_name):
+        self.actions = {
+            "clear_cache" : self.clear_cache
+        }
+        super().__init__(host, port, queue_name)
+
+    async def clear_cache(self, data : dict):
+        user_id = data.get('user_id')
+        old_status = self.cache.get_user_status(user_id)
+        old_group_count = self.cache.get_group_count(user_id)
+        self.cache.remove_user_data(user_id)
+        new_data = {
+            'status' : old_status,
+            'group_count' : old_group_count
+        }
+        self.cache.redis.set(user_id, json.dumps(new_data))
+        neww = self.cache.get_user_data(user_id)
+        print("new data cache")
+        pprint(neww)
+        layer = get_channel_layer()
+        group_name = f"notification_{user_id}"
+        await layer.group_send(group_name, {
+            'type' : "refresh_friends"
+        })
+
     async def on_message(self, message : IncomingMessage):
         try:
-            data = message.body.decode()
-            print(f"{self.queue_name} : received message : {data}")
+            body = json.loads(message.body.decode())
+            print("received message :")
+            pprint(body)
+            type = body.get("type")
+            if type not in self.actions:
+                await message.ack()
+                return
+            await self.actions[type](body.get('data'))
             await message.ack()
         except json.JSONDecodeError:
-            print(f"{self.queue_name} : invalid json data")
-        except Exception as e:
-            print(f"{self.queue_name} : Error processing the message : {e}")
+            print("invalid json data")
             await message.reject()
+        except Exception as e:
+            print(f"Error processing the message : {e}")
 
 
 from channels.layers import get_channel_layer

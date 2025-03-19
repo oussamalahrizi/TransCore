@@ -62,6 +62,7 @@ class InputSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError("passwords missmatch")
 		return attrs
 	
+
 	def create(self, validated_data):
 		try:
 			user : User = User.objects.create_user(validated_data['email'], 
@@ -88,33 +89,28 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 # serializer to update common user info
 class UpdateUserSerializer(serializers.ModelSerializer):
-	auth_provider = serializers.CharField(max_length=len('google'), required=False)
-	username = serializers.CharField(max_length=255)
-	email = serializers.EmailField(max_length=255)
-	icon_url = serializers.URLField()
 	class Meta:
 		model = User
-		fields = ['username', 'email', 'icon_url', 'auth_provider']
-		extra_kwargs = {
-            'username': {'required': False},
-            'email': {'required': False},
-            'icon_url': {'required': False}
-		}
+		fields = ["username", "email"]
+
+	def validate_username(self, value):
+		if User.objects.filter(username=value).exists():
+			raise serializers.ValidationError(f"Username : {value} Already exists")
+		return value
+	def validate_email(self, value):
+		if User.objects.filter(email=value).exists():
+			raise serializers.ValidationError(f"Email : {value} Already exists")
+		return value
 	
-	def validate_auth_provider(self, value):
-		choices = ['google', 'intra', 'email']
-		value = str(value).lower()
-		if value not in choices:
-			raise serializers.ValidationError('invalid auth provider value')
-		obj, created = AuthProvider.objects.get_or_create(name=value)
-		return obj
+	def validate(self, attrs : dict):
+		for key in attrs.keys():
+			if key not in self.get_fields():
+				raise serializers.ValidationError("Invalid key provided")
+		return attrs
 	
 	def update(self, instance: User, validated_data):
-		auth_provider = validated_data.pop('auth_provider', None)
-		if auth_provider:
-			if instance.auth_provider.filter(name=auth_provider.name).exists():
-				raise serializers.ValidationError('auth provider already exist')
-			instance.auth_provider.add(auth_provider)
+		if not instance.auth_provider.filter(name="Email").exists():
+			raise serializers.ValidationError("Please update your password before setting new email")
 		for attr, value in validated_data.items():
 			setattr(instance, attr, value)
 		instance.save()
@@ -176,6 +172,8 @@ class SessionSerializer(serializers.Serializer):
 		- just call instance.set_password(new_password) to update it 
 """
 class UpdatePasswordSerializer(serializers.ModelSerializer):
+	old_password = serializers.CharField(required=True)
+	confirm_password = serializers.CharField(required=True)
 	class Meta:
 		model = User
 		fields = ['password']
@@ -183,13 +181,27 @@ class UpdatePasswordSerializer(serializers.ModelSerializer):
 			"password" : {"required" : True}
 		}
 
+	def validate(self, attrs):
+		new = attrs.get("password")
+		confirm = attrs.get("confirm_password")
+		if new != confirm:
+			raise serializers.ValidationError("Password missmatch")
+		return attrs
+
+	def validate_old_password(self, value):
+		if not self.instance.check_password(value):
+			raise serializers.ValidationError("Wrong Password")
+		return value
+
 	def validate_password(self, value):
 		if len(value) < 8:
 			raise serializers.ValidationError("password too short")
 		return value
 
-	def update(self, instance : User, validated_data):
+	def update(self, instance : User, validated_data : dict):
 		password = validated_data["password"]
 		instance.set_password(password)
 		instance.save()
+		email, created = AuthProvider.objects.get_or_create(name="Email")
+		instance.auth_provider.add(email)
 		return instance

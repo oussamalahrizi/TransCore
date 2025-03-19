@@ -5,6 +5,7 @@ from channels.middleware import BaseMiddleware
 from urllib.parse import parse_qs
 from api_core.utils import _Cache
 from channels.exceptions import DenyConnection
+from pprint import pprint
 
 JWK_URL = "http://auth-service/api/auth/jwk/"
 USERINFO_URL = "http://auth-service/api/auth/internal/userid/"
@@ -81,8 +82,13 @@ class jwtmiddleware(BaseMiddleware):
         """
         try:
             user = self.cache.get_user_data(user_id=user_id)
-            if user:
+            if user and user.get("auth"):
+                print("user in cache middlware")
+                pprint(user)
                 return user["auth"]
+            if user:
+                print("user in cache : ")
+                pprint(user)
             timeout = httpx.Timeout(5.0, read=5.0)
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(f"{USERINFO_URL}{user_id}/")

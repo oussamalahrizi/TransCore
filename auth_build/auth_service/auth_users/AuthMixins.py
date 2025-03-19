@@ -26,10 +26,10 @@ class LoginMixin:
 
 	def _handle_logged_user(self, user : User, refresh_cookie=None):
 		"""Handle already logged in user scenarios"""
-		if self.cache.isUserLogged(user.username):
+		if self.cache.isUserLogged(user.id):
 			print("User logged in already")
 			print("there is refresh" if refresh_cookie else "no refresh")
-			cache_token = self.cache.get_user_token(username=user.username)
+			cache_token = self.cache.get_user_token(user_id=user.id)
 			if refresh_cookie:
 				if cache_token != refresh_cookie:
 					response = Response(status=status.HTTP_403_FORBIDDEN,
@@ -41,13 +41,13 @@ class LoginMixin:
 			
 			if user.two_factor_enabled == False:
 				return Response(data={"detail": "User already logged in from another device"}, status=status.HTTP_403_FORBIDDEN)
-			self.cache.blacklist_token(cache_token, user.username)
+			self.cache.blacklist_token(cache_token, user.id)
 		return None
 
 	def _handle_2fa(self, user : User):
 		"""Handle 2FA verification"""
 		if user.two_factor_enabled:
-			self.cache.execution_2fa_action(user.username, "set")
+			self.cache.execution_2fa_action(user.id, "set")
 			return Response(data={
 				"detail" : "Please verify 2fa.",
 				"2fa" : True,
@@ -56,12 +56,12 @@ class LoginMixin:
 		return None
 
 	@async_to_sync
-	async def disconnect_user(self, username : str):
+	async def disconnect_user(self, user_id):
 		notif_queue = publishers[1]
 		data = {
 			'type' : "disconnect_user",
 			'data' : {
-				'username' : username,
+				'user_id' : str(user_id),
 				'reason' : "Logged in from a new device"
 			}
 		}
@@ -70,7 +70,7 @@ class LoginMixin:
 
 	def Helper(self, user : User) -> Response:
 		token_pair = GenerateTokenPair(str(user.id))
-		self.cache.store_token(user.username, token_pair['refresh'], token_pair["exp_refresh"])
+		self.cache.store_token(user.id, token_pair['refresh'], token_pair["exp_refresh"])
 		user.last_login = datetime.datetime.now(datetime.timezone.utc)
 		user.save()
 		response = Response(
@@ -100,8 +100,15 @@ class GoogleMixin(LoginMixin):
 				user.save()
 			return user
 		except Http404:
-			user = User.objects.create_user(email=email, username=username, auth_provider="Google")
-			return user
+			try:
+				# try create a user , avoid making same username different email
+				original_username = get_object_or_404(User, username=username)
+				raise Exception("Another user have the same username.")
+			except Http404:
+				user = User.objects.create_user(email=email, username=username, auth_provider="Google")
+				return user
+				
+				
 
 
 class IntraMixin(LoginMixin):

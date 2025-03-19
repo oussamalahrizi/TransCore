@@ -244,6 +244,9 @@ export default async () => {
             profile.value = formdata.name;
             console.log(data);
         })
+        // hady dial bind form event to send request to update user info f backend
+        bindUpdateInfo()
+        // other bind forms ba9i dial icon and password 
     }
     catch (error) {
         console.error("Error in Settings controller:", error);
@@ -253,4 +256,69 @@ export default async () => {
         }
         app.utils.showToast("An error occurred loading settings.");
     }
+}
+
+/**
+ * 
+ * @param {Object} options
+ * @param {string} options.username 
+ * @param {string} options.email 
+ * @returns 
+ */
+
+const handleUpdate = async ({username, email}) => {
+    // Only include non-empty fields in the request body
+    const requestBody = {};
+    if (username && username.trim() !== '') {
+        requestBody.username = username;
+    }
+    if (email && email.trim() !== '') {
+        requestBody.email = email;
+    }
+    if (Object.keys(requestBody).length === 0)
+    {
+        app.utils.showToast("Please fill in your infos")
+        return
+    }
+    console.log(requestBody);
+    
+    const {data, error} = await app.utils.fetchWithAuth(
+        "/api/auth/users/update/",
+        "PATCH",
+       JSON.stringify(requestBody)
+    )
+
+    if (error)
+    {
+        app.utils.showToast(error)
+        return
+    }
+    console.log("data after patch info : ", data);
+    app.utils.showToast(data.detail, "green")
+}
+
+const bindUpdateInfo = () => {
+    try {
+        const view = document.getElementById("settings")
+        const form = view.querySelector("#infos-form")
+        const button = view.querySelector("#save-change-infos")
+        form.addEventListener("submit", async (e)=> {
+            e.preventDefault()
+            button.disabled = true
+            const formdata = new FormData(form)
+            const data = Object.fromEntries(formdata.entries())
+            await handleUpdate(data)
+            button.disabled = false
+    })
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+        {
+            app.Router.navigate("/auth/login")
+            return
+        }
+        app.utils.showToast("Something went wrong, check console")
+        console.log(error);
+        return
+    }
+    
 }
