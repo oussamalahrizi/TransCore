@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Game App</title>
+  <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+  <!-- <div id="chat-log"></div> -->
+  <!-- <input id="chat-message-input" type="text" size="100" /> -->
+  <!-- <input id="chat-position-input" type="number" size="100" /> -->
+  <!-- <input id="chat-message-submit" type="button" value="Send" /> -->
+  <main id="root"></main>
+
+  <!-- <script> -->
+  <!--   const chatSocket = new WebSocket( -->
+  <!--     'ws://' + window.location.host + '/ws/game/' -->
+  <!--   ); -->
+  <!---->
+  <!--   chatSocket.onmessage = function (e) { -->
+  <!--     const data = JSON.parse(e.data); -->
+  <!--     console.log(data); -->
+  <!--     const p = document.createElement('p'); -->
+  <!--     p.textContent = data.message; -->
+  <!--     document.querySelector('#chat-log').appendChild(p); -->
+  <!--   }; -->
+  <!--   document.querySelector('#chat-message-input').focus(); -->
+  <!--   document.querySelector('#chat-message-input').onkeyup = function (e) { -->
+  <!--     if (e.keyCode === 13) {  // Enter key -->
+  <!--       document.querySelector('#chat-message-submit').click(); -->
+  <!--     } -->
+  <!--   }; -->
+  <!--   document.querySelector('#chat-message-submit').onclick = function (e) { -->
+  <!--     const messageInputDom = document.querySelector('#chat-message-input'); -->
+  <!--     const positionInputDom = document.querySelector('#chat-position-input'); -->
+  <!--     const message = messageInputDom.value; -->
+  <!--     const position = positionInputDom.value; -->
+  <!--     chatSocket.send(JSON.stringify({ -->
+  <!--       'message': message, -->
+  <!--       'position': position -->
+  <!--     })); -->
+  <!--     messageInputDom.value = ''; -->
+  <!--   }; -->
+  <!-- </script> -->
+  <script src="components/main.js" type="module"> </script>
+  <script src="components/HomeGame.js" type="module"> </script>
+  <script src="components/RemoteGame.js" type="module"> </script>
+  <script src="components/RoomGame.js" type="module"> </script>
+  <script src="components/LocalGame.js" type="module"> </script>
+</body>
+
+</html>

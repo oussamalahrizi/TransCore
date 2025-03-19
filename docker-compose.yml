@@ -254,3 +254,17 @@ services:
     pull_policy: build
     networks:
       - TransNetwork
+
+  xo-game:
+    build: "xo_build/."
+    container_name: xo_game
+    image: xo_game:latest
+    pull_policy: build
+    ports:
+      - 2002:2002
+    networks:
+      - TransNetwork
+    volumes:
+      - "./xo_build/xo_service:/var/app"
+    depends_on:
+      - game-redis
