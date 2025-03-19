@@ -1,132 +1,119 @@
+# chat/consumers.py
 import json
 import logging
 from datetime import datetime
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth import get_user_model
-
+from .models import Message
+from channels.exceptions import DenyConnection
+import httpx
 logger = logging.getLogger(__name__)
 
+USER_BY_USERNAME_URL = "http://auth-service/api/auth/internal/username/"
+
+async def fetch_user_by_username(username: str):
+    try:
+        timeout = httpx.Timeout(5.0, read=5.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.get(f"{USER_BY_USERNAME_URL}{username}/")
+            response.raise_for_status()
+            return response.json()
+    except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError) as e:
+        raise DenyConnection("Failed to fetch receipent info form auth")
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == httpx.codes.NOT_FOUND:
+            logger.error(f"User not found: {user_id}")
+            raise DenyConnection("User Not Found.")
+        logger.error(f"HTTP error fetching user info: {e}")
+        raise DenyConnection("Failed to fetch user info form auth")
+    except:
+        raise DenyConnection("Failed to fetch user info form auth")
 
 class ChatConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.room_name = None
-        self.room_group_name = None
-        self.user = None
-        self.chat_with_user_id = None
+        self.room_name = self.room_group_name = self.user = self.chat_with_user_id = None
 
     async def connect(self):
         try:
             await self.accept()
-
-            if self.scope.get("error_message"):
-                error = self.scope.get("error_message")
-                logger.error(f"Error in chat consumer: {error}")
-                await self.close(code=4001, reason=f"Error in chat consumer: {error}")
-                return
-
             self.user = self.scope.get("user")
-            if not self.user:
-                logger.error("User not found in scope")
-                await self.close(code=4002, reason="User not found.")
+            if not self.user or "id" not in self.user:
+                await self.close(code=4002 if not self.user else 4003, reason="User not found or invalid.")
                 return
-
-            if "id" not in self.user:
-                logger.error("User object does not contain 'id' field")
-                await self.close(code=4003, reason="Invalid user object.")
+            other = self.scope['url_route']['kwargs'].get('username')
+            try:
+                if not other:
+                    await self.close(code=4002 if not self.user else 4003, reason="Receipent not found or invalid.")
+                    return
+                self.other = await fetch_user_by_username(other)
+            except DenyConnection as e:
+                await self.close(code=4002 if not self.user else 4003, reason=str(e))
                 return
-
-            await self.send(text_data=json.dumps({
-                "type": "user_info",
-                "user_id": self.user["id"], 
-            }))
-
-            logger.info("Waiting for recipient's user_id from the frontend...")
-
+            
+            await self.setup_room(self.other['id'])
+            await self.send(json.dumps({"type": "user_info", "user_id": self.user["id"]}))
         except Exception as e:
-            logger.error(f"Error during WebSocket connection: {e}")
-            await self.close(code=4000, reason="Unexpected connection error.")
+            logger.error(f"Connection error: {e}")
+            await self.close(code=4000, reason="Unexpected error.")
 
     async def receive(self, text_data):
         try:
-            message_data = json.loads(text_data)
-            message_type = message_data.get("type")
-
-            if message_type == "user_id":
-                self.chat_with_user_id = message_data.get("user_id")
-                logger.info(f"Received recipient's user_id: {self.chat_with_user_id}")
-
-                user1_id = self.user["id"]
-                user2_id = self.chat_with_user_id
-
-                min_id = min(user1_id, user2_id)
-                max_id = max(user1_id, user2_id)
-                self.room_name = f"chat_{min_id}_{max_id}"
-                self.room_group_name = f"chat_{self.room_name}"
-
-                logger.info(f"Sender ID: {user1_id}, Receiver ID: {user2_id}, Room Name: {self.room_name}")
-
-                await self.channel_layer.group_add(
-                    self.room_group_name,
-                    self.channel_name
-                )
-
-                logger.info(f"Connected to chat with user ID {self.chat_with_user_id} in room {self.room_name}")
-
-            elif message_type == "message":
-                message = message_data.get("message", "")
-                sender = self.user
-                timestamp = datetime.now()
-
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "chat.message",
-                        "message": message,
-                        "sender_id": sender["id"],
-                        "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                    }
-                )
-
+            data = json.loads(text_data)
+            if data["type"] == "message":
+                await self.handle_message(data["message"])
         except Exception as e:
-            logger.error(f"Error while processing message: {e}")
-            await self.send(text_data=json.dumps({"error": "Error while processing message"}))
-    @database_sync_to_async
-    def get_user_by_id(self, user_id):
+            logger.error(f"Message processing error: {e}")
+            await self.send(json.dumps({"error": "Message processing failed."}))
+
+    async def setup_room(self, recipient_id):
+        self.chat_with_user_id = recipient_id
+        user1_id, user2_id = sorted([self.user["id"], recipient_id])
+        self.room_name = f"chat_{user1_id}_{user2_id}"
+        self.room_group_name = f"chat_{self.room_name}"
+
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        logger.info(f"Connected to room: {self.room_name}")
+
+    async def handle_message(self, message):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        await self.publish_notification(self.user["id"], self.chat_with_user_id, message)
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "chat.message", "message": message, "sender_id": self.user["id"], "timestamp": timestamp}
+        )
+
+
+    async def publish_notification(self, sender_id, recipient_id, message):
         """
-        Fetch user data by user_id from the database.
+        Publish a notification to RabbitMQ in the specified format.
         """
         try:
-            return User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            logger.warning(f"User not found in database: {user_id}")
-            return None
+            data = {
+                "type": "send_notification",
+                "data": {
+                    "user_id": str(recipient_id),  
+                    "message": f"New message from {sender_id}: {message}",
+                },
+            }
+            notifspub = self.scope.get("notifspub")  
+            await notifspub.publish(data)
+            logger.info(f"Notification published: {data}")
         except Exception as e:
-            logger.error(f"Error fetching user by ID: {e}")
-            return None
+            logger.error(f"Error publishing notification: {e}")
 
     async def chat_message(self, event):
-        """
-        Handle incoming messages from the room group and send them to the WebSocket.
-        """
-        logger.info(f"Sending message to WebSocket: {event}")
-
-        await self.send(text_data=json.dumps({
-            "message": event["message"],
-            "sender_id": event["sender_id"],
-            "timestamp": event["timestamp"],
-        }))
+        data = {
+            'type' : 'message',
+            "message": event['message'],
+            "sender_id": event['sender_id'],
+            "timestamp": event['timestamp']
+        }
+        await self.send(json.dumps(data))
 
     async def disconnect(self, close_code):
-        try:
-            if self.room_group_name:
-                await self.channel_layer.group_discard(
-                    self.room_group_name,
-                    self.channel_name
-                )
-                logger.info(f"Disconnected from chat with user ID {self.chat_with_user_id}")
-            else:
-                logger.warning("Disconnected without a valid room_group_name")
-        except Exception as e:
-            logger.error(f"Error during WebSocket disconnection: {e}")
+        if self.room_group_name:
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+            logger.info(f"Disconnected from room: {self.room_name}")
