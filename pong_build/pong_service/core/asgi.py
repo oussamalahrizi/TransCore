@@ -13,16 +13,16 @@ import asyncio
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-from pong_game.game import GameState
-
-game_task : dict[str, asyncio.Task] = {}
-
-Game : dict[str, GameState] = {}
 
 from django.core.asgi import get_asgi_application
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+import django
 
-from pong_game.urls import websocket_patterns
+django.setup()
+
+
+
+from pong_game.wbesocket_urls import websocket_patterns
 
 from pong_game.Middleware import jwtMiddleware
 

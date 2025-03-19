@@ -124,7 +124,6 @@ services:
     env_file:
       - "api_build/build/conf/.env"
 
-
   api-redis:
     build: "api_redis"
     pull_policy: build
@@ -247,6 +246,8 @@ services:
       - "./pong_build/pong_service:/var/app"
     depends_on:
       - game-redis
+    env_file:
+      - "api_build/build/conf/.env"
 
   game-redis:
     build: "game_redis/."
@@ -255,3 +256,13 @@ services:
     pull_policy: build
     networks:
       - TransNetwork
+
+  game-db:
+    image: postgres:17
+    container_name: game_db
+    networks:
+      - TransNetwork
+    volumes:
+      - /var/lib/postgresql/data
+    env_file:
+      - "api_build/build/conf/.env"

@@ -1,12 +1,12 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
-from core.asgi import GameState
+from .utils import GameState
 from .utils import Game_Cache
-from asgiref.sync import sync_to_async, database_sync_to_async
-from core.asgi import game_task, Game
+from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
+from .utils import game_task, Game
 import time
 from channels.layers import get_channel_layer
-from .services import GameService
 
 layer = get_channel_layer()
 @database_sync_to_async
@@ -38,6 +38,10 @@ async def broadcastSingle(instance: GameState):
         print(e)
     finally:
 
+        await layer.group_send(instance.game_id, {
+            'type' : 'game_end',
+            'winner' : instance.winner
+        })
         # For single player games, record the match in the database
         if Game.singleplayer and Game.players:
             player_id = Game.players[0]
@@ -50,10 +54,6 @@ async def broadcastSingle(instance: GameState):
             # Record the single player match in the database
             await record_single_match_async(player_id, is_win, p1_score, p2_score)
             
-        await layer.group_send(instance.game_id, {
-            'type' : 'game_end',
-            'winner' : instance.winner
-        })
 
 
 class SingleConsumer(AsyncWebsocketConsumer):

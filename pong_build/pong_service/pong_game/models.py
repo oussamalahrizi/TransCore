@@ -23,11 +23,13 @@ class Match(models.Model):
     
 
 class MatchSingle(models.Model):
-    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player1_matches')
+    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='single_player')
     winner = models.CharField(max_length=10, choices=[
-        ("WIN","WIN")
+        ("WIN","WIN"),
         ("LOSS", "LOSS")
     ], default="WIN")
     player1_score = models.IntegerField()
     cpu_score = models.IntegerField()
     played_at = models.DateTimeField(auto_now_add=True)
+
+

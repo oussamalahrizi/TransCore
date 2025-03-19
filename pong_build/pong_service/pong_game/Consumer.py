@@ -1,14 +1,13 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
-from core.asgi import GameState, Game, game_task
+from .utils import GameState, Game, game_task
 from .utils import Game_Cache
-from asgiref.sync import sync_to_async, database_sync_to_async
 from channels.layers import get_channel_layer
-from channels.db import aclose_old_connections
+from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 import time
-from .services import GameService
 
+from .services import GameService
 # game_task : dict[str, asyncio.Task] = {}
 
 # Game : dict[str, GameState] = {}
