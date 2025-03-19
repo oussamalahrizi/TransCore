@@ -175,3 +175,53 @@
   background-color: #057343;
   color: #fff;
 }
+
+
+.inqueue {
+  text-align: center;
+  line-height: 1.5rem;
+  background-color: #ff9800;
+  border-width: 1px;
+  border-color: #373a41;
+  color: #fff;
+  border-radius: 0.5rem;
+  /* margin-top: 0.75rem; */
+  margin-left: 2rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+  font-weight: 600;
+  transition: 0.25s;
+}
+
+.inqueue:hover {
+  opacity: 1;
+  background-color: #d18411;
+  color: #fff;
+}
+
+.ingame {
+  text-align: center;
+  line-height: 1.5rem;
+  background-color: #2e00fd;
+  border-width: 1px;
+  border-color: #373a41;
+  color: #fff;
+  border-radius: 0.5rem;
+  /* margin-top: 0.75rem; */
+  margin-left: 2rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+  font-weight: 600;
+  transition: 0.25s;
+}
+
+.ingame:hover {
+  opacity: 1;
+  background-color: #3718c1;
+  color: #fff;
+}
+

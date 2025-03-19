@@ -25,6 +25,7 @@ const login = async ({email, password}) => {
         app.utils.setCookie("access_token", data.access_token)
         dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
         dispatchEvent(new CustomEvent("navbar-profile"))
+        dispatchEvent(new CustomEvent("play-button"));
         return true
     } catch (error) {
         app.utils.showToast(error, 'red')

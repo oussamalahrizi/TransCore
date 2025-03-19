@@ -34,6 +34,47 @@ addEventListener("websocket", (e) => {
   } else console.log("success");
 });
 
+addEventListener("play-button", async (e)=> {
+  const Play = /*html*/`<a href="/gamemode" class="playnow">Play</a>`
+  const inqueue = /*html*/`<button class="inqueue">In Queue</a>`
+  const ingame = /*html*/`<button class="playnow">In Game</a>`
+  const token = app.utils.getCookie("access_token")
+  if (!token)
+      return
+  // logged in get player state
+  const view = document.getElementById("play-container")
+  const {data, error} = await app.utils.fetchWithAuth("/api/main/user/me/")
+  if (error)
+  {
+    app.utils.showToast(error)
+    return
+  }
+  const status = data.status
+  console.log("status fetched : ", status);
+  switch (status)
+  {
+    case "online":
+      view.innerHTML = Play
+      break
+    case "inqueue":
+      view.innerHTML = inqueue
+      button = view.querySelector("button")
+      button.addEventListener("click", (e)=>{
+        app.utils.showToast("attempt cancel queue", "orange")
+        dispatchEvent(new CustomEvent("play-button"))
+      })
+      break
+    case "ingame":
+      view.innerHTML = ingame
+      view.querySelector("button").disabled = true
+      break
+    default:
+      console.log("something went wrong");
+      break
+    }
+    app.Router.disableReload()
+})
+
 addEventListener("navbar-profile", async (e) => {
   const token = app.utils.getCookie("access_token");
   const view = document.getElementById("profile-container");
@@ -47,7 +88,6 @@ addEventListener("navbar-profile", async (e) => {
       `;
     return;
   }
-
   try {
     const { data, error } = await app.utils.fetchWithAuth(
       "/api/auth/users/me/"

@@ -246,8 +246,9 @@ services:
       - "./pong_build/pong_service:/var/app"
     depends_on:
       - game-redis
+      - game-db
     env_file:
-      - "api_build/build/conf/.env"
+      - "pong_build/build/conf/.env"
 
   game-redis:
     build: "game_redis/."
@@ -265,4 +266,4 @@ services:
     volumes:
       - /var/lib/postgresql/data
     env_file:
-      - "api_build/build/conf/.env"
+      - "pong_build/build/conf/.env"
