@@ -601,7 +601,7 @@ export default async () => {
       cancelAnimationFrame(animationId);
       animationId = null;
     }
-
-    // clearInterval(timer);
+    console.log("merge");
+    
   };
 };
