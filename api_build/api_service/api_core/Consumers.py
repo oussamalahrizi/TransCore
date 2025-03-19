@@ -62,15 +62,18 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 	async def set_user_queue(self, event):
 		data = {
 			'type' : "inqueue",
-			'message' : 'You Are In Queue'
 		}
 		await self.send(text_data=json.dumps(data))
 	
 	async def set_user_game(self, event):
 		data = {
 			'type' : "ingame",
-			'message' : 'You Are In Game',
 			'game_id' : event["game_id"]
 		}
 		await self.send(text_data=json.dumps(data))
 
+	async def refresh_friends(self, event):
+		print("wslat from api queue")
+		await self.send(text_data=json.dumps({
+			'type' : "refresh_friends"
+		}))

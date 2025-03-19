@@ -16,8 +16,27 @@ export const SetOnline = () => {
     ws.onmessage = async (e) => {
         const {message, type} = JSON.parse(e.data)
         console.log(e.data);
-        app.utils.showToast("You have a notification : " + message, "green")
-        await fetchNotifs()
+        switch (type)
+        {
+            case "notification":
+                Notification(message)
+                break
+            
+            case "refresh_friends":
+                refresh_friends(message)
+                break
+            
+            case 'inqueue':
+                app.utils.showToast("You are now in queue, bdel play a imad")
+                break
+
+            case 'ingame':
+                app.utils.showToast("You are in game, ha game id a ilyass", data.game_id)
+                break
+            default:
+                app.utils.showToast("ma3rt chhadshy ja mn back : ", message)
+                break
+        }
     }
 
     const fetchNotifs = async () => {
@@ -40,3 +59,12 @@ export const SetOnline = () => {
     app.websocket = ws
 }
 
+
+const Notification = (data) => {
+    app.utils.showToast(data.message)
+}
+
+
+const refresh_friends  = (data) => {
+    app.utils.showToast("refresh friends akhay imad")
+}

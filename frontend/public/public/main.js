@@ -74,7 +74,7 @@ addEventListener("navbar-profile", async (e) => {
                <div class="icon-container">
                   <img src="/public/assets/profile.svg" alt="Profile icon" class="menu-icon">
                </div>
-               <a href="#" id="profile-link">Your profile</a>
+               <a href="/profile" id="profile-link">Your profile</a>
             </div>
             <div class="menu-item">
                <div class="icon-container">
@@ -109,12 +109,6 @@ addEventListener("navbar-profile", async (e) => {
         hideModalWithAnimation(profileModal);
         console.log("Modal hidden with animation");
       }
-    });
-
-    document.getElementById("profile-link").addEventListener("click", (e) => {
-      e.preventDefault();
-      hideModalWithAnimation(profileModal);
-      app.Router.navigate("/profile");
     });
 
     document.getElementById("settings-link").addEventListener("click", (e) => {
@@ -154,6 +148,7 @@ addEventListener("navbar-profile", async (e) => {
         }
         app.utils.showToast(data.detail);
       });
+      app.Router.disableReload()
   } catch (error) {
     if (error instanceof app.utils.AuthError) {
       app.Router.navigate("/auth/login");

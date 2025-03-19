@@ -20,57 +20,41 @@ from core.asgi import publishers
 from asgiref.sync import async_to_sync
 
 
-class UpdateUserInfo(UpdateAPIView):
+
+class UpdateUserInfo(APIView):
     serializer_class = UpdateUserSerializer
-    queryset = User.objects.all()
-    lookup_field = 'username'
-    http_method_names = ['patch']
-    permission_classes = [IsSameUser]
+    permission_classes = [IsAuthenticated]
     
-    def patch(self, request, *agrs, **kwargs):
+    def patch(self, request : Request, *agrs, **kwargs):
         if not request.data:
-            return Response({"detail" : "empty request data"},
+            return Response({"detail" : "Empty request data"},
                             status.HTTP_400_BAD_REQUEST)
-        partial = True
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        # check additional fields in the request data
-        for key in request.data.keys():
-            if key not in serializer.get_fields():
-                return Response({"detail" : "ivalid key provided"},
-                    status=status.HTTP_400_BAD_REQUEST)
+        instance : User = request.user
+        serializer = self.serializer_class(instance, data=request.data, partial=True)
         # check serializer validation and perform the update
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        # just copied it from original function, ignore it 
-        ###################
-        if getattr(instance, '_prefetched_objects_cache', None):
-             # If 'prefetch_related' has been applied to a queryset, we need to
-             # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-        ###################
-        response = {
-            "detail" : "update successful",
-            "updated_fields" : request.data.keys()
-        }
-        return Response(response)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
+        serializer.update(instance, serializer.validated_data)
+        async_to_sync(NotifyApi)(instance.id)
+        return Response(data={ "detail" : f"update successful {instance.username}"})
 
 
-class UpdatePassword(UpdateAPIView):
-    permission_classes = [IsSameUser]
-    queryset = User.objects.all()
-    lookup_field = 'username'
-    http_method_names = ['patch']
+class UpdatePassword(APIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = UpdatePasswordSerializer
     
-    def patch(self, request, *args, **kwargs):
+    def patch(self, request : Request, *args, **kwargs):
         if not request.data:
             return Response({"detail" : "empty request data"},
                             status.HTTP_400_BAD_REQUEST)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer=serializer)
+        instance = request.user
+        serializer = self.serializer_class(instance, data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
+        validated_data = self.serializer_class.validated_data
+        self.serializer_class.update(instance=instance, validated_data=validated_data)
         return Response(status=status.HTTP_202_ACCEPTED,
                         data={"detail" : "Sucessfully updated the password"})
         
@@ -88,14 +72,29 @@ class GetMyInfo(APIView):
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
 
-from .serializers import AuthProviderSerializer
-
 
 
 class ListUsers(ListAPIView):
     serializer_class = UserDetailSerializer
     queryset = User.objects.all()
     authentication_classes = []
+
+"""
+    cleanup functions for api
+"""
+
+from core.asgi import publishers
+
+async def NotifyApi(user_id):
+    api = publishers[0]
+
+    body = {
+        'type' : "clear_cache",
+        'data' : {
+            "user_id" : str(user_id)
+        }
+    }
+    await api.publish(body)
 
 class GetFriends(APIView):
     class FriendsSerializer(serializers.ModelSerializer):
@@ -185,6 +184,7 @@ class ChangeFriend(APIView):
             'block' : self.block,
         }
         super().__init__(**kwargs)
+
     class ChangeSerializer(serializers.Serializer):
         
         change = serializers.CharField(max_length=10, required=True)
@@ -272,22 +272,6 @@ class ChangeFriend(APIView):
                             data={"detail" : f'User Not Found, {kwargs.get("username")}'})
         except Exception as e:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : str(e)})
-
-
-class BanSelf(APIView):
-    permission_classes = [IsAuthenticated]
-    cache = _AuthCache
-
-    def get(self, request: Request, *args, **kwargs):
-        current_user: User = request.user
-        if current_user.is_active:
-            print("current user: ", current_user.username)
-            self.cache.BlacklistUserToken(current_user.username)
-            self.cache.remove_access_session(current_user.id)
-            current_user.is_active = False
-            current_user.save()
-            return Response(data={"detail" : "You are now banned!"})
-        return Response(data={"detail" : "You are already banned."})
 
 import json
 from django.core.mail import send_mail
