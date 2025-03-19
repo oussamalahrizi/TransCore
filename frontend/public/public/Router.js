@@ -56,6 +56,7 @@ const Router = {
     app.utils.removeCookie("access_token");
     await Router.navigate(location.href);
     dispatchEvent(new CustomEvent("navbar-profile"));
+    dispatchEvent(new CustomEvent("play-button"));
     dispatchEvent(new CustomEvent("websocket", { detail: { type: "open" } }));
   },
   navigate: async (url, useHistory = true) => {

@@ -13,7 +13,7 @@ done
 
 echo "Database is up! Starting the application..."
 
-python3 manage.py makemigrations
-python3 manage.py migrate
+./manage.py makemigrations
+./manage.py migrate
 
 exec "$@"

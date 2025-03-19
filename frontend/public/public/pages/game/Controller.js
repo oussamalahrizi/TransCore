@@ -597,10 +597,11 @@ export default async () => {
   // Cleanup on unmount
   return function () {
     if (gameInfo.ws.readyState === WebSocket.OPEN) {
+      console.log("closing websocket game");
       gameInfo.ws.close();
-      cancelAnimationFrame(animationId);
-      animationId = null;
     }
+    cancelAnimationFrame(animationId);
+    animationId = null;
     console.log("merge");
     
   };

@@ -4,12 +4,9 @@ from django.db import models
 
 
 class Player(models.Model):
-    player_id = models.CharField(max_length=100, unique=True, primary_key=True, editable=False)
+    player_id = models.CharField(max_length=100, unique=True, primary_key=True)
     matches_won = models.IntegerField(default=0)
     matches_lost = models.IntegerField(default=0)
-
-    def __str__(self):
-        return f"{self.player_id} (W:{self.matches_won}/L:{self.matches_lost})"
 
 
 class Match(models.Model):
@@ -20,7 +17,6 @@ class Match(models.Model):
     player2_score = models.IntegerField()
     played_at = models.DateTimeField(auto_now_add=True)
 
-    
 
 class MatchSingle(models.Model):
     player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='single_player')
@@ -31,5 +27,3 @@ class MatchSingle(models.Model):
     player1_score = models.IntegerField()
     cpu_score = models.IntegerField()
     played_at = models.DateTimeField(auto_now_add=True)
-
-

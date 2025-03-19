@@ -17,6 +17,7 @@ const IntraCallback = async (code) => {
     app.utils.setCookie("access_token", data.access_token);
     dispatchEvent(new CustomEvent("websocket", { detail: { type: "open" } }));
     dispatchEvent(new CustomEvent("navbar-profile"));
+    dispatchEvent(new CustomEvent("play-button"));
 
     app.Router.navigate("/");
   } catch (error) {

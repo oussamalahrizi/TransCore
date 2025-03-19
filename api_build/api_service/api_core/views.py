@@ -119,15 +119,13 @@ class GetFriends(APIView):
         auth_data : dict = data.get("auth")
         friends = auth_data.get('friends')
         if not friends:
-            friends = async_to_sync(fetch_friends_auth)(user_id) # [ { id : 123, username : oussama}, { id : 456, username : lahrizi}]
+            friends = async_to_sync(fetch_friends_auth)(user_id)
             for f in friends:
-                print("friend : ", f['username'])
-                pprint(f)
                 self.cache.set_user_data(f['id'], f, 'auth')
                 self.cache.append_user_friends(user_id, f['id'])
             data = self.cache.get_user_data(user_id)
             auth_data = data.get("auth")
-            friends = auth_data.get('friends')
+            friends = auth_data.get('friends') or [] # so its iterable as array not None type
         final = []
         for id in friends:
             user : dict = self.cache.get_user_data(id)

@@ -64,3 +64,20 @@ class AsyncRabbitMQConsumer:
             print("Stopped")
 
 
+class APIConsumer(AsyncRabbitMQConsumer):
+
+    cache = _Cache
+
+    async def on_message(self, message : IncomingMessage):
+        try:
+            data = message.body.decode()
+            print(f"received message : {data}")
+            user = json.loads(message.body)
+            self.cache.remove_user_data(user_id=user["id"])
+            await message.ack()
+            print(f"deleted cached data for user : {user["username"]}")
+        except json.JSONDecodeError:
+            print("invalid json data")
+            await message.reject()
+        except Exception as e:
+            print(f"Error processing the message : {e}")

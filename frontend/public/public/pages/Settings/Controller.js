@@ -140,6 +140,7 @@ const handleLogout = async () => {
             app.utils.removeCookie("access_token")
             dispatchEvent(new CustomEvent("websocket", {detail : {type : "close"}}))
             dispatchEvent(new CustomEvent("navbar-profile"))
+            dispatchEvent(new CustomEvent("play-button"));
             app.Router.navigate("/auth/login")
             return
         }
