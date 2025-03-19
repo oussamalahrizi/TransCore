@@ -60,8 +60,8 @@ export const SetOnline = () => {
 }
 
 
-const Notification = (data) => {
-    app.utils.showToast(data.message)
+const Notification = (message) => {
+    app.utils.showToast(message, "green")
 }
 
 

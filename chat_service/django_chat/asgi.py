@@ -6,10 +6,9 @@ from .rabbitms_publisher import NotificationPub, RabbitmqBase
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_chat.settings')
 
-
 notifspub = NotificationPub(host="rabbitmq", port=5672, queue_name="notifications")
 
-publishers : list[RabbitmqBase] = [notifspub]
+publishers: list[RabbitmqBase] = [notifspub]
 
 async def lifespan(scope, receive, send):
     if scope['type'] == 'lifespan':
@@ -17,15 +16,15 @@ async def lifespan(scope, receive, send):
         while True:
             message = await receive()
             if message['type'] == 'lifespan.startup':
-                print("started publisher")
+                print("Starting publishers...")
                 for pub in publishers:
                     tasks.append({
-                        "publisher" : pub,
-                        "task" : asyncio.create_task(pub.run())
+                        "publisher": pub,
+                        "task": asyncio.create_task(pub.run())
                     })
                 await send({'type': 'lifespan.startup.complete'})
             elif message['type'] == 'lifespan.shutdown':
-                if len(tasks):
+                if tasks:
                     for task in tasks:
                         await task["publisher"].stop()
                         task["task"].cancel()
@@ -39,10 +38,11 @@ from chat.middleware import JWTMiddleware
 
 application = ProtocolTypeRouter({
     "http": app,
-    "websocket": JWTMiddleware(  
+    "websocket": JWTMiddleware(
         URLRouter(
             websocket_urlpatterns
-        )
+        ),
+        notifspub=notifspub  
     ),
-    'lifespan' : lifespan
+    'lifespan': lifespan
 })

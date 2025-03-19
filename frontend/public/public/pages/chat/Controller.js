@@ -21,7 +21,6 @@ export default () => {
     let blockedUsers = new Set(JSON.parse(localStorage.getItem('blockedUsers')) || []);
     let currentUserId = null; 
 
-
     // document.addEventListener('DOMContentLoaded', () => {
     //     const inviteToGameButton = document.getElementById('invite-to-game-button');
     //     const viewProfileButton = document.getElementById('view-profile-button');
@@ -247,12 +246,26 @@ window.addEventListener('load', () => {
     
         socket.onopen = () => {
             console.log('Chat WebSocket connected');
-            socket.send(JSON.stringify({ type: "user_id", user_id: selectedChatUserId }));
             updateUserList();
             scrollToBottom();
         };
     
-        socket.onmessage = handleChatMessage;
+        socket.onmessage = (e)=> {
+            const data = JSON.parse(e.data)
+            const {type} = data
+            console.log("om message", e.data);
+            
+            switch (type) {
+                case 'user_info':
+                    currentUserId = data.user_id
+                    break;
+                case 'message':                
+                    renderMessage(data);                   
+                 break;
+                default:
+                    break;
+            }
+        }
     
         socket.onclose = (e) => {
             console.log('WebSocket closed:', e.reason);
@@ -265,24 +278,6 @@ window.addEventListener('load', () => {
         };
     }
 
-   
-    function handleChatMessage(event) {
-        console.log("Raw WebSocket message:", event.data); 
-        const data = JSON.parse(event.data);
-    
-        // if (data.type === "chat.message") {
-        //     renderMessage(data); // Ensure this is called
-        // } else
-         if (data.type === "user_info") {
-            currentUserId = data.user_id;
-            console.log('Current user ID:', currentUserId);
-        } else if (data.error) {
-            console.error('Error from server:', data.error);
-        } else
-            renderMessage(data);
-
-    }
-    
     function resetChatBox() {
         document.getElementById("messages").innerHTML = ""; 
         document.getElementById("chat-header").classList.remove("active"); 
