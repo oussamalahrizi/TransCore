@@ -1,9 +1,19 @@
 #!/bin/bash
 
-sleep 3
+HOST=game-db
+PORT=5432
 
-./manage.py makemigrations
+echo "Waiting for database at $HOST:$PORT to be available..."
 
-./manage.py migrate
+check="nc -z $HOST $PORT"
 
-exec $@
+while ! $check; do
+  sleep 1
+done
+
+echo "Database is up! Starting the application..."
+
+python3 manage.py makemigrations
+python3 manage.py migrate
+
+exec "$@"
