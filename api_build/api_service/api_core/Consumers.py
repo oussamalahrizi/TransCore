@@ -6,6 +6,8 @@ from asgiref.sync import sync_to_async
 from .models import Notification
 from core.asgi import queue_publisher
 
+from pprint import pprint
+
 class OnlineConsumer(AsyncWebsocketConsumer):
 	cache = _Cache
 
@@ -21,6 +23,8 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await sync_to_async(self.cache.set_user_online)(self.user["id"])
 		await self.channel_layer.group_add(self.group_name, self.channel_name)
 		print(f"{self.user['username']} connected")
+		print("user data")
+		pprint(self.cache.get_user_data(self.user["id"]))
 
 	async def disconnect(self, code):
 		if code == 4001:
@@ -53,8 +57,10 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 	async def send_notification(self, event):
 		data = {
 			'type' : "notification",
-			'message' : event["message"]
+			'message' : event["message"],
 		}
+		if event.get("color"):
+			data["color"] = event["color"]
 		await self.store_notfication(data['message'])
 		await self.send(text_data=json.dumps(data))
 		print("send regular notification message")
@@ -73,7 +79,6 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data=json.dumps(data))
 
 	async def refresh_friends(self, event):
-		print("wslat from api queue")
 		await self.send(text_data=json.dumps({
 			'type' : "refresh_friends"
 		}))

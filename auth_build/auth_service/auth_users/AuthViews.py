@@ -172,9 +172,7 @@ class SessionState(APIView):
 		try:
 			print(request.data)
 			serializer = SessionSerializer(data=request.data)
-			print("before")
 			serializer.is_valid(raise_exception=True)
-			print(f"user id after: {serializer.data["user_id"]}")
 			session = self.cache.get_access_session(serializer.data["user_id"])
 			if session is None:
 				raise serializers.ValidationError

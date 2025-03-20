@@ -49,15 +49,14 @@ const refreshToken = async () => {
             showToast(data.detail ? data.detail : JSON.stringify(data, null, 2), 'red');
             removeCookie("access_token");
             // Router.navigate("/auth/login");
+            dispatchEvent("auth-error")
             throw new AuthError()
         } else if (res.status === 400) {
             
             removeCookie("access_token");
-            // Router.navigate("/auth/login");
+            dispatchEvent("auth-error")
             throw new AuthError()
         }
-        // something else
-        throw new Error(data.detail)
     }
     setCookie("access_token", data.access_token);
 };
@@ -98,6 +97,7 @@ const fetchWithAuth = async (url, method=null, body=null) => {
     if (response.status === 423) {
         removeCookie("access_token");
         showToast(data.detail, 'red');
+        dispatchEvent(new CustomEvent("auth-error"))
         throw new AuthError()
     }
     
@@ -126,7 +126,7 @@ const fetchWithout = async (url, method=null, body=null) => {
                     error : "Something went wrong : " + response.status
                 }
             }
-            data = await response.json() 
+            data = await response.json()
             return {
                 data,
                 status: response.status,
@@ -215,4 +215,3 @@ export default {
     ButtonHandler,
     LoadCss
 };
-
