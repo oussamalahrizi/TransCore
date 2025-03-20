@@ -39,7 +39,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.accept()
             self.user = self.scope.get("user")
             if not self.user or "id" not in self.user:
-                await self.close(code=4002 if not self.user else 4003, reason="User not found or invalid.")
+                await self.close(code=4002 if not self.user else 4003, reasaon="User not found or invalid.")
                 return
             other = self.scope['url_route']['kwargs'].get('username')
             try:
@@ -52,7 +52,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
             
             await self.setup_room(self.other['id'])
-            await self.send(json.dumps({"type": "user_info", "user_id": self.user["id"]}))
+            await self.send(json.dumps({
+                "type": "user_info",
+                "user_id": self.user["id"],
+                "roomname": self.room_name  
+            }))            
+        
         except Exception as e:
             logger.error(f"Connection error: {e}")
             await self.close(code=4000, reason="Unexpected error.")
@@ -76,8 +81,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Connected to room: {self.room_name}")
 
     async def handle_message(self, message):
+        if not message or not message.strip():
+            logger.warning("Empty message received. Ignoring.")
+            await self.send(json.dumps({"error": "Message cannot be empty."}))
+            return
+
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        await self.save_message(self.user["id"], self.chat_with_user_id, message, self.room_name, timestamp)
+        
         await self.publish_notification(self.user["id"], self.chat_with_user_id, message)
 
         await self.channel_layer.group_send(
@@ -113,6 +125,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }
         await self.send(json.dumps(data))
 
+    @database_sync_to_async
+    def save_message(self, sender_id, recipient_id, content, room, timestamp):
+        try:
+            Message.objects.create(
+                sender=sender_id,
+                recipient=recipient_id,
+                content=content,
+                room=room,
+                timestamp=timestamp
+            )
+            logger.info(f"Message saved: sender={sender_id}, recipient={recipient_id}, room={room}")
+        except Exception as e:
+            logger.error(f"Error saving message: {e}")
+            raise e
+        
     async def disconnect(self, close_code):
         if self.room_group_name:
             await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
