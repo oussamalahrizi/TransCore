@@ -14,16 +14,20 @@ export const SetOnline = () => {
         console.log("websocket error", e);
     }
     ws.onmessage = async (e) => {
-        const {message, type} = JSON.parse(e.data)
+        const data = JSON.parse(e.data)
+        const {message, type} = data
         console.log(e.data);
         switch (type)
         {
             case "notification":
-                Notification(message)
+                Notification(message, data.color ? color : "red")
                 break
             
             case "refresh_friends":
-                refresh_friends(message)
+                const friendsContainer = document.getElementById("friend-list-items")                
+                if (!friendsContainer)
+                    break
+                friendsContainer.dispatchEvent(new CustomEvent('refresh'))
                 break
             
             case 'inqueue':
@@ -33,38 +37,18 @@ export const SetOnline = () => {
             case 'ingame':
                 app.utils.showToast("You are in game, ha game id a ilyass", data.game_id)
                 break
+            case 'invite':
+                app.utils.showToast("wslatk invite")
+                break
             default:
                 app.utils.showToast("ma3rt chhadshy ja mn back : ", message)
                 break
         }
     }
-
-    const fetchNotifs = async () => {
-        try {
-            const {data, error} = await app.utils.fetchWithAuth("/api/main/user/notifications/")
-            if (error)
-            {
-                app.utils.showToast(error)
-                return
-            }
-            const view = document.getElementById("notif-container")
-            const li = document.createElement("li")
-            li.innerHTML = ` <pre>${JSON.stringify(data)}</pre>`
-            view.appendChild(li)
-        } catch (error) {
-            console.log("error fetch notif", error);
-        }
-    }
-
     app.websocket = ws
 }
 
-
-const Notification = (data) => {
-    app.utils.showToast(data.message)
+const Notification = (message, color) => {
+    app.utils.showToast(message, color)
 }
 
-
-const refresh_friends  = (data) => {
-    app.utils.showToast("refresh friends akhay imad")
-}

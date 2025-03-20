@@ -107,7 +107,7 @@ async def fetch_friends_auth(user_id : str):
         raise Exception("Internal Server Error")
 
 from pprint import pprint
-
+import asyncio
 class GetFriends(APIView):
 
     cache = _Cache
