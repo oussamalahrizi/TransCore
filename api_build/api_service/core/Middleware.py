@@ -83,12 +83,9 @@ class jwtmiddleware(BaseMiddleware):
         try:
             user = self.cache.get_user_data(user_id=user_id)
             if user and user.get("auth"):
-                print("user in cache middlware")
-                pprint(user)
+                print("user in cache middleware", user["auth"]["username"])
                 return user["auth"]
-            if user:
-                print("user in cache : ")
-                pprint(user)
+            print("user from auth")
             timeout = httpx.Timeout(5.0, read=5.0)
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(f"{USERINFO_URL}{user_id}/")

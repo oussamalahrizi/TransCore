@@ -78,6 +78,7 @@ class Cache:
             if user_data.get("auth"):
                 self.redis.set(user_id, json.dumps(user_data))
             else:
+                print("delete set user offline")
                 self.redis.delete(user_id)
 
     def get_user_status(self, user_id: str):
@@ -126,11 +127,12 @@ class Cache:
         user_data = self.get_user_data(user_id)
         auth_data = user_data.get('auth')
         if not auth_data.get('friends'):
+            print("creating friend to user : ", auth_data["username"], friend_id)
             auth_data['friends'] = [friend_id]
         else:
+            print("appending friend to user : ", auth_data["username"], friend_id)
             auth_data['friends'].append(friend_id)
-        user_data["auth"] = auth_data
-        self.redis.set(user_id, json.dumps(user_data))
+        self.set_user_data(user_id, auth_data, "auth")
         
 
 _Cache = Cache()

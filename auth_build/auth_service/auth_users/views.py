@@ -36,7 +36,7 @@ class UpdateUserInfo(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data=serializer.errors)
         serializer.update(instance, serializer.validated_data)
-        async_to_sync(NotifyApi)(instance.id)
+        async_to_sync(NotifyApi)(instance.id, "clear_cache")
         return Response(data={ "detail" : f"update successful {instance.username}"})
 
 
@@ -85,11 +85,10 @@ class ListUsers(ListAPIView):
 
 from core.asgi import publishers
 
-async def NotifyApi(user_id):
+async def NotifyApi(user_id, type):
     api = publishers[0]
-
     body = {
-        'type' : "clear_cache",
+        'type' : type,
         'data' : {
             "user_id" : str(user_id)
         }
@@ -148,9 +147,9 @@ class CheckReceivedFriend(APIView):
 
     def get(self, request: Request, *args, **kwargs):
         current_user = request.user
-        data = Friends.objects.get_received_reqs(current_user)
-        ser = self.ReceivedFriendSerializer(data, many=True)
-        ser.is_valid(raise_exception=True)
+        received = Friends.objects.get_received_reqs(current_user)
+        users = User.objects.filter(id__in=received)
+        ser = self.ReceivedFriendSerializer(users, many=True)
         return Response(ser.data)
 
 
@@ -165,8 +164,8 @@ class CheckSentFriend(APIView):
     def get(self, request : Request, *args, **kwargs):
         current_user = request.user
         sent_requests = Friends.objects.get_sent_reqs(current_user)
-        ser = self.SentFriendSerializer(sent_requests, many=True)
-        ser.is_valid(raise_exception=True)
+        users = User.objects.filter(id__in=sent_requests)
+        ser = self.SentFriendSerializer(users, many=True)
         return Response(ser.data)
 
 class ChangeFriend(APIView):
@@ -182,6 +181,7 @@ class ChangeFriend(APIView):
             'reject' : self.reject,
             'unfriend' : self.unfriend,
             'block' : self.block,
+            'cancel' : self.cancel
         }
         super().__init__(**kwargs)
 
@@ -190,61 +190,73 @@ class ChangeFriend(APIView):
         change = serializers.CharField(max_length=10, required=True)
 
         def validate_change(self, value):
-            choices = ['accept', 'reject', 'unfriend', 'block']
+            choices = ['accept', 'reject', 'unfriend', 'block', 'cancel']
             if value not in choices:
                 raise serializers.ValidationError("invalid relation change value")
             return value
-    
+
     def get_relation(self, user, other):
         try:
-            relation = self.filter(from_user=user, to_user=other).get()
+            relation = Friends.objects.filter(from_user=user, to_user=other).get()
             return relation
         except Friends.DoesNotExist:
             try:
-                relation = self.filter(from_user=other, to_user=user).get()
+                relation = Friends.objects.filter(from_user=other, to_user=user).get()
                 return relation
             except Friends.DoesNotExist:
                 return None
 
     def accept(self, user : User, other : User):
         try:
-            relation : Friends = Friends.objects.filter(from_user=other, to_user=user).all()
+            relation : Friends = self.get_relation(user, other)
+            if not relation:
+                raise Exception(f"{other.username} Did not send you a friend request")
             if relation.status != "pending":
                 raise Exception(f"Your current relation is : {relation.status}")
             relation.status = "accepted"
             relation.save()
-            return "Success"
+            return f"You accepted {other.username}"
         except Friends.DoesNotExist:
             raise Exception("You didn't receive any friend request from this user.")
+    
     def reject(self, user : User, other : User):
         try:
-            relation : Friends = Friends.objects.filter(from_user=other, to_user=user).all()
+            relation : Friends = self.get_relation(user, other)
+            if not relation:
+                raise Exception(f"{other.username} did not sent you a friend request")
             if relation.status != "pending":
                 raise Exception(f"Your current relation is : {relation.status}")
             relation.delete()
-            return "Success"
+            return f"You rejected {other.username}"
         except Friends.DoesNotExist:
             raise Exception("You didn't receive any friend request from this user.")
 
+    def cancel(self, user : User, other : User):
+        relation : Friends = self.get_relation(user, other)
+        if not relation:
+            raise Exception(f"You did not send any friend request to {other.username}")
+        relation.delete()
+        return f"You canceled friend request to {other.username}"
     def unfriend(self, user : User, other : User):
        
         relation : Friends = self.get_relation(user, other)
         if not relation:
             raise Exception("You are not even friends.")
         relation.delete()
-        return "Success"
+        return f"{other.username} removed from friends"
+
         
     def block(self, user : User, other : User):
         relation : Friends = self.get_relation(user, other)
         if relation:
             if relation.status == "blocked":
-                return "User already blocked you hehe"
+                return f"{other.username} already blocked you hehe"
             relation.status = "blocked"
             relation.save()
-            return "Success"
-        relation = Friends.objects.create(from_user=user, to_user=other, status="blocked")
-        relation.save()
-        return "Success"
+        else:
+            relation = Friends.objects.create(from_user=user, to_user=other, status="blocked")
+            relation.save()
+        return f"Successfully blocked {other.username}"
     
     def unblock(self, user : User, other : User):
         relation : Friends = self.get_relation(user, other)
@@ -252,25 +264,30 @@ class ChangeFriend(APIView):
             raise Exception("You are not even friends or blocking each other")
         relation.status = "accepted"
         relation.save()
-        return "Success"
+        return f"Successfully unblocked {other.username}"
 
     def post(self, request : Request, *args, **kwargs):
         try:
             user : User = request.user
-            other = kwargs.get('username')
+            other = kwargs.get('id')
             if not other:
                 return Response(status=status.HTTP_400_BAD_REQUEST,
                                 data={"detail" : 'Missing Username'})
-            other : User = get_object_or_404(User, username=other)
+            other : User = get_object_or_404(User, id=other)
             serializer = self.ChangeSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             change = serializer.data["change"]
-            res = self.actions[change](user)
+            res = self.actions[change](user, other)
+            print(f"publishing for user id {user.id} type : refresh")
+            print(f"publishing for other id {other.id} type : refresh")
+            if change not in ["reject", "cancel"]:              
+                async_to_sync(NotifyApi)(user.id, "refresh_friends")
+                async_to_sync(NotifyApi)(other.id, "refresh_friends")
             return Response(status=status.HTTP_201_CREATED, data={"detail" : res})
         except Http404:
             return Response(status=status.HTTP_404_NOT_FOUND,
                             data={"detail" : f'User Not Found, {kwargs.get("username")}'})
-        except Exception as e:
+        except (Exception, ValueError) as e:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : str(e)})
 
 import json
@@ -377,7 +394,6 @@ class Upload(APIView):
 
     class imageSerial(serializers.Serializer):
         image = serializers.ImageField()
-
 
 class sendNotif(APIView):
     permission_classes = [IsAuthenticated]
