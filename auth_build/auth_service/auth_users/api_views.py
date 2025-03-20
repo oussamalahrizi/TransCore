@@ -54,6 +54,10 @@ class GetFriendsAPI(APIView):
     
     def get(self, request : Request, *args, **kwargs):
         try:
+            id = kwargs.get("id")
+            if not id:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : "missing id in url request"})
             id = uuid.UUID(kwargs.get("id"))
             user : User = get_object_or_404(User, id=id)
             friends = Friends.objects.get_friends(user)
@@ -97,6 +101,32 @@ class GetRelation(APIView):
         except Http404:
             return Response(status=status.HTTP_404_NOT_FOUND,
                             data={"detail" : f"User Not Found.{kwargs.get("username")}"})
+
+    def permission_denied(self, request, message=None, code=None):
+        raise PermissionDenied(detail="Host not allowed.")
+
+from pprint import pprint
+
+class GetBlockedAPI(APIView):
+    serializer = UserDetailSerializer
+    permission_classes = [IsAllowedHost]
+    authentication_classes = []
+
+    def get(self, request : Request, *args, **kwargs):
+        try:
+            id = kwargs.get("id")
+            if not id:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : "missing id in url request"})
+            id = uuid.UUID(kwargs.get("id"))
+            user : User = get_object_or_404(User, id=id)
+            blocked = Friends.objects.get_blocked_users(user)
+            objects = User.objects.filter(id__in=blocked)
+            ser = UserDetailSerializer(objects, many=True)
+            return Response(data=ser.data)
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND,
+                            data={"detail" : "User Not Found"})
 
     def permission_denied(self, request, message=None, code=None):
         raise PermissionDenied(detail="Host not allowed.")

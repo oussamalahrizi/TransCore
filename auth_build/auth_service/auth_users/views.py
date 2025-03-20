@@ -101,7 +101,6 @@ class GetFriends(APIView):
             model = User
             fields =  ['id', 'username', 'email', 'icon_url']
 
-
     permission_classes = [IsAuthenticated]
     
     def get(self, request : Request, *args, **kwargs):
@@ -127,7 +126,8 @@ class SendFriendRequest(APIView):
                 'type' : "send_notification",
                 'data' : {
                     'user_id' : str(to_user.id),
-                    'message' : f'you received a friend request from {user.username}'
+                    'message' : f'you received a friend request from {user.username}',
+                    'color' : "green"
                 }
             }
             async_to_sync(self.notif.publish)(data)
@@ -168,8 +168,23 @@ class CheckSentFriend(APIView):
         ser = self.SentFriendSerializer(users, many=True)
         return Response(ser.data)
 
-class ChangeFriend(APIView):
+class GetBlocked(APIView):
+    permission_classes = [IsAuthenticated]
 
+
+    def get(self, request : Request, *args, **kwargs):
+        current = request.user
+        blocked = Friends.objects.get_blocked_users(current)
+        final : list[Friends] = []
+        for b in blocked:
+            final.append(Friends.objects.filter(id=b).get())
+        for f in final:
+            print(type(f))
+        objects = User.objects.filter(id__in=blocked)
+        ser = UserDetailSerializer(objects, many=True)
+        return Response(data=ser.data)
+
+class ChangeFriend(APIView):
 
     permission_classes = [IsAuthenticated]
 
@@ -181,6 +196,7 @@ class ChangeFriend(APIView):
             'reject' : self.reject,
             'unfriend' : self.unfriend,
             'block' : self.block,
+            'unblock' : self.unblock,
             'cancel' : self.cancel
         }
         super().__init__(**kwargs)
@@ -190,7 +206,7 @@ class ChangeFriend(APIView):
         change = serializers.CharField(max_length=10, required=True)
 
         def validate_change(self, value):
-            choices = ['accept', 'reject', 'unfriend', 'block', 'cancel']
+            choices = ['accept', 'reject', 'unfriend', 'block', 'cancel', 'unblock']
             if value not in choices:
                 raise serializers.ValidationError("invalid relation change value")
             return value
@@ -252,9 +268,13 @@ class ChangeFriend(APIView):
             if relation.status == "blocked":
                 return f"{other.username} already blocked you hehe"
             relation.status = "blocked"
+            relation.from_user = user
+            relation.to_user = other
             relation.save()
         else:
             relation = Friends.objects.create(from_user=user, to_user=other, status="blocked")
+            relation.from_user = user
+            relation.to_user = other
             relation.save()
         return f"Successfully blocked {other.username}"
     

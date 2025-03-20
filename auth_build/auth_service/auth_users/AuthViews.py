@@ -175,7 +175,7 @@ class SessionState(APIView):
 			serializer.is_valid(raise_exception=True)
 			session = self.cache.get_access_session(serializer.data["user_id"])
 			if session is None:
-				raise serializers.ValidationError
+				raise serializers.ValidationError("session not found")
 			return Response(data={"session_state" : session})
 		except serializers.ValidationError as e:
 			print(f"reason : {e}")

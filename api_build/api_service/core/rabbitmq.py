@@ -81,7 +81,10 @@ class APIConsumer(AsyncRabbitMQConsumer):
         pprint(user_data)
         auth_data = user_data.get("auth")
         if auth_data.get("friends"):
+            print("AAAAAAAAAAAA", auth_data["username"], "ba7")
             auth_data.pop("friends")
+        if auth_data.get("blocked"):
+            auth_data.pop("blocked")
         user_data["auth"] = auth_data
         self.cache.redis.set(user_id, json.dumps(user_data))
         layer = get_channel_layer()
@@ -125,6 +128,7 @@ class APIConsumer(AsyncRabbitMQConsumer):
             await message.reject()
         except Exception as e:
             print(f"Error processing the message : {e}")
+            await message.reject()
 
 
 from channels.layers import get_channel_layer
@@ -146,11 +150,13 @@ class NotifConsumer(AsyncRabbitMQConsumer):
     async def send_notification(self, data : dict):
         group_name = f"notification_{data.get('user_id')}"
         layer = get_channel_layer()
-
-        await layer.group_send(group_name, {
+        body = {
             'type' : 'send_notification',
             'message' : data.get('message')
-        })
+        }
+        if data.get("color"):
+            body["color"] = data["color"]
+        await layer.group_send(group_name, body)
         
     async def disconnect_user(self, data : dict):
         group_name = f"notification_{data.get('user_id')}"
@@ -257,9 +263,12 @@ from aio_pika import Message
 class QueuePublisher(RabbitmqBase):
     
     async def publish(self, data : dict):
-        message = Message(
-            json.dumps(data).encode(),
-            delivery_mode=1,
-            content_type="application/json")
-        await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
-        print("queue publisher : pusblished!")
+        try:
+            message = Message(
+                json.dumps(data).encode(),
+                delivery_mode=1,
+                content_type="application/json")
+            await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
+            print("queue publisher : pusblished!")
+        except BaseException as e:
+            print(f"error publishing to queue : {e}")

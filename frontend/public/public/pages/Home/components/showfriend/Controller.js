@@ -3,7 +3,8 @@ import { showModalWithAnimation, hideModalWithAnimation } from "../../../../moda
 
 /**
  * 
- * @param {HTMLElement} target
+ * @param {string} id
+ * @param {HTMLElement} container
  * @returns 
  */
 
@@ -34,6 +35,39 @@ const handleUnfriend = async (id, container) =>
     const friendscontainer = document.querySelector("#friend-list-items")
     friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
 }
+/**
+ * 
+ * @param {string} id 
+ * @param {HTMLElement} container 
+ * @returns 
+ */
+
+const handleblock = async (id, container) => {
+    if (!id)
+    {
+        console.error("no id in handle unfriend");
+        return
+    }
+    const body = JSON.stringify({
+        change : 'block'
+    })
+    const {data, error} = await app.utils.fetchWithAuth(
+        `/api/auth/friends/change/${id}/`,
+        'POST',
+        body
+    )
+    if (error)
+    {
+        app.utils.showToast(error)
+        return
+    }
+    console.log("block friend : ", data)
+    app.utils.showToast(data.detail, 'green')
+    container.classList.remove('show');
+    container.remove();
+    const friendscontainer = document.querySelector("#friend-list-items")
+    friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
+}
 
 /**
  * 
@@ -43,21 +77,38 @@ const handleUnfriend = async (id, container) =>
 const handlers = (container, friend) => {
     const invite = container.querySelector(`#invite-game-${friend.id}`)
     invite.addEventListener('click', (e) => {
+        try {
             e.preventDefault();
             app.utils.showToast(`Invited ${friend.username} to a game`, "green");
             hideModalWithAnimation(container);
+        } catch (error) {
+            if (error instanceof app.utils.AuthError)
+                return
+            console.log("error in invite friend", error);
+        }
         });
-        
-    document.getElementById(`unfriend-${friend.id}`).addEventListener('click', async () => {
-        await handleUnfriend(friend.id, container)
-        hideModalWithAnimation(container);
+    const unfriend = container.querySelector(`#unfriend-${friend.id}`)
+    unfriend.addEventListener('click', async () => {
+        try {
+            await handleUnfriend(friend.id, container)
+            hideModalWithAnimation(container);    
+        } catch (error) {
+            if (error instanceof app.utils.AuthError)
+                return
+            console.log("error in unfriend friend", error);
+        }
     });
-    
-    document.getElementById(`block-${friend.id}`).addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log(`Block ${friend.username}`);
-        app.utils.showToast(`Blocked ${friend.username}`, "orange");
-        hideModalWithAnimation(container);
+    const block = container.querySelector(`#block-${friend.id}`)
+    block.addEventListener('click', async (e) => {
+        try
+        {
+            await handleblock(friend.id, container)
+            hideModalWithAnimation(container);
+        } catch (error) {
+            if (error instanceof app.utils.AuthError)
+                return
+            console.log("error in block friend", error);
+        }
     });
 }
 

@@ -12,7 +12,8 @@ from .views import (
    ResetPassword,
    PasswordVerify,
    CDNVerify,
-   ChangeFriend
+   ChangeFriend,
+   GetBlocked
 )
 
 from .AuthViews import (
@@ -75,6 +76,7 @@ urlpatterns += [
    path('users/update_password/', UpdatePassword.as_view(), name='update-password'),
    path('users/<str:username>/', GetUser.as_view(), name='user-info'),
    path('friends/', GetFriends.as_view(), name='friend-list'),
+   path('friends/blocked/', GetBlocked.as_view(), name='block-list'),
    path('friends/received/', CheckReceivedFriend.as_view(), name='recv-list'),
    path('friends/sent/', CheckSentFriend.as_view(), name='sent-list'),
    path('friends/change/<str:id>/', ChangeFriend.as_view(), name='change-friends-relations'),

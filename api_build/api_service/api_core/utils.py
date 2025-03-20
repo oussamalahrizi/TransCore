@@ -133,6 +133,25 @@ class Cache:
             print("appending friend to user : ", auth_data["username"], friend_id)
             auth_data['friends'].append(friend_id)
         self.set_user_data(user_id, auth_data, "auth")
+    
+    def append_user_blocked(self, user_id : str, blocked_id : str):
+        user_data = self.get_user_data(user_id)
+        auth_data = user_data.get('auth')
+        if not auth_data.get('blocked'):
+            print("creating blocked to user : ", auth_data["username"], blocked_id)
+            auth_data['blocked'] = [blocked_id]
+        else:
+            print("appending blocked to user : ", auth_data["username"], blocked_id)
+            auth_data['blocked'].append(blocked_id)
+        friends : list = auth_data.get("friends")
+        # remove blocked user from friend list
+        if friends:
+            if blocked_id in friends:
+                friends.remove(blocked_id)
+            auth_data["friends"] = friends
+            print("user new friends after append")
+            pprint(friends)
+        self.set_user_data(user_id, auth_data, "auth")
         
 
 _Cache = Cache()

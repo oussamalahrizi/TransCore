@@ -157,8 +157,10 @@ class FriendsManager(models.Manager):
         friends = list(friends_from_user.union(friends_to_user))
         return friends
     
-    def get_blocked_users(self, from_user):
-        return self.filter(from_user=from_user, status='blocked').all().values_list('to_user', flat=True)
+    def get_blocked_users(self, user: User):
+        # Get users that the user has directly blocked (as from_user)
+        blocked_as_from = self.filter(from_user=user, status='blocked').values_list('to_user', flat=True)
+        return blocked_as_from
     
 class Friends(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

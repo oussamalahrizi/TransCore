@@ -5,6 +5,7 @@ from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
 from .models import Notification
 from core.asgi import queue_publisher
+from channels.layers import get_channel_layer
 
 from pprint import pprint
 
@@ -23,8 +24,18 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await sync_to_async(self.cache.set_user_online)(self.user["id"])
 		await self.channel_layer.group_add(self.group_name, self.channel_name)
 		print(f"{self.user['username']} connected")
-		print("user data")
-		pprint(self.cache.get_user_data(self.user["id"]))
+		friends = self.cache.get_user_data(self.user["id"]).get("auth").get("friends")
+		if not friends:
+			print("no friends connect")
+			return
+		for f in friends:
+			f_status = self.cache.get_user_status(f)
+			if f_status != "offline":
+				print("sending to user ", f)
+				group = f"notification_{f}"
+				await get_channel_layer().group_send(group, {
+					"type": "refresh_friends"
+				})
 
 	async def disconnect(self, code):
 		if code == 4001:
@@ -41,8 +52,22 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 				}
 			}
 			await queue_publisher.publish(body)
+		user_data = self.cache.get_user_data(self.user["id"])
+		friends = user_data.get("auth").get("friends")
 		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
 		print(f"{self.user['username']} disconnected")
+		# inform friends to refresh their friend list? how
+		if not friends:
+			print("no friends")
+			return
+		for f in friends:
+			f_status = self.cache.get_user_status(f)
+			if f_status != "offline":
+				print("sending to user ", f)
+				group = f"notification_{f}"
+				await get_channel_layer().group_send(group, {
+					"type": "refresh_friends"
+				})
 	
 	@database_sync_to_async
 	def store_notfication(self, message : str):
