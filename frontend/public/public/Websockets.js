@@ -20,7 +20,8 @@ export const SetOnline = () => {
         switch (type)
         {
             case "notification":
-                Notification(message, data.color ? color : "red")
+                const color = data.color ? data.color : "red"
+                Notification(message, color)
                 break
             
             case "refresh_friends":
@@ -49,7 +50,7 @@ export const SetOnline = () => {
 }
 
 
-const Notification = (message) => {
-    app.utils.showToast(message, "green")
+const Notification = (message, color) => {
+    app.utils.showToast(message, color)
 }
 

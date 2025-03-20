@@ -13,7 +13,7 @@ window.app = {};
 app.Router = Router;
 app.utils = utils;
 app.routes = routes;
-app.username = null;
+app.user_id = null;
 app.websocket = null;
 app.gameInfo = {};
 app.cleanup = []
@@ -30,6 +30,7 @@ addEventListener("websocket", (e) => {
 	const { type } = e.detail;
 	if (type === "close" && app.websocket) {
 		app.websocket.close();
+		app.websocket = null
 		return;
 	}
 	if (!app.utils.getCookie("access_token")) return;
@@ -92,6 +93,8 @@ addEventListener("play-button", async (e)=> {
 	}
 })
 
+import { handleLogout } from "./pages/Settings/Controller.js";
+
 addEventListener("navbar-profile", async (e) => {
 	const token = app.utils.getCookie("access_token");
 	const view = document.getElementById("profile-container");
@@ -144,7 +147,7 @@ addEventListener("navbar-profile", async (e) => {
 							 <div class="icon-container">
 									<img src="/public/assets/signout.svg" alt="Sign out icon" class="menu-icon">
 							 </div>
-							 <a href="#" id="logout-link">Sign out</a>
+							 <button id="logout-link">Sign out</button>
 						</div>
 				 </div>
 			`;
@@ -191,19 +194,8 @@ addEventListener("navbar-profile", async (e) => {
 				e.preventDefault();
 				hideModalWithAnimation(profileModal);
 
-				const { data, error } = await app.utils.fetchWithAuth(
-					"/api/auth/logout/"
-				);
-				if (!error) {
-					app.utils.removeCookie("access_token");
-					dispatchEvent(
-						new CustomEvent("websocket", { detail: { type: "close" } })
-					);
-					dispatchEvent(new CustomEvent("navbar-profile"));
-					app.Router.navigate("/auth/login");
-					return;
-				}
-				app.utils.showToast(data.detail);
+				await handleLogout()
+				
 			});
 			app.Router.disableReload()
 	} catch (error) {
@@ -232,30 +224,3 @@ addEventListener("auth-error", () => {
 	catch to catch the error and just exit (return the cleanup function optionally)
 
 */
-
-
-export const user = (props)=> {
-	const [user, setUser] = useState(props.username)
-
-	useEffect(()=> {
-		console.log("controller running");
-		
-	}, [])
-
-	useEffect(()=> {
-		console.log("user changed");
-		
-	}, [user])
-
-	const handleuser = (e)=> {
-		setUser(e.target.value)
-	}
-	return (
-		<div className="flex">
-			<p>{user}</p>
-			<input onchange={handleuser} />
-		</div>
-	)
-}
-
-<user username=1 />

@@ -133,14 +133,17 @@ const handleRefreshState = async () => {
     updateButtonText(state);
 }
 
-const handleLogout = async () => {
+export const handleLogout = async () => {
     try {
         const {data, error} = await app.utils.fetchWithAuth("/api/auth/logout/")
         if (!error) {
             app.utils.removeCookie("access_token")
             dispatchEvent(new CustomEvent("websocket", {detail : {type : "close"}}))
+            console.log("dispatch socket");
             dispatchEvent(new CustomEvent("navbar-profile"))
+            console.log("dispatch navbar");
             dispatchEvent(new CustomEvent("play-button"));
+            console.log("dispatch play button");
             app.Router.navigate("/auth/login")
             return
         }
