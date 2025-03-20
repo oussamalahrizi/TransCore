@@ -20,6 +20,7 @@ export default () => {
     let lastMessages = {}; 
     let blockedUsers = new Set(JSON.parse(localStorage.getItem('blockedUsers')) || []);
     let currentUserId = null; 
+    let roomName = null;
 
     // document.addEventListener('DOMContentLoaded', () => {
     //     const inviteToGameButton = document.getElementById('invite-to-game-button');
@@ -156,25 +157,9 @@ function createUserItem(user) {
         userItem.classList.add('active');
         updateUserList();
         toggleProfileSection();
-        updateBlockUI(user.username);
     };
 
     return userItem;
-}
-
-
-function updateBlockUI(user) {
-    const isBlocked = blockedUsers.has(user);
-    const chatInput = document.getElementById('chat-input');
-    const sendButton = document.getElementById('send-button');
-    const blockButton = document.getElementById('block-button');
-    const unblockButton = document.getElementById('unblock-button');
-
-    chatInput.disabled = isBlocked;
-    sendButton.disabled = isBlocked;
-
-    blockButton.style.display = isBlocked ? 'none' : 'inline-block';
-    unblockButton.style.display = isBlocked ? 'inline-block' : 'none';
 }
 
 
@@ -237,6 +222,26 @@ window.addEventListener('load', () => {
     }
 
 
+    async function fetchInitialMessages() {
+        if (!roomName) {
+            console.error("Room name is not available.");
+            return;
+        }
+    
+        try {
+            const response = await fetch(`http://localhost:8000/api/chat/${roomName}/`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch messages: ${response.statusText}`);
+            }
+    
+            const data = await response.json();
+            const messages = data.messages;
+    
+            await renderMessage(messages);
+            } catch (error) {
+            console.error("Error fetching initial messages:", error);
+        }
+    }
 
     function connectChatSocket() {
         if (socket?.readyState === WebSocket.OPEN) return;
@@ -250,26 +255,27 @@ window.addEventListener('load', () => {
             scrollToBottom();
         };
     
-        socket.onmessage = (e)=> {
-            const data = JSON.parse(e.data)
-            const {type} = data
-            console.log("om message", e.data);
-            
+        socket.onmessage = async (e) => { 
+            const data = JSON.parse(e.data);
+            const { type } = data;
+            console.log("on message", e.data);
+        
             switch (type) {
                 case 'user_info':
-                    currentUserId = data.user_id
+                    currentUserId = data.user_id;
+                    roomName = data.roomname;        
+                    await fetchInitialMessages(); 
                     break;
-                case 'message':                
-                    renderMessage(data);                   
-                 break;
+                case 'message':
+                    renderMessage(data);
+                    break;
                 default:
                     break;
             }
-        }
+        };
     
         socket.onclose = (e) => {
             console.log('WebSocket closed:', e.reason);
-            app.utils.showToast(e.reason);
         };
     
         socket.onerror = (error) => {
@@ -277,6 +283,57 @@ window.addEventListener('load', () => {
             socket.close();
         };
     }
+
+    async function renderMessage(data) {
+        if (Array.isArray(data)) {
+            for (const message of data) {
+                await renderMessage(message); 
+            }
+            return; 
+        }
+        const { sender_id, message, timestamp } = data;
+    
+        const formattedTime = new Date(timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        });
+    
+        if (selectedChatUser) {
+            lastMessages[selectedChatUser] = { message, timestamp: formattedTime };
+            updateUserList();
+        }
+    
+        const formattedDate = formatDate(new Date(timestamp));
+    
+        const messagesContainer = document.getElementById("messages");
+        if (!messagesContainer) {
+            console.error("Messages container not found!");
+            return;
+        }
+    
+        let dateHeader = document.querySelector(`.date-header[data-date="${formattedDate}"]`);
+        if (!dateHeader) {
+            dateHeader = document.createElement('div');
+            dateHeader.classList.add('date-header');
+            dateHeader.setAttribute('data-date', formattedDate);
+            dateHeader.textContent = formattedDate;
+            messagesContainer.appendChild(dateHeader);
+        }
+    
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', sender_id === currentUserId ? 'sender' : 'recipient');
+        messageElement.innerHTML = `
+            <div class="message-text">${message}</div>
+            <div class="timestamp">${formattedTime}</div>
+        `;
+    
+        messagesContainer.appendChild(messageElement);
+    
+        scrollToBottom();
+    }
+
+
 
     function resetChatBox() {
         document.getElementById("messages").innerHTML = ""; 
@@ -328,54 +385,6 @@ window.addEventListener('load', () => {
         chatBox.classList.remove("w-1/2");
         chatBox.classList.add("w-3/4");
     }
-
-
-    async function renderMessage(data) {
-        console.log("Rendering message:", data);
-    
-        const { sender_id, message, timestamp } = data;
-    
-        const formattedTime = new Date(timestamp).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false, 
-        });
-    
-        if (selectedChatUser) {
-            lastMessages[selectedChatUser] = { message, timestamp: formattedTime }; 
-            updateUserList();
-        }
-    
-        const formattedDate = formatDate(new Date(timestamp));
-    
-        const messagesContainer = document.getElementById("messages");
-        if (!messagesContainer) {
-            console.error("Messages container not found!");
-            return;
-        }
-    
-        let dateHeader = document.querySelector(`.date-header[data-date="${formattedDate}"]`);
-        if (!dateHeader) {
-            dateHeader = document.createElement('div');
-            dateHeader.classList.add('date-header');
-            dateHeader.setAttribute('data-date', formattedDate);
-            dateHeader.textContent = formattedDate;
-            messagesContainer.appendChild(dateHeader);
-        }
-    
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message', sender_id === currentUserId ? 'sender' : 'recipient');
-        messageElement.innerHTML = `
-            <div class="message-text">${message}</div>
-            <div class="timestamp">${formattedTime}</div> <!-- Use formattedTime -->
-        `;
-    
-        messagesContainer.appendChild(messageElement);
-    
-        scrollToBottom();
-    }
-
-
 
 
     function formatDate(date) {

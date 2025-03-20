@@ -52,12 +52,22 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px; 
+  gap: 10px;
+}
+
+.search-icon {
+  background-image: url("searchIcon.png"); 
+  background-size: cover; 
+  width: 20px; 
+  height: 20px; 
+  position: absolute;
+  left: 10px; 
+  pointer-events: none; 
 }
 
 .search-input {
   width: 100%;
-  padding: 10px 35px 10px 40px;
+  padding: 10px 35px 10px 40px; 
   border: none;
   border-radius: 8px;
   background-color: #444;
@@ -72,19 +82,6 @@ body {
   outline: none;
 }
 
-/* Search Icon (Left) */
-.search-icon.left-icon {
-  position: absolute;
-  left: 12px; 
-  color: #888;
-  font-size: 16px; 
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.search-icon.left-icon:hover {
-  color: #029F5B;
-}
 
 /* Filter Label */
 .filter-label {
@@ -94,59 +91,42 @@ body {
   font-size: 14px;
   color: #888;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
   padding: 8px 12px;
   border-radius: 8px;
   background-color: #444;
 }
 
 .filter-label:hover {
-  background-color: #555; 
+  background-color: #555;
   color: #029F5B;
 }
 
-/* Dark Checkbox */
-.dark-checkbox {
+.filter-checkbox {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #444;
-  border-radius: 4px;
-  background-color: #444;
-  position: relative;
-  transition: background-color 0.3s, border-color 0.3s;
+  width: 20px; 
+  height: 20px; 
+  background-image: url("filter.png"); 
+  background-size: cover;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
 }
 
-.dark-checkbox:checked {
-  background-color: #10b981; 
-  border-color: #10b981;
+.filter-checkbox:checked {
+  background-image: url("filter-active.png"); 
+  opacity: 0.8; 
 }
 
-.dark-checkbox:checked::after {
-  content: '\2713'; 
-  position: absolute;
-  top: 0;
-  left: 4px;
-  color: white;
-  font-size: 14px;
+.filter-checkbox:hover {
+  opacity: 0.8; 
 }
 
-.dark-checkbox:hover {
-  border-color: #34d399;
-}
 
-/* Filter Text */
-.filter-text {
-  font-size: 14px;
-  color: #888;
-  transition: color 0.3s ease;
-}
 
-.filter-label:hover .filter-text {
-  color: #029F5B;
-}
+
 /* User Item Styling */
 .user-item {
   display: flex;
@@ -257,7 +237,6 @@ body {
   transition: width 0.3s ease;
 }
 
-/* Chat Header */
 #chat-header {
   display: flex;
   justify-content: space-between;
@@ -321,7 +300,6 @@ body {
   gap: 12px; 
 }
 
-/* Message Bubbles */
 .message {
   margin-bottom: 12px;
   padding: 12px 16px;
@@ -538,7 +516,7 @@ body {
   padding: 12px;
   border: none;
   border-radius: 8px;
-  background-color: #444;
+  background-color: #029F5B;;
   color: white;
   cursor: pointer;
   font-size: 14px;
@@ -547,11 +525,36 @@ body {
 }
 
 .profile-button:hover {
-  background-color: #029F5B;
+  background-color: #00ce75;
   transform: scale(1.02);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+.icon {
+  display: inline-block;
+  width: 20px; 
+  height: 20px; 
+  background-size: cover;
+  background-repeat: no-repeat;
+}
 
+.block-icon {
+  background-image: url("block.png"); 
+}
+
+.unblock-icon {
+  background-image: url("block.png"); 
+}
+
+.game-icon {
+  background-image: url("game.png");
+}
+
+.profile-icon {
+  background-image: url("profile.png"); 
+}
+.profile-button i {
+  font-size: 16px;
+}
 .profile-button i {
   font-size: 16px;
 }
@@ -559,16 +562,38 @@ body {
 /* Select User Prompt */
 .select-user-prompt {
   display: flex;
+  flex-direction: column; 
   justify-content: center;
   align-items: center;
   height: 100%;
   width: 100%;
   font-size: 1.5rem;
-  background-color: #333;
+  background-color: #2d2d2d;
   position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
+}
+
+.chat-icon {
+  background-image: url("chat.png");
+  background-size: cover; 
+  width: 50px; 
+  height: 50px; 
+  margin-bottom: 10px;
+}
+
+.select-user-prompt p {
+  color: #c8c8c8; 
+  font-size: 1rem;
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  text-shadow: none;
+  border: none;
+  background-color: transparent;
 }
 
 /* Profile Popup Styles */
@@ -634,36 +659,9 @@ body {
   display: none; 
 }
 
-/* Notification Design */
-#notification-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 
-.notification-item {
-  background-color: #029F5B;
-  color: #FFFFFF;
-  padding: 12px 24px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  opacity: 0;
-  transform: translateY(-20px);
-  animation: slideIn 0.5s ease forwards;
-}
 
-.notification-item img {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
+
 
 @keyframes slideIn {
   to {

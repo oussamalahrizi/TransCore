@@ -7,14 +7,13 @@ export default /*html*/ `
             <div id="search-section" class="search-section">
             <div class="search-input-container">
                 <!-- Search Icon on the Left -->
-                <span class="search-icon left-icon" aria-hidden="true">
-                <i class="fas fa-search"></i> <!-- FontAwesome search icon -->
-                </span>
+                <span class="search-icon"></span>
                 <!-- Search Input -->
                 <input type="text" id="search-user" class="search-input" placeholder="Search users..." aria-label="Search users">
                 <!-- Filter Checkbox -->
+                <!-- Filter Checkbox (Replaced by Filter Icon) -->
                 <label class="filter-label" aria-label="Filter unread messages">
-                <input type="checkbox" id="filter-unread" class="filter-checkbox dark-checkbox">
+                <input type="checkbox" id="filter-unread" class="filter-checkbox">
                 </label>
             </div>
             </div>
@@ -46,6 +45,8 @@ export default /*html*/ `
 
             <!-- User Selection Prompt -->
             <div id="select-user-prompt" class="select-user-prompt">
+                <div class="chat-icon"></div> <!-- Use a div for the background image -->
+
                 <p>Select a user to start chatting</p>
             </div>
         </div>
@@ -56,27 +57,21 @@ export default /*html*/ `
                 <img src="default-profile.png" alt="Profile Image" class="profile-image">
                 <h3 class="profile-name"><span id="profile-user-name">User Name</span></h3>
             </div>
-            <div class="profile-buttons">
+                <div class="profile-buttons">
                 <button id="block-button" class="profile-button" aria-label="Block user">
-                            <i class="fas fa-ban"></i> Block
-                        </button>
-                        <button id="unblock-button" class="profile-button" aria-label="Unblock user" style="display: none;">
-                            <i class="fas fa-unlock-alt"></i> Unblock
-                        </button>
+                    <span class="icon block-icon"></span> Block
+                </button>
+                <button id="unblock-button" class="profile-button" aria-label="Unblock user" style="display: none;">
+                    <span class="icon unblock-icon"></span> Unblock
+                </button>
                 <button id="invite-to-game-button" class="profile-button" aria-label="Invite to game">
-                    <i class="fas fa-gamepad"></i> Invite to Game
+                    <span class="icon game-icon"></span> Invite to Game
                 </button>
                 <button id="view-profile-button" class="profile-button" aria-label="View profile">
-                    <i class="fas fa-user"></i> View Profile
+                    <span class="icon profile-icon"></span> View Profile
                 </button>
-            </div>
+                </div>
         </div>
     </div>
-
-    <!-- Notification Container -->
-    <div id="notification-container"></div>
-
-    <!-- Log (for debugging) -->
-    <div id="log" class="log-container"></div>
 </div>
 `;
