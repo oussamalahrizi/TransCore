@@ -68,9 +68,27 @@ class APIConsumer(AsyncRabbitMQConsumer):
 
     def __init__(self, host, port, queue_name):
         self.actions = {
-            "clear_cache" : self.clear_cache
+            "clear_cache" : self.clear_cache,
+            "refresh_friends" : self.refresh_friends
         }
         super().__init__(host, port, queue_name)
+
+    async def refresh_friends(self, data : dict):
+        user_id = data.get("user_id")
+        # get user data to delete his friends attrs
+        user_data : dict = self.cache.get_user_data(user_id)
+        print("refresh user data")
+        pprint(user_data)
+        auth_data = user_data.get("auth")
+        if auth_data.get("friends"):
+            auth_data.pop("friends")
+        user_data["auth"] = auth_data
+        self.cache.redis.set(user_id, json.dumps(user_data))
+        layer = get_channel_layer()
+        group_name = f"notification_{user_id}"
+        await layer.group_send(group_name, {
+            "type" : "refresh_friends"
+        })
 
     async def clear_cache(self, data : dict):
         user_id = data.get('user_id')

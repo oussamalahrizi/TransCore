@@ -158,7 +158,6 @@ class SessionSerializer(serializers.Serializer):
 	def validate(self, attrs):
 		try:
 			user_id = attrs["user_id"]
-			print(f"id in serializer : {user_id}")
 			user = get_object_or_404(User, id=user_id)
 			return attrs
 		except Http404:
