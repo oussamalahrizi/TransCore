@@ -1,3 +1,4 @@
+import { fetchStatus } from "../../main.js";
 
 
 const findmatch = async () => {
@@ -9,7 +10,7 @@ const findmatch = async () => {
       return
     }
     console.log("data find match : ", data);
-    app.utils.showToast(data.detail)
+    app.utils.showToast(data.detail, "green")
   
   } catch (error) {
     if (error instanceof app.utils.AuthError)
@@ -45,23 +46,30 @@ export default () => {
   }
 
   // Function to handle card clicks
-  function handleCardClick(cardNumber) {
+  async function handleCardClick(cardNumber) {
     // First, reset all modes
     resetModes();
 
     // Set the appropriate variable to true based on the card clicked
     // and prepare redirection
-    let redirectURL = "";
+    
 
     switch (cardNumber) {
       case 1:
         app.gameInfo.Singleplayer = true;
-        redirectURL = SINGLEPLAYER_URL;
+        const data = await fetchStatus()
+        if (!data)
+          break
+        if (data.status !== "online")
+        {
+          app.utils.showToast(`Error: you are ${data.status}`)
+          break
+        }
+        app.Router.navigate(SINGLEPLAYER_URL);
         console.log("Singleplayer mode selected");
         break;
       case 2:
         app.gameInfo.Multiplayer = true;
-        // redirectURL = MULTIPLAYER_URL;
         findmatch()
         break;
       case 3:
@@ -76,7 +84,6 @@ export default () => {
       `.card:nth-child(${cardNumber})`
     );
     selectedCard.classList.add("selected");
-
     // Add visual feedback before redirecting
     // app.Router.navigate(redirectURL);
   }

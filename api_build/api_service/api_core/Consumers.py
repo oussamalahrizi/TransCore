@@ -90,20 +90,28 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data=json.dumps(data))
 		print("send regular notification message")
 	
-	async def set_user_queue(self, event):
-		data = {
-			'type' : "inqueue",
-		}
-		await self.send(text_data=json.dumps(data))
-	
 	async def set_user_game(self, event):
 		data = {
 			'type' : "ingame",
 			'game_id' : event["game_id"]
 		}
 		await self.send(text_data=json.dumps(data))
+	
+	async def status_update(self, event):
+		print("status update event")
+		pprint(event)
+		data = {
+			"type" : "status_update",
+			"status" : event["status"]
+		}
+		await self.send(json.dumps(data))
 
 	async def refresh_friends(self, event):
 		await self.send(text_data=json.dumps({
 			'type' : "refresh_friends"
+		}))
+	
+	async def update_info(self, event):
+		await self.send(text_data=json.dumps({
+			'type' : "update_info"
 		}))

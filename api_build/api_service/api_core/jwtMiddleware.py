@@ -63,7 +63,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
 	async def get_user_data(self, user_id):
 		try:
 			user_data = self.cache.get_user_data(user_id)
-			if user_data:
+			if user_data and user_data.get("auth"):
 				return user_data["auth"]
 			timeout = httpx.Timeout(5.0, read=5.0)
 			async with httpx.AsyncClient(timeout=timeout) as client:

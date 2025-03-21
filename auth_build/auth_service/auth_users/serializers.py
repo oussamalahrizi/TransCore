@@ -109,11 +109,13 @@ class UpdateUserSerializer(serializers.ModelSerializer):
 		return attrs
 	
 	def update(self, instance: User, validated_data):
-		if not instance.auth_provider.filter(name="Email").exists():
-			raise serializers.ValidationError("Please update your password before setting new email")
 		for attr, value in validated_data.items():
 			setattr(instance, attr, value)
 		instance.save()
+		email = validated_data.get("email")
+		if email:
+			auth, created = AuthProvider.objects.get_or_create(name="Email")
+			instance.auth_provider.add(auth)
 		return instance
 
 
@@ -170,35 +172,23 @@ class SessionSerializer(serializers.Serializer):
 		- password length should be at least 8 chars
 		- just call instance.set_password(new_password) to update it 
 """
-class UpdatePasswordSerializer(serializers.ModelSerializer):
+class UpdatePasswordSerializer(serializers.Serializer):
+	new_password = serializers.CharField(required=True)
 	old_password = serializers.CharField(required=True)
-	confirm_password = serializers.CharField(required=True)
-	class Meta:
-		model = User
-		fields = ['password']
-		kwagrs = {
-			"password" : {"required" : True}
-		}
 
-	def validate(self, attrs):
-		new = attrs.get("password")
-		confirm = attrs.get("confirm_password")
-		if new != confirm:
-			raise serializers.ValidationError("Password missmatch")
-		return attrs
 
 	def validate_old_password(self, value):
 		if not self.instance.check_password(value):
 			raise serializers.ValidationError("Wrong Password")
 		return value
 
-	def validate_password(self, value):
+	def validate_new_password(self, value):
 		if len(value) < 8:
-			raise serializers.ValidationError("password too short")
+			raise serializers.ValidationError("Password too short")
 		return value
 
 	def update(self, instance : User, validated_data : dict):
-		password = validated_data["password"]
+		password = validated_data["new_password"]
 		instance.set_password(password)
 		instance.save()
 		email, created = AuthProvider.objects.get_or_create(name="Email")

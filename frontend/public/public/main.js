@@ -40,37 +40,65 @@ addEventListener("websocket", (e) => {
 	} else console.log("success");
 });
 
-addEventListener("play-button", async (e)=> {
-	try
-	{
-		const Play = /*html*/`<a href="/gamemode" class="playnow">Play</a>`
-		const inqueue = /*html*/`<button class="inqueue">In Queue</a>`
-		const ingame = /*html*/`<button class="playnow">In Game</a>`
-		const token = app.utils.getCookie("access_token")
-		if (!token)
-				return
-		// logged in get player state
-		const view = document.getElementById("play-container")
-		const {data, error} = await app.utils.fetchWithAuth("/api/main/user/me/")
+
+
+const CancelQueue = async () => {
+	try {
+		const {error, data} = await app.utils.fetchWithAuth("/api/match/cancel_queue/")
 		if (error)
 		{
 			app.utils.showToast(error)
 			return
 		}
+		app.utils.showToast(data.detail, "green")
+	} catch (error) {
+		if (error instanceof app.utils.AuthError)
+			return
+		console.log("error in cancel queue", error);
+	}
+}
+
+export const fetchStatus = async () => {
+	const {data, error} = await app.utils.fetchWithAuth("/api/main/user/me/")
+	if (error)
+	{
+		app.utils.showToast(error)
+		return null
+	}
+	return data
+}
+
+addEventListener("play-button", async (e)=> {
+	try
+	{
+		const Play = /*html*/`<button href="/gamemode" class="playnow">Play</button>`
+		const inqueue = /*html*/`<button class="inqueue">In Queue</a>`
+		const ingame = /*html*/`<button class="playnow">In Game</a>`
+		const token = app.utils.getCookie("access_token")
+		if (!token)
+			return
+		// logged in get player state
+		const view = document.getElementById("play-container")
+		const data = await fetchStatus()
+		if (!data)
+			return
 		const status = data.status
-		console.log("status fetched : ", status);
 		switch (status)
 		{
 			case "online":
 				view.innerHTML = Play
+				const link = view.querySelector("button")
+				link.addEventListener("click", (e)=> {
+					e.preventDefault()
+					if (location.pathname !== '/gamemode')
+						app.Router.navigate("/gamemode")
+				})
 				break
 			case "inqueue":
 				view.innerHTML = inqueue
-				button = view.querySelector("button")
-				console.log("view : ", view);
-				console.log("button", button);
-				button.addEventListener("click", (e)=>{
-					app.utils.showToast("attempt cancel queue", "orange")
+				const button = view.querySelector("button")
+				button.addEventListener("click", async ()=> {
+					await CancelQueue()
 					dispatchEvent(new CustomEvent("play-button"))
 				})
 				break
@@ -86,10 +114,7 @@ addEventListener("play-button", async (e)=> {
 	} catch (error)
 	{
 		if (error instanceof app.utils.AuthError)
-		{
-			app.Router.navigate("/auth/login")
 			return
-		}
 		console.log("error in dispatch play : ", error);
 		return
 	}
@@ -202,7 +227,6 @@ addEventListener("navbar-profile", async (e) => {
 			app.Router.disableReload()
 	} catch (error) {
 		if (error instanceof app.utils.AuthError) {
-			app.Router.navigate("/auth/login");
 			return;
 		}
 	}

@@ -91,6 +91,7 @@ const Router = {
 				make sure if you are signing out or something to close the online websocket
 		*/
 
+		
 		// injecting content in the root div and running the controller
 		app.cleanup.map(clean => {
 			if (typeof clean === "function")

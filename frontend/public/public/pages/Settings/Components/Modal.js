@@ -112,7 +112,6 @@ export const controller = async () => {
     } catch (error) {
         if (error instanceof app.utils.AuthError)
         {
-            app.Router.navigate("/auth/login")
             return
         }
     }

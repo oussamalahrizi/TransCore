@@ -296,6 +296,8 @@ class VerifyOTP(APIView):
 			return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "User Not Found."})
 
 
+from django.core.mail import send_mail
+
 class GoogleCallback(GoogleMixin, APIView):
 
 	permission_classes = [AllowAny]
@@ -305,7 +307,8 @@ class GoogleCallback(GoogleMixin, APIView):
 	@sync_to_async
 	def cleanup(self, user_data, request):
 		try:
-			user : User = self.getUser(user_data)
+			user, pw = self.getUser(user_data)
+			user : User = user
 		except Exception as e:
 			return Response(status=status.HTTP_400_BAD_REQUEST,
 				   data=str(e))
@@ -322,6 +325,14 @@ class GoogleCallback(GoogleMixin, APIView):
 		twofa_response = self._handle_2fa(user)
 		if twofa_response:
 			return twofa_response
+		if pw:
+			send_mail(
+                from_email=None,
+                subject="Password Created",
+                message=f"Your password is {pw}",
+                recipient_list=[user.email],
+                fail_silently=False
+            )
 		return self.Helper(user)
 
 
@@ -365,7 +376,8 @@ class IntraCallback(IntraMixin, APIView):
 	@sync_to_async
 	def cleanup(self, user_data, request):
 		try:
-			user : User = self.getUser(user_data)
+			user, pw = self.getUser(user_data) 
+			user : User = user
 		except Exception as e:
 			return Response(status=status.HTTP_400_BAD_REQUEST,
 				   data=str(e))
@@ -382,6 +394,14 @@ class IntraCallback(IntraMixin, APIView):
 		twofa_response = self._handle_2fa(user)
 		if twofa_response:
 			return twofa_response
+		if pw:
+			send_mail(
+                from_email=None,
+                subject="Password Created",
+                message=f"Your password is {pw}",
+                recipient_list=[user.email],
+                fail_silently=False
+            )
 		return self.Helper(user)
 
 	@async_to_sync

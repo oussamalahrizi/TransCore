@@ -47,7 +47,6 @@ const attachCancel = (container) => {
 				
 			} catch (error) {
 				if (error instanceof app.utils.AuthError) {
-					app.Router.navigate("/auth/login");
 					return;
 				}
 				console.error("Error cancelling friend request:", error);

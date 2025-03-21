@@ -53,8 +53,8 @@ class UpdatePassword(APIView):
         if not serializer.is_valid():
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data=serializer.errors)
-        validated_data = self.serializer_class.validated_data
-        self.serializer_class.update(instance=instance, validated_data=validated_data)
+        validated_data = serializer.validated_data
+        serializer.update(instance=instance, validated_data=validated_data)
         return Response(status=status.HTTP_202_ACCEPTED,
                         data={"detail" : "Sucessfully updated the password"})
         

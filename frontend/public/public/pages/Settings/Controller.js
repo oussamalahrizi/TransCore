@@ -22,7 +22,7 @@ const getState = async (forceRefresh = false) => {
     }
     catch (error) {
         if (error instanceof app.utils.AuthError)
-            app.Router.navigate("/auth/login")
+            return
         return null
     }
 }
@@ -112,7 +112,6 @@ const toggleCallback = async (e) => {
     } catch (error) {
         console.error("Error in toggle callback:", error);
         if (error instanceof app.utils.AuthError) {
-            app.Router.navigate("/auth/login")
             return;
         }
         app.utils.showToast("An error occurred. Please try again.");
@@ -150,7 +149,6 @@ export const handleLogout = async () => {
         app.utils.showToast(data.detail)
     } catch (error) {
         if (error instanceof app.utils.AuthError) {
-            app.Router.navigate("/auth/login")
             return
         }
         console.error("Logout error:", error)
@@ -251,15 +249,71 @@ export default async () => {
         // hady dial bind form event to send request to update user info f backend
         bindUpdateInfo()
         // other bind forms ba9i dial icon and password 
+
+        const pw_container = document.getElementById("update-pass")
+        const form_password = pw_container.querySelector("#update-pass-form")
+        form_password.addEventListener("submit", async (e)=> {
+            e.preventDefault()
+            const formdata = new FormData(form_password)
+            const data = Object.fromEntries(formdata.entries())
+            console.log("form data",data);
+            await handlePassword({
+                current : data.current_password,
+                new_pass : data.password,
+                confirm_pass : data.confirm_password
+            })
+            form_password.reset()
+        })
     }
     catch (error) {
         console.error("Error in Settings controller:", error);
         if (error instanceof app.utils.AuthError) {
-            app.Router.navigate("/auth/login")
             return
         }
         app.utils.showToast("An error occurred loading settings.");
     }
+}
+
+/**
+ * @param {Object} options
+ * @param {string} options.current
+ * @param {string} options.new_pass
+ * @param {string} options.confirm_pass
+ */
+const handlePassword = async ({current, new_pass , confirm_pass}) => {
+    const body = {}
+    if (!current || !current.trim().length)
+    {
+        app.utils.showToast("missing value current")
+        return
+    }
+    if (!new_pass || !new_pass.trim().length)
+    {
+        app.utils.showToast("missing value new password")
+        return
+    }
+    if (!confirm_pass || !confirm_pass.trim().length)
+    {
+        app.utils.showToast("missing value confirm password")
+        return
+    }
+    if (confirm_pass !== new_pass)
+    {
+        app.utils.showToast("Password Missmatch")
+        return
+    }
+    body.old_password = current
+    body.new_password = confirm_pass
+    const {error, data} = await app.utils.fetchWithAuth("/api/auth/users/update_password/",
+        'PATCH',
+        JSON.stringify(body)
+    )
+    if (error)
+    {
+        app.utils.showToast(error)
+        return
+    }
+    app.utils.showToast(data.detail, "green")
 }
 
 /**
@@ -291,7 +345,6 @@ const handleUpdate = async ({username, email}) => {
         "PATCH",
        JSON.stringify(requestBody)
     )
-
     if (error)
     {
         app.utils.showToast(error)
@@ -313,16 +366,15 @@ const bindUpdateInfo = () => {
             const data = Object.fromEntries(formdata.entries())
             await handleUpdate(data)
             button.disabled = false
+            form.reset()
     })
     } catch (error) {
         if (error instanceof app.utils.AuthError)
         {
-            app.Router.navigate("/auth/login")
             return
         }
         app.utils.showToast("Something went wrong, check console")
         console.log(error);
         return
     }
-    
 }

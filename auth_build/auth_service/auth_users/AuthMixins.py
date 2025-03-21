@@ -97,18 +97,25 @@ class GoogleMixin(LoginMixin):
 				obj, created = AuthProvider.objects.get_or_create(name="Google")
 				user.auth_provider.add(obj)
 				user.save()
-			return user
+			return user, None
 		except Http404:
 			try:
 				# try create a user , avoid making same username different email
 				original_username = get_object_or_404(User, username=username)
 				raise Exception("Another user have the same username.")
 			except Http404:
-				user = User.objects.create_user(email=email, username=username, auth_provider="Google")
-				return user
-				
-				
+				user : User = User.objects.create_user(email=email, username=username, auth_provider="Google")
+				pw = generate_password()
+				user.set_password(pw)
+				user.save()
+				return user, pw
 
+import secrets
+import string	
+				
+def generate_password(length=12):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(characters) for _ in range(length))
 
 class IntraMixin(LoginMixin):
 
@@ -123,7 +130,15 @@ class IntraMixin(LoginMixin):
 				obj, created = AuthProvider.objects.get_or_create(name="Intra")
 				user.auth_provider.add(obj)
 				user.save()
-			return user
+			return user, None
 		except Http404:
-			user = User.objects.create_user(email=email, username=username, auth_provider="Intra")
-			return user
+			try:
+				# try create a user , avoid making same username different email
+				original_username = get_object_or_404(User, username=username)
+				raise Exception("Another user have the same username or email.")
+			except Http404:
+				user : User = User.objects.create_user(email=email, username=username, auth_provider="Intra")
+				pw = generate_password()
+				user.set_password(pw)
+				user.save()
+				return user, pw

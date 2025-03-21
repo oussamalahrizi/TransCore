@@ -103,13 +103,10 @@ class APIConsumer(AsyncRabbitMQConsumer):
             'group_count' : old_group_count
         }
         self.cache.redis.set(user_id, json.dumps(new_data))
-        neww = self.cache.get_user_data(user_id)
-        print("new data cache")
-        pprint(neww)
         layer = get_channel_layer()
         group_name = f"notification_{user_id}"
         await layer.group_send(group_name, {
-            'type' : "refresh_friends"
+            'type' : "update_info"
         })
 
     async def on_message(self, message : IncomingMessage):
@@ -143,7 +140,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
             "send_notification" : self.send_notification,
             'disconnect_user' : self.disconnect_user,
             'set_inqueue' : self.set_inqueue,
-            'match_found' : self.set_ingame
+            'match_found' : self.set_ingame,
+            'cancel_queue' : self.cancel_queue
         }
         super().__init__(host, port, queue_name)
 
@@ -173,7 +171,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         group_name = f"notification_{data.get('user_id')}"
         layer = get_channel_layer()
         await layer.group_send(group_name, {
-            'type' : "set_user_queue",
+            'type' : "status_update",
+            'status' : 'inqueue'
         })
     
     async def set_ingame(self, data : dict):
@@ -187,6 +186,19 @@ class NotifConsumer(AsyncRabbitMQConsumer):
                 'game_id' : data.get("game_id")
             })
     
+    async def cancel_queue(self, data : dict):
+        user_id = data.get("user_id")
+        user_data =  self.cache.get_user_data(user_id)
+        user_data["status"] = "online"
+        self.cache.redis.set(user_id, json.dumps(user_data))
+        print(f"user : {user_id} back online")
+        layer = get_channel_layer()
+        group = f"notification_{user_id}"
+        await layer.group_send(group, {
+            'type' : "status_update",
+            "status" : 'online'
+        })
+
     async def on_message(self, message : IncomingMessage):
         try:
             body : dict = json.loads(message.body.decode())
