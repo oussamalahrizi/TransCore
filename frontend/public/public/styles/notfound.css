@@ -2,7 +2,7 @@
 .notfound-container
 {
     display: flex;
-    background-color: #161616;
+    background: linear-gradient(45deg, #1D1D1D, #057343);
     min-height: 100vh;
     align-items: center;
     justify-content: center;
@@ -41,7 +41,7 @@
 .text
 {
     font-size: 1rem;
-    color:#373A41;
+    color:#bdaeae;
     margin-bottom: 1.75rem;
 }
 

@@ -2,7 +2,7 @@
 {
     display: flex;
     flex: 1;
-    background-color: #161616;
+    background: linear-gradient(to top, #057343, #1D1D1D);
     min-height: 100vh;
     width: 100%;
     justify-content: center;
@@ -15,8 +15,8 @@
     flex-direction: row;
     margin-left: 1rem;
     margin-right: 1rem;
-    background-color: #161616;
     align-self: center;
+    margin-top: 2rem;
     gap: 1rem;
 }
 
@@ -34,7 +34,7 @@
     flex-direction: column;
     width: 15rem;
     height: 52rem;
-    background: linear-gradient(to top, #1D1D1D, rgba(22, 112, 73, 0.39));
+    background-color: #1D1D1D;
     border-radius: 0.5rem;
 }
 
@@ -55,7 +55,7 @@
 .leaderboard-preview
 {
     height: 25.5rem;
-    background: linear-gradient(to top, #1D1D1D, rgba(22, 112, 73, 0.39));
+    background: #1D1D1D;
     border-radius: 0.5rem;
     overflow-y: scroll;
 }
@@ -130,8 +130,9 @@
 
 .leaderboard-background
 {
-    background-color: rgba(17, 90, 58, 0.39);
     padding: 0.5rem ;
+    background-color: #1D1D1D;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     border-top-left-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
 }
@@ -158,11 +159,6 @@
 .svgs-div
 {
     display: flex;
-    /* border-top: #1D1D1D solid 1px;
-    border-bottom: #1D1D1D solid 1px; */
-    /* border-left:  rgba(17, 90, 58, 0.39) solid 0.25rem;
-    border-right: rgba(17, 90, 58, 0.39) solid 0.25rem; */
-    /* background-color: #1D1D1D; */
     padding: 4px 0;
     justify-content: space-around;
     align-items: center;
@@ -1007,7 +1003,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    background: linear-gradient(to right, #f59e0b, rgba(237, 137, 54, 0.8));
+    background: linear-gradient(to right, #029F5B, rgba(22, 112, 73, 0.8));;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }

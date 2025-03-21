@@ -11,7 +11,6 @@ import Verify from "./pages/verify-2fa/index.js";
 import Game from "./pages/game/index.js";
 import Chat from "./pages/chat/index.js";
 import Profile from "./pages/profile/index.js";
-import matchmaking from "./pages/matchmaking/index.js";
 import gamemode from "./pages/Gamemode/index.js";
 
 export default {
@@ -44,12 +43,6 @@ export default {
     controller: Profile.Controller,
     auth_guard: true,
     style: "/public/styles/profile.css",
-  },
-  "/matchmaking": {
-    view: matchmaking.View,
-    controller: matchmaking.Controller,
-    auth_guard: true,
-    style: "/public/styles/matchmaking.css",
   },
   "/auth/google_callback": {
     view: AuthGoogle.View,

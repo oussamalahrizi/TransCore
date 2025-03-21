@@ -5,7 +5,6 @@
   min-height: 100vh;
   margin-left: auto;
   margin-right: auto;
-  background-color: #161616;
 }
 
 .sign-in-link {
@@ -166,17 +165,17 @@
 }
 
 .playnow {
-  text-align: center;
+  align-items: center;
   line-height: 1.5rem;
   background-color: #029f5b;
   border-width: 1px;
   border-color: #373a41;
   color: #fff;
+  white-space: nowrap;
   border-radius: 0.5rem;
-  /* margin-top: 0.75rem; */
   margin-left: 2rem;
   padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.5em;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
   font-weight: 600;
@@ -186,22 +185,23 @@
 .playnow:hover {
   opacity: 1;
   background-color: #057343;
+  box-shadow: 0 0 10px rgba(94, 255, 0, 0.519);
   color: #fff;
 }
 
 
 .inqueue {
-  text-align: center;
+  align-items: center;
   line-height: 1.5rem;
   background-color: #ff9800;
   border-width: 1px;
   border-color: #373a41;
   color: #fff;
   border-radius: 0.5rem;
-  /* margin-top: 0.75rem; */
+  white-space: nowrap;
   margin-left: 2rem;
   padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.5em;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
   font-weight: 600;
@@ -211,6 +211,7 @@
 .inqueue:hover {
   opacity: 1;
   background-color: #d18411;
+  box-shadow: 0 0 10px rgba(188, 144, 2, 0.74);
   color: #fff;
 }
 
@@ -222,10 +223,10 @@
   border-color: #373a41;
   color: #fff;
   border-radius: 0.5rem;
-  /* margin-top: 0.75rem; */
+  white-space: nowrap;
   margin-left: 2rem;
   padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.5em;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
   font-weight: 600;
@@ -235,6 +236,6 @@
 .ingame:hover {
   opacity: 1;
   background-color: #3718c1;
+  box-shadow: 0 0 10px rgba(0, 21, 255, 0.553);
   color: #fff;
 }
-
