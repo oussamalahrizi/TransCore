@@ -8,6 +8,13 @@ export const SetOnline = () => {
     }
     ws.onclose = (e) => {
         console.log("connection closed :", e.reason);
+        if (e.code === 4242)
+        {
+            app.utils.showToast(e.reason)
+            app.utils.removeCookie("access_token")
+            app.Router.navigate("/auth/login")
+            return
+        }
         e.reason && app.utils.showToast(e.reason)
     }
     ws.onerror = (e)=> {
@@ -32,11 +39,15 @@ export const SetOnline = () => {
                 break
             
             case 'inqueue':
-                app.utils.showToast("You are now in queue, bdel play a imad")
+                console.log("received in queue event");
+                
+                dispatchEvent(new CustomEvent("play-button"))
                 break
 
             case 'ingame':
-                app.utils.showToast("You are in game, ha game id a ilyass", data.game_id)
+                console.log("received in game event");
+                
+                dispatchEvent(new CustomEvent("play-button"))
                 break
             case 'invite':
                 app.utils.showToast("wslatk invite")
@@ -53,4 +64,3 @@ export const SetOnline = () => {
 const Notification = (message, color) => {
     app.utils.showToast(message, color)
 }
-

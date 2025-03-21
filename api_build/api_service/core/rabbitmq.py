@@ -163,7 +163,7 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         layer = get_channel_layer()
         await layer.group_send(group_name, {
             'type' : 'disconnect_user',
-            'code' : 4003,
+            'code' : 4242,
             'message' : f"""You have been forcibly disconnected.
                 {data.get('reason') if data.get('reason') else ""}."""
         })
