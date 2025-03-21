@@ -11,19 +11,20 @@ import os
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter
-from .rabbitmq import APIPub, NotificationPub, RabbitmqBase, QueueConsumer
 import asyncio
-from matchmaking.utils import Cache
-
-
-apipub = APIPub(host='rabbitmq', port=5672, queue_name="api")
-notifspub = NotificationPub(host='rabbitmq', port=5672, queue_name="notifications")
-queue_consumer = QueueConsumer(host='rabbitmq', port=5672, queue_name='match_queue')
-
-publishers : list[RabbitmqBase] = [apipub, notifspub, queue_consumer]
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
+djang_app = get_asgi_application()
+
+from .publishers import publishers
+from .QueueConsumer import QueueConsumer
+
+# Create QueueConsumer instance here to break circular import
+queue_consumer = QueueConsumer(host='rabbitmq', port=5672, queue_name='match_queue')
+
+# Add queue_consumer to the publishers list
+all_publishers = publishers + [queue_consumer]
 
 async def app(scope, receive, send):
     if scope['type'] == 'lifespan':
@@ -32,7 +33,7 @@ async def app(scope, receive, send):
             message = await receive()
             if message['type'] == 'lifespan.startup':
                 print("started publisher")
-                for pub in publishers:
+                for pub in all_publishers:
                     tasks.append({
                         "publisher" : pub,
                         "task" : asyncio.create_task(pub.run())
@@ -45,8 +46,6 @@ async def app(scope, receive, send):
                         task["task"].cancel()
                 await send({'type': 'lifespan.shutdown.complete'})
                 return
-
-djang_app = get_asgi_application()
 
 
 application = ProtocolTypeRouter({

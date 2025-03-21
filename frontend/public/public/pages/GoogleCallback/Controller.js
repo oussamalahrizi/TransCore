@@ -11,7 +11,7 @@ const GoogleCallback = async (code) => {
             throw new Error(data.detail ? data.detail : JSON.stringify(data, null, 2))
         if (data["2fa"] === true)
         {
-            app.username = data.username
+            app.user_id = data.user_id
             app.Router.navigate("/auth/verify-2fa")
             return
         }

@@ -5,7 +5,7 @@ from .exceptions import InvalidToken
 from asgiref.sync import async_to_sync
 
 JWK_URL = "http://auth-service/api/auth/jwk/"
-USER_INFO = "http://auth-service/api/auth/api_user_id/"
+USER_INFO = "http://auth-service/api/auth/internal/userid/"
 SESSION_STATE = "http://auth-service/api/auth/session_state/"
 
 

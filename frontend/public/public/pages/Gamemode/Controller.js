@@ -1,3 +1,24 @@
+
+
+const findmatch = async () => {
+  try {
+    const {error, data} = await app.utils.fetchWithAuth("/api/match/findmatch/pong/")
+    if (error)
+    {
+      app.utils.showToast(error)
+      return
+    }
+    console.log("data find match : ", data);
+    app.utils.showToast(data.detail)
+  
+  } catch (error) {
+    if (error instanceof app.utils.AuthError)
+      return
+    console.log("error in find match: ", error);
+    
+  }
+}
+
 export default () => {
   // Game mode variables - all initially set to false;
   app.gameInfo = {
@@ -40,9 +61,8 @@ export default () => {
         break;
       case 2:
         app.gameInfo.Multiplayer = true;
-        redirectURL = MULTIPLAYER_URL;
-        app.utils.showToast("You are now in queue", "orange");
-        console.log("Multiplayer mode selected");
+        // redirectURL = MULTIPLAYER_URL;
+        findmatch()
         break;
       case 3:
         app.gameInfo.Tournament = true;
@@ -58,7 +78,7 @@ export default () => {
     selectedCard.classList.add("selected");
 
     // Add visual feedback before redirecting
-    app.Router.navigate(redirectURL);
+    // app.Router.navigate(redirectURL);
   }
 
   // Wait for the DOM to be fully loaded before adding event listeners
