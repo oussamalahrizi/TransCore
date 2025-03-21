@@ -1,4 +1,4 @@
-import Router from "./Router.js";
+import Router, { refreshLocal } from "./Router.js";
 import utils from "./utils.js";
 import routes from "./routes.js";
 import { SetOnline } from "./Websockets.js";
@@ -71,7 +71,7 @@ export const fetchStatus = async () => {
 addEventListener("play-button", async (e)=> {
 	try
 	{
-		const Play = /*html*/`<button href="/gamemode" class="playnow">Play</button>`
+		const Play = /*html*/`<button href="/gamemode" class="playnow">Play Now</button>`
 		const inqueue = /*html*/`<button class="inqueue">In Queue</a>`
 		const ingame = /*html*/`<button class="playnow">In Game</a>`
 		const token = app.utils.getCookie("access_token")
@@ -123,7 +123,10 @@ addEventListener("play-button", async (e)=> {
 import { handleLogout } from "./pages/Settings/Controller.js";
 
 addEventListener("navbar-profile", async (e) => {
-	const token = app.utils.getCookie("access_token");
+	var token = app.utils.getCookie("access_token");
+	if (!token)
+		await refreshLocal();
+	token = app.utils.getCookie("access_token");
 	const view = document.getElementById("profile-container");
 	if (!token) {
 		while (view.firstChild) view.removeChild(view.firstChild);

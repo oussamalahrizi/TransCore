@@ -168,8 +168,6 @@
   align-items: center;
   line-height: 1.5rem;
   background-color: #029f5b;
-  border-width: 1px;
-  border-color: #373a41;
   color: #fff;
   white-space: nowrap;
   border-radius: 0.5rem;
@@ -186,6 +184,7 @@
   opacity: 1;
   background-color: #057343;
   box-shadow: 0 0 10px rgba(94, 255, 0, 0.519);
+  transform: scale(1.03);
   color: #fff;
 }
 
@@ -238,4 +237,14 @@
   background-color: #3718c1;
   box-shadow: 0 0 10px rgba(0, 21, 255, 0.553);
   color: #fff;
+}
+
+.opacity-hover
+{
+  opacity: 0.25;
+}
+
+.opacity-hover:hover
+{
+  opacity: 0.5;
 }
