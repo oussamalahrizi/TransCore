@@ -1,4 +1,6 @@
 
+let friendsContainer= null
+
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
     
@@ -22,35 +24,39 @@ export const SetOnline = () => {
     }
     ws.onmessage = async (e) => {
         const data = JSON.parse(e.data)
-        const {message, type} = data
-        console.log(e.data);
+        const {type} = data
         switch (type)
         {
             case "notification":
+                const message = data
                 const color = data.color ? data.color : "red"
                 Notification(message, color)
                 break
             
             case "refresh_friends":
-                const friendsContainer = document.getElementById("friend-list-items")                
+                friendsContainer = document.getElementById("friend-list-items")                
                 if (!friendsContainer)
                     break
                 friendsContainer.dispatchEvent(new CustomEvent('refresh'))
                 break
             
-            case 'inqueue':
-                console.log("received in queue event");
-                
+            case 'status_update':
+                console.log("received update status event");
                 dispatchEvent(new CustomEvent("play-button"))
                 break
 
             case 'ingame':
                 console.log("received in game event");
-                
+                console.log(data);
                 dispatchEvent(new CustomEvent("play-button"))
                 break
             case 'invite':
                 app.utils.showToast("wslatk invite")
+                break
+            case 'update_info':
+                if (friendsContainer)
+                    friendsContainer.dispatchEvent(new CustomEvent('refresh'))
+                dispatchEvent(new CustomEvent("navbar-profile"))
                 break
             default:
                 app.utils.showToast("ma3rt chhadshy ja mn back : ", message)
