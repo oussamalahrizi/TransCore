@@ -10,16 +10,16 @@ class Player(models.Model):
 
 
 class Match(models.Model):
-    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player1_matches')
-    player2 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player2_matches')
-    winner = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='won_matches')
+    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player1')
+    player2 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player2')
+    winner = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='winner')
     player1_score = models.IntegerField()
     player2_score = models.IntegerField()
     played_at = models.DateTimeField(auto_now_add=True)
 
 
 class MatchSingle(models.Model):
-    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='single_player')
+    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player')
     winner = models.CharField(max_length=10, choices=[
         ("WIN","WIN"),
         ("LOSS", "LOSS")

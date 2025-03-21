@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-f4ruh*(x!+t%51qe0#x-w%4wrf65e!8vanzl2a%-*kc&!qjc6g'
+SECRET_KEY = 'django-insecure-ksemsi#y#f$uyqi*ht_b#wglaene6wp(t1kyw_8x1q229y9)e#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -63,7 +63,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
-ASGI_APPLICATION = 'core.asgi.application'
 
 
 # Database
@@ -91,6 +90,7 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
 
 
 # Password validation
