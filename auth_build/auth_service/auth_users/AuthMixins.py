@@ -41,7 +41,6 @@ class LoginMixin:
 			
 			if user.two_factor_enabled == False:
 				return Response(data={"detail": "User already logged in from another device"}, status=status.HTTP_403_FORBIDDEN)
-			self.cache.blacklist_token(cache_token, user.id)
 		return None
 
 	def _handle_2fa(self, user : User):
@@ -51,7 +50,7 @@ class LoginMixin:
 			return Response(data={
 				"detail" : "Please verify 2fa.",
 				"2fa" : True,
-				"username" : user.username
+				"user_id" : user.id
 				})
 		return None
 

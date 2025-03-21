@@ -282,6 +282,8 @@ class ChangeFriend(APIView):
         relation : Friends = self.get_relation(user, other)
         if not relation:
             raise Exception("You are not even friends or blocking each other")
+        if  relation.status != "blocked":
+            raise Exception("You are not even friends or blocking each other")
         relation.status = "accepted"
         relation.save()
         return f"Successfully unblocked {other.username}"

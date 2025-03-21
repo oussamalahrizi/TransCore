@@ -6,7 +6,12 @@ from redis import Redis
 """
 from asgiref.sync import async_to_sync
 import uuid, json
+
 from core.rabbitmq import NotificationPub
+from core.publishers import publishers
+
+notif = publishers[1]
+
 class Cache:
 
     pong_queue = "pong"
@@ -25,8 +30,9 @@ class Cache:
             type = [type]
         for t in type:
             self.redis.lrem(t, 0, user_id)
+            print(f"removed {user_id} from {t} queue")
 
-    def store_player(self, user_id : str, game : str, notif : NotificationPub):
+    def store_player(self, user_id : str, game : str):
         """
             store the player in queue and try to find a match
         """
@@ -48,7 +54,7 @@ class Cache:
         }
         async_to_sync(notif.publish)(body)
 
-    def generate_game(self, players : list[str], match_type : str, game : str, notif : NotificationPub):
+    def generate_game(self, players : list[str], match_type : str, game : str):
         """
         `match_type` is either regular or tournament
         

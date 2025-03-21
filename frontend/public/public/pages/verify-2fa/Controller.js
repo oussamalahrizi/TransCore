@@ -15,6 +15,9 @@ const handleLocation = async (url) => {
         }
         app.utils.setCookie("access_token", data.access_token)
         app.utils.showToast("Logged in successfully", 'green')
+        dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
+        dispatchEvent(new CustomEvent("navbar-profile"))
+        dispatchEvent(new CustomEvent("play-button"));
         app.Router.navigate("/")
     } catch (error) {
         app.utils.showToast(error)
@@ -53,7 +56,7 @@ const handleVerify = async (code, user_id) => {
 export default () => {
     if (!app.user_id)
     {
-        app.utils.showToast("Username missing")
+        app.utils.showToast("user id missing")
         app.Router.navigate("/auth/login")
         return
     }
