@@ -131,7 +131,8 @@ class Cache:
             auth_data['friends'] = [friend_id]
         else:
             print("appending friend to user : ", auth_data["username"], friend_id)
-            auth_data['friends'].append(friend_id)
+            if friend_id not in auth_data['friends']:
+                auth_data['friends'].append(friend_id)
         self.set_user_data(user_id, auth_data, "auth")
     
     def append_user_blocked(self, user_id : str, blocked_id : str):

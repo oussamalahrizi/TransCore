@@ -67,6 +67,8 @@ addEventListener("play-button", async (e)=> {
 			case "inqueue":
 				view.innerHTML = inqueue
 				button = view.querySelector("button")
+				console.log("view : ", view);
+				console.log("button", button);
 				button.addEventListener("click", (e)=>{
 					app.utils.showToast("attempt cancel queue", "orange")
 					dispatchEvent(new CustomEvent("play-button"))
@@ -88,7 +90,7 @@ addEventListener("play-button", async (e)=> {
 			app.Router.navigate("/auth/login")
 			return
 		}
-		console.log("error in dispatch navbar : ", error);
+		console.log("error in dispatch play : ", error);
 		return
 	}
 })
