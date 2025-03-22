@@ -7,7 +7,10 @@ from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 import time
 
+
 from .services import GameService
+from .game_service import save_game_result
+
 # game_task : dict[str, asyncio.Task] = {}
 
 # Game : dict[str, GameState] = {}
@@ -143,18 +146,38 @@ class Consumer(AsyncWebsocketConsumer):
     
 
     
-    async def game_end(self, event):
-        print("sending gameEnd to : " ,self.username)
-        winner = 'You Win!'
-        if self.user_id != event['winner']:
-            winner = 'You Lost!'
-        await self.send(json.dumps({
-            'type' : 'gameEnd',
-            'winner' : winner
-            }))
-        await self.channel_layer.group_send(self.game_id, {
-            'type' : 'close_user'
-        })
+async def game_end(self, event):
+    print("sending gameEnd to : ", self.username)
+    winner = 'You Win!'
+    winner_id = event['winner']
+    
+    if self.user_id != winner_id:
+        winner = 'You Lost!'
+    
+    # Get game state to extract scores
+    if Game.get(self.game_id):
+        game_state = Game.get(self.game_id)
+        
+        game_data = {
+            "match_type": "multiplayer",
+            "player1_id": self.players_ids[0],
+            "player2_id": self.players_ids[1],
+            "player1_score": game_state.p1_score,
+            "player2_score": game_state.p2_score,
+            "winner_id": winner_id
+        }
+            
+        # Save game result
+        save_game_result(game_data)
+    
+    await self.send(json.dumps({
+        'type': 'gameEnd',
+        'winner': winner
+    }))
+    
+    await self.channel_layer.group_send(self.game_id, {
+        'type': 'close_user'
+    })
 
     async def gameState(self, event):
         state = event['state']

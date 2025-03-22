@@ -8,6 +8,7 @@ from .utils import game_task, Game
 import time
 from channels.layers import get_channel_layer
 from .services import GameService
+from .game_service import save_game_result
 
 layer = get_channel_layer()
 
@@ -159,6 +160,7 @@ class SingleConsumer(AsyncWebsocketConsumer):
     async def game_end(self, event):
         print("sending gameEnd to : " ,self.username)
         winner = 'You Win!'
+        winner_id = event['winner']
         if self.user_id != event['winner']:
             winner = 'You Lost!'
         await self.send(json.dumps({
@@ -168,6 +170,20 @@ class SingleConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(self.game_id, {
             'type' : 'close_user'
         })
+
+        if Game.get(self.game_id):
+            game_state = Game.get(self.game_id)
+
+            game_data = {
+                "match_type": "singleplayer",
+                "player_id": self.user_id,
+                "player_score": game_state.p1_score,
+                "cpu_score": game_state.p2_score,
+                "winner": "WIN" if self.user_id == winner_id else "LOSS"
+            }
+        
+        save_game_result(game_data)
+        
 
     async def gameState(self, event):
         state = event['state']
