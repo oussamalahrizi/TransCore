@@ -437,3 +437,123 @@ class sendNotif(APIView):
         except Exception as e:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             data={"detail" : f"error publishing, {e}"})
+
+from django.http import FileResponse
+import os
+from django.conf import settings
+from .models import ImageUser
+from PIL import Image
+from rest_framework.parsers import FileUploadParser, JSONParser
+from rest_framework.parsers import BaseParser
+
+from uuid import uuid4
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+
+class RawImageParser(BaseParser):
+    """
+    Parser for raw image data.
+    """
+    media_type = 'image/png'
+    
+    def parse(self, stream, media_type=None, parser_context=None):
+        """
+        Convert raw binary content to a file-like object that serializers can use
+        """
+        content = stream.read()
+        
+        # Create a unique filename for the image
+        filename = f"{uuid4()}.png"
+        
+        # Create a Django file object from the raw content
+        file_dict = {
+            'image': SimpleUploadedFile(
+                name=filename,
+                content=content,
+                content_type='image/png'
+            )
+        }
+        return file_dict
+
+from base64 import b64encode
+from io import BytesIO
+
+class UserImageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_parsers(self):
+        if self.request.method == "POST":
+            return [RawImageParser()]
+        return super().get_parsers()
+
+    class UploadSerialize(serializers.Serializer):
+        image = serializers.ImageField()
+
+        def validate_image(self, value):
+            try:
+                # Open the image using Pillow
+                img = Image.open(value)
+                if img.format != 'PNG':
+                    raise serializers.ValidationError("Only PNG images are allowed.")
+            except Exception as e:
+                raise serializers.ValidationError("The uploaded file is not a valid image.")
+            return value
+    
+    def relation(self, user, other):
+        try:
+            relation = Friends.objects.filter(from_user=user, to_user=other).get()
+            return relation
+        except Friends.DoesNotExist:
+            try:
+                relation = Friends.objects.filter(from_user=other, to_user=user).get()
+                return relation
+            except Friends.DoesNotExist:
+                return None
+
+    def get(self, request : Request, *args, **kwargs):
+        user : User = request.user
+        id = kwargs.get("id")
+        try:
+            if not id:
+                id != user.id
+                if id != user.id:
+                    other : User = get_object_or_404(User, id=id)
+                    rel = self.relation(user, other)
+                    if rel.status == "blocked":
+                        return Response(status=status.HTTP_403_FORBIDDEN)
+                    user = other
+            try:
+                image : ImageUser = ImageUser.objects.get(user=user)
+                with open(image.image.path, "rb") as img_file:
+                    image_data = img_file.read()
+                return Response(b64encode(image_data).decode())
+            except ImageUser.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND, data={"detail": "No image found"})
+            except BaseException as e:
+                print(str(e))
+                return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data="Internal Server error")
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    def post(self, request : Request, *args, **kwargs):
+        ser = self.UploadSerialize(data=request.data)
+        ser.is_valid(raise_exception=True)
+        image : SimpleUploadedFile= ser.validated_data["image"]
+        user : User = request.user
+        save, created = ImageUser.objects.get_or_create(user=user)
+        save.image = image
+        save.save()
+        user.icon_url = f"/api/auth/users/image/{user.id}/"
+        user.save()
+        async_to_sync(NotifyApi)(user.id, type="clear_cache")
+        return Response({"detail" :"OK?"})
+    
+    def delete(self, request : Request, *args, **kwargs):
+        user : User = request.user
+        image = ImageUser(user=user)
+        image.delete()
+        user.icon_url = None
+        user.save()
+        async_to_sync(NotifyApi)(user.id, type="clear_cache")
+        return Response(data={"detail": "Successfully deleted your profile image."})
+

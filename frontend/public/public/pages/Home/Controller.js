@@ -38,7 +38,7 @@ const renderFriendsList = async (container) => {
 			if (!friend.auth.icon_url)
 				friend.auth.icon_url = "/public/assets/dog.png"
 			friendItem.innerHTML = `
-				<img class="profile-photo" src="${friend.auth.icon_url}" alt="Profile photo of ${friend.auth.username}">
+				<img class="profile-photo" src="${friend.auth.icon_url}">
 				<div class="friend-info">
 					<span class="friend-name">${friend.auth.username}</span>
 					<span class="friend-status ${friend.status}">

@@ -54,14 +54,14 @@ const refreshToken = async () => {
         } else if (res.status === 400) {
             
             removeCookie("access_token");
-            dispatchEvent("auth-error")
+            dispatchEvent(new CustomEvent("auth-error"))
             throw new AuthError()
         }
     }
     setCookie("access_token", data.access_token);
 };
 
-const fetchWithAuth = async (url, method=null, body=null) => {
+const fetchWithAuth = async (url, method=null, body=null, content_type=null) => {
     const finalurl = url
     
     let options = {
@@ -74,7 +74,7 @@ const fetchWithAuth = async (url, method=null, body=null) => {
     if (body)
     {
         options = {...options, body}
-        headers = {...headers, 'Content-Type' : "application/json"}
+        headers = {...headers, 'Content-Type' : content_type ? content_type :  "application/json"}
     }
     let response = await fetch(finalurl, {
         ...options,

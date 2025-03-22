@@ -75,10 +75,13 @@ addEventListener("play-button", async (e)=> {
 		const inqueue = /*html*/`<button class="inqueue">In Queue</a>`
 		const ingame = /*html*/`<button class="playnow">In Game</a>`
 		const token = app.utils.getCookie("access_token")
-		if (!token)
-			return
-		// logged in get player state
 		const view = document.getElementById("play-container")
+		if (!token)
+		{
+			view.innerHTML = ''
+			return
+		}
+		// logged in get player state
 		const data = await fetchStatus()
 		if (!data)
 			return
@@ -121,12 +124,10 @@ addEventListener("play-button", async (e)=> {
 })
 
 import { handleLogout } from "./pages/Settings/Controller.js";
+import { rendergame } from "./pages/game/websockets.js";
 
 addEventListener("navbar-profile", async (e) => {
 	var token = app.utils.getCookie("access_token");
-	if (!token)
-		await refreshLocal();
-	token = app.utils.getCookie("access_token");
 	const view = document.getElementById("profile-container");
 	if (!token) {
 		while (view.firstChild) view.removeChild(view.firstChild);
@@ -147,7 +148,29 @@ addEventListener("navbar-profile", async (e) => {
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		view.innerHTML = NavProfile(data);
+		const img = data.icon_url
+		console.log("image url : ", img);
+		
+		if (img && img.startsWith("/"))
+		{
+			console.log("fetching image navbar");
+			
+			const res = await app.utils.fetchWithAuth(img);
+			console.log("res", res);
+			
+			if (res.error)
+			{
+				view.innerHTML = placeholder;
+				app.utils.showToast("Failed to get your data");
+				return;
+			}
+			view.innerHTML = NavProfile({
+				username : data.username,
+				icon_url : res.data
+			})	
+		}
+		else
+			view.innerHTML = NavProfile(data);
 
 		const existingModal = document.getElementById("profile-modal");
 		if (existingModal) {
@@ -241,6 +264,7 @@ addEventListener("auth-error", () => {
 			clean()
 	})
 	app.cleanup = []
+	dispatchEvent(new CustomEvent("play-button"))
 	app.Router.navigate("/auth/login")
 })
 

@@ -89,6 +89,7 @@ class GoogleMixin(LoginMixin):
 	def getUser(self, user_data) -> User :
 		username = user_data["given_name"]
 		email = user_data["email"]
+		icon_url = user_data["picture"]
 
 		try:
 			user = get_object_or_404(User, email=email)
@@ -104,7 +105,11 @@ class GoogleMixin(LoginMixin):
 				original_username = get_object_or_404(User, username=username)
 				raise Exception("Another user have the same username.")
 			except Http404:
-				user : User = User.objects.create_user(email=email, username=username, auth_provider="Google")
+				user : User = User.objects.create_user(
+					email=email,
+					username=username,
+					icon_url=icon_url,
+					auth_provider="Google")
 				pw = generate_password()
 				user.set_password(pw)
 				user.save()
@@ -122,6 +127,7 @@ class IntraMixin(LoginMixin):
 	def getUser(self, user_data) -> User :
 		username = user_data["login"]
 		email = user_data["email"]
+		icon_url = user_data["image"]["versions"]["medium"]
 
 		try:
 			user = get_object_or_404(User, email=email)
@@ -137,7 +143,12 @@ class IntraMixin(LoginMixin):
 				original_username = get_object_or_404(User, username=username)
 				raise Exception("Another user have the same username or email.")
 			except Http404:
-				user : User = User.objects.create_user(email=email, username=username, auth_provider="Intra")
+				user : User = User.objects.create_user(
+					email=email,
+					username=username,
+					auth_provider="Intra",
+					icon_url = icon_url
+					)
 				pw = generate_password()
 				user.set_password(pw)
 				user.save()

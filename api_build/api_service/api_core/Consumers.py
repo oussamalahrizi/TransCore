@@ -1,9 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .utils import _Cache
-from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
-from .models import Notification
 from core.asgi import queue_publisher
 from channels.layers import get_channel_layer
 
@@ -52,13 +50,13 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 				}
 			}
 			await queue_publisher.publish(body)
+		# TODO also notify game and tournament to remove the player
+		# notify his friends to refresh the friend list
 		user_data = self.cache.get_user_data(self.user["id"])
 		friends = user_data.get("auth").get("friends")
 		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
 		print(f"{self.user['username']} disconnected")
-		# inform friends to refresh their friend list? how
 		if not friends:
-			print("no friends")
 			return
 		for f in friends:
 			f_status = self.cache.get_user_status(f)
@@ -69,9 +67,6 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 					"type": "refresh_friends"
 				})
 	
-	@database_sync_to_async
-	def store_notfication(self, message : str):
-		Notification.objects.create_notification(user_id=self.user['id'], message=message)
 
 	async def disconnect_user(self, event):
 		print("disconnect user consumer", event)
@@ -86,7 +81,6 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		}
 		if event.get("color"):
 			data["color"] = event["color"]
-		await self.store_notfication(data['message'])
 		await self.send(text_data=json.dumps(data))
 		print("send regular notification message")
 	

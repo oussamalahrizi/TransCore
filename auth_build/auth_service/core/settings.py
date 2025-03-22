@@ -139,6 +139,8 @@ USE_TZ = True
 
 STATIC_URL = '/api/auth/static/'
 MEDIA_URL = '/api/auth/media/'
+MEDIA_ROOT = "media"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

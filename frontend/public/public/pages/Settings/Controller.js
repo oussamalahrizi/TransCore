@@ -223,28 +223,52 @@ export default async () => {
         
         logoutBtn.addEventListener("click", handleLogout)
         
+        // set image form
+        const {error, data} = await app.utils.fetchWithAuth("/api/main/user/me/")
+        if (error)
+        {
+            app.utils.showToast(error)
+            setImageUpload("/public/assets/icon-placeholder.svg")
+        }
+        else
+            setImageUpload(data.auth.icon_url)
+        // bind image form to submit
         const imageform = document.getElementById("img-form")
-        imageform.addEventListener("submit", (e)=>{
+        imageform.addEventListener("submit", async (e)=>{
             e.preventDefault();
             const formdata = new FormData(imageform);
             const file = formdata.get("image");
             if (file)
-            {
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-                if (fileExtension !== 'png')
+            {                
+                if (file.type !== 'image/png')
                 {
                     alert("Please upload a PNG image.");
+                    imageform.reset()
                     return;
                 }
             }
             else
             {
                 alert("Please select an image to upload.");
+                imageform.reset()
+                return
             }
             const data = Object.fromEntries(formdata.entries());
-            var profile = document.getElementById("current")
-            profile.value = formdata.name;
-            console.log(data);
+            console.log("image : ", data["image"]);
+            
+            const bool = await handleUpload({image : data["image"]})
+            if (bool)
+            {
+                const {error, data} = await app.utils.fetchWithAuth("/api/main/user/me/")
+                if (error)
+                {
+                    app.utils.showToast(error)
+                    setImageUpload("/public/assets/icon-placeholder.svg")
+                }
+                else
+                    setImageUpload(data.auth.icon_url)
+            }
+            imageform.reset()
         })
         // hady dial bind form event to send request to update user info f backend
         bindUpdateInfo()
@@ -272,6 +296,50 @@ export default async () => {
         }
         app.utils.showToast("An error occurred loading settings.");
     }
+}
+/**
+ * 
+ * @param {string} url 
+ */
+const setImageUpload = async (url) => {
+    const current = document.getElementById("current")   
+    console.log("url ", url);
+    if (!url)
+    {
+        current.src = "/public/assets/icon-placeholder.svg"
+        return
+    }
+    if (url.startsWith("/"))
+    {
+        const {data, error} = await app.utils.fetchWithAuth(url)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        url = "data:image/png;base64," + data
+        current.src = url
+    }
+    else
+        current.src = url
+    current.className ="object-cover"    
+}
+
+const handleUpload = async ({image}) => {
+    
+    const {data, error} = await app.utils.fetchWithAuth(
+        "/api/auth/users/image/",
+        'POST',
+        image,
+        "image/png"
+    )
+    if (error)
+    {
+        console.error(error);
+        app.utils.showToast(error)
+        return false
+    }
+    return true
 }
 
 /**

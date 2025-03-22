@@ -17,6 +17,8 @@ export const SetOnline = () => {
             app.Router.navigate("/auth/login")
             return
         }
+        dispatchEvent(new CustomEvent("navbar-profile"))
+        dispatchEvent(new CustomEvent("play-button"))
         e.reason && app.utils.showToast(e.reason)
     }
     ws.onerror = (e)=> {

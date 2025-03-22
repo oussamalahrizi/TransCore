@@ -83,6 +83,10 @@ export const controller = async () => {
     try {
         const view = document.getElementById("settings")
         const modal = view.querySelector("#modal-wrapper")
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal)
+                hideModalWithAnimation(modal, () => view.removeChild(modal))
+        })
         console.log("modal controller");
         const cross = modal.querySelector("#close-modal")
         cross.addEventListener("click", () => {

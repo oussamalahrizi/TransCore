@@ -10,7 +10,13 @@ export default (receivedRequests) =>  /*html*/`
             receivedRequests.map(request => `
                 <div class="received-request-item">
                     <div class="received-request-info">
-                        <img src="${request.icon_url || '/public/assets/dog.png'}" class="received-avatar" alt="${request.username}">
+                    ${!request.icon_url ?
+                        '<img src="/public/assets/icon-placeholder.svg" class="received-avatar"/>' 
+                        : request.icon_url.startsWith("https") ?
+                        `<img src="${request.icon_url}" class="received-avatar"/>`
+                        :
+                        `<img src="data:image/png;base64,${request.icon_url}" class="received-avatar"/>`
+                    }
                         <span class="received-username">${request.username}</span>
                     </div>
                     <div class="received-request-actions">
