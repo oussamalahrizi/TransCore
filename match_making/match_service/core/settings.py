@@ -34,8 +34,8 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
-    'channels',
-    'matchmaking'
+    'matchmaking',
+    'channels'
 ]
 
 MIDDLEWARE = [

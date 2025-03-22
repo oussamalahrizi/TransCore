@@ -1,5 +1,11 @@
 from redis import Redis
 import json
+import asyncio
+from .game import GameState
+
+game_task : dict[str, asyncio.Task] = {}
+
+Game : dict[str, GameState] = {}
 
 class Cache:
     def __init__(self):

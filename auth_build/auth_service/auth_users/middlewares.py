@@ -34,6 +34,8 @@ class JWTAuthentication(authentication.BaseAuthentication):
 				raise InvalidToken("Token is not Bearer")
 			user = get_object_or_404(User, id=payload['user_id'])
 			if not user.is_active:
+				self.cache.BlacklistUserToken(user.id)
+				self.cache.delete_access_session(user.id)
 				raise InvalidToken('Your account has been permanently banned.',
 					   clear_cookie=True, custom_code=status.HTTP_423_LOCKED)
 			"""

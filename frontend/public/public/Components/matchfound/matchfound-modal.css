@@ -1,0 +1,208 @@
+.matchfound-modal-container
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.matchfound-modal-container.show
+{
+    opacity: 1;
+    visibility: visible;
+}
+
+.matchfound-modal
+{
+    background-color: #1f3721;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    width: 400px;
+    max-width: 90%;
+    padding: 30px;
+    transform: translateY(30px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid #029F5B;
+    overflow: hidden;
+}
+
+.matchfound-modal-container.show .matchfound-modal
+{
+    transform: translateY(0);
+}
+
+.matchfound-content
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.matchfound-content h1
+{
+    color: #ffffff;
+    font-size: 32px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.matchfound-message
+{
+    color: #d1d5db;
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+
+.matchfound-timer
+{
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 15px 0 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.countdown-circle
+{
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.countdown-circle-bg
+{
+    fill: none;
+    stroke: #374151;
+    stroke-width: 5;
+}
+
+.countdown-circle-progress
+{
+    fill: none;
+    stroke: #029F5B;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+}
+
+.timer-text
+{
+    position: absolute;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.matchfound-buttons
+{
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.matchfound-buttons button
+{
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+}
+
+.decline-btn
+{
+    background-color: #903d3d;
+    color: #f3f4f6;
+}
+
+.decline-btn:hover
+{
+    background-color: #9f0b0b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 23, 23, 0.4);
+}
+
+.accept-btn
+{
+    background-color: #029F5B;
+    color: white;
+}
+
+.accept-btn:hover
+{
+    background-color: #0b8747;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(2, 159, 91, 0.578);
+}
+
+.accept-btn:active, .decline-btn:active
+{
+    transform: translateY(1px);
+}
+
+@keyframes pulse
+{
+    0%
+    {
+        text-shadow: 0 0 5px rgba(2, 159, 91, 0.5);
+    }
+    50%
+    {
+        text-shadow: 0 0 20px rgba(2, 159, 91, 0.8);
+    }
+    100%
+    {
+        text-shadow: 0 0 5px rgba(2, 159, 91, 0.5);
+    }
+}
+
+@media screen and (max-width: 480px)
+{
+    .matchfound-modal
+    {
+        padding: 20px;
+    }
+    
+    .matchfound-content h1
+    {
+        font-size: 28px;
+    }
+    
+    .matchfound-timer
+    {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .timer-text
+    {
+        font-size: 24px;
+    }
+    
+    .matchfound-buttons
+    {
+        flex-direction: column;
+        gap: 10px;
+    }
+} 

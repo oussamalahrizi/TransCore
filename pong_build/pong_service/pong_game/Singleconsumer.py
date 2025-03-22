@@ -1,13 +1,23 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
-from core.asgi import GameState
+from .utils import GameState
 from .utils import Game_Cache
 from asgiref.sync import sync_to_async
-from core.asgi import game_task, Game
+from channels.db import database_sync_to_async
+from .utils import game_task, Game
 import time
 from channels.layers import get_channel_layer
+from .services import GameService
+from .game_service import save_game_result
 
 layer = get_channel_layer()
+
+
+@database_sync_to_async
+def record_single_match_async(player_id, is_win, player_score, cpu_score):
+    return GameService.record_single_match(player_id, is_win, player_score, cpu_score)
+
+
 async def broadcastSingle(instance: GameState):
     try:
         lasttime = time.time()
@@ -27,13 +37,27 @@ async def broadcastSingle(instance: GameState):
                 await asyncio.sleep(0.0083 - delta) # 120 frames
             lasttime = current
 
-    except Exception as e:
+    except asyncio.exceptions.CancelledError:
+        print("Task was canceled")
+    except BaseException as e:
         print(e)
     finally:
         await layer.group_send(instance.game_id, {
             'type' : 'game_end',
             'winner' : instance.winner
         })
+        # For single player games, record the match in the database
+        if instance.singleplayer and instance.players:
+            player_id = instance.players[0]
+            p1_score = instance.p1_score
+            p2_score = instance.p2_score
+            
+            # Check if the player won (winner is not "loser")
+            is_win = instance.winner == "CPU"
+
+            # Record the single player match in the database
+            await record_single_match_async(player_id, is_win, p1_score, p2_score)
+            
 
 
 class SingleConsumer(AsyncWebsocketConsumer):
@@ -71,30 +95,30 @@ class SingleConsumer(AsyncWebsocketConsumer):
             'type' : 'waiting',
             'player_id' : self.user_id
         }))
-        await self.start_game()
 
     async def disconnect(self, code):
         # in case middleware error
-        if self.username:
-            print(f"{self.username} disconnected, code : ", code)
+    
         if code == 4001:
             return
-        winner = self.cache.get_players(self.game_id)
-        Game.get(self.game_id).winner = winner
+        if self.username:
+            print(f"{self.username} disconnected, code : ", code)
+        # winner = self.cache.get_players(self.game_id)
+        # Game.get(self.game_id).winner = winner
         self.cache.remove_player(self.user_id, self.game_id)
         if code == 4003:
             return
         # first send result if not game over
-        await self.channel_layer.group_discard(self.game_id, self.channel_name)
         print(f"{self.username} removed")
-        if Game.get(self.game_id):
-            # players = self.cache.get_player_count(self.game_id);
-            # print(players)
-            Game.get(self.game_id).winner = winner
-            print(Game.get(self.game_id).winner)
-            Game.get(self.game_id).gameover = True
+        instance = Game.get(self.game_id)
+        if instance:
+            if not instance.gameover:
+                instance.gameover = True
+                instance.winner = "CPU"
             game_task.get(self.game_id).cancel()
+            await game_task.get(self.game_id)
             game_task.pop(self.game_id)
+        await self.channel_layer.group_discard(self.game_id, self.channel_name)
 
         if game_task.get(self.game_id):
             game_task.pop(self.game_id)
@@ -115,17 +139,28 @@ class SingleConsumer(AsyncWebsocketConsumer):
                 }
             }
         '''
-        data = json.loads(text_data)
+        body = json.loads(text_data)
+        type = body.get('type')
+        await self.channel_layer.group_send(self.game_id, {
+            'type' : type,
+            'data' : body.get('data')
+        })
+        
+    
+    async def move_paddle(self, event):
+        data = event['data']
         key = data.get('key')
         player_id = data.get('player_id')
         instance =  Game.get(self.game_id)
         instance.update_player_move(player_id, key)
     
+    async def init_game(self, event):
+        await self.start_game()
 
-    
     async def game_end(self, event):
         print("sending gameEnd to : " ,self.username)
         winner = 'You Win!'
+        winner_id = event['winner']
         if self.user_id != event['winner']:
             winner = 'You Lost!'
         await self.send(json.dumps({
@@ -135,6 +170,20 @@ class SingleConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(self.game_id, {
             'type' : 'close_user'
         })
+
+        if Game.get(self.game_id):
+            game_state = Game.get(self.game_id)
+
+            game_data = {
+                "match_type": "singleplayer",
+                "player_id": self.user_id,
+                "player_score": game_state.p1_score,
+                "cpu_score": game_state.p2_score,
+                "winner": "WIN" if self.user_id == winner_id else "LOSS"
+            }
+        
+        save_game_result(game_data)
+        
 
     async def gameState(self, event):
         state = event['state']

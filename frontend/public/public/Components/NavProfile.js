@@ -1,6 +1,14 @@
+
 export default ({username, icon_url})=> /*html*/`
     <button id="profile-icon">
-        <img src="/public/assets/icon-placeholder.svg" />
+        ${
+            !icon_url ?
+                /*html*/`<img src="/public/assets/icon-placeholder.svg" class="object-cover rounded-full" />`
+            : !icon_url.startsWith("https:") ?
+                /*html*/`<img src="data:image/png;base64,${icon_url}" class="object-cover rounded-full" />`
+            :                
+                /*html*/`<img src=${icon_url} class="object-cover rounded-full" />`
+        }
         <h1>${username}</h1>
     </button>
 `

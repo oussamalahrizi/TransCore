@@ -83,7 +83,6 @@ export default async () => {
         console.error('Error loading profile:', error);
         
         if (error instanceof app.utils.AuthError) {
-            app.Router.navigate('/auth/login');
             return;
         }
         

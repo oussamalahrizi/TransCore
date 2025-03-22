@@ -45,8 +45,6 @@ class RegisterEmail(LoginMixin, CreateAPIView):
 		cookie_response = self._handle_refresh_cookie(refresh_cookie)
 		if cookie_response:
 			return cookie_response
-
-
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		self.perform_create(serializer)
@@ -62,19 +60,19 @@ class LoginView(LoginMixin, CreateAPIView):
 
 	def get(self, request : Request):
 		execution = request.query_params.get("execution")
-		username = request.query_params.get("username")
-		if execution is None or username is None:
-			return Response(data={"detail" : "missing query params"})
-		token = self.cache.execution_2fa_action(username, action="get")
+		id = request.query_params.get("id")
+		if execution is None or id is None:
+			return Response(data={"detail" : "missing query params"}, status=status.HTTP_400_BAD_REQUEST)
+		token = self.cache.execution_2fa_action(id, action="get")
 		if token is None:
 			return Response(data={"detail" : "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 		try:
-			user: User = get_object_or_404(User, username=username)
-			self.cache.execution_2fa_action(user.username, action="delete")
+			user: User = get_object_or_404(User, id=id)
+			self.cache.execution_2fa_action(user.id, action="delete")
 			if not user.is_active:
 				return Response(status=status.HTTP_403_FORBIDDEN,
 					data={"detail" : "Your Account has been permanently banned."})
-			self.disconnect_user(user.username)
+			self.disconnect_user(user.id)
 			return self.Helper(user)
 		except Http404:
 			return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -116,7 +114,7 @@ class LogoutView(APIView):
 			return Response({"detail": "Refresh token not found."}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Blacklist the refresh token
-		self.cache.blacklist_token(refresh_token, request.user.username)
+		self.cache.blacklist_token(refresh_token, request.user.id)
 		self.cache.delete_access_session(request.user.id)
 		# Delete from cookies
 		response = Response({"detail": "Logout successful."}, status=status.HTTP_200_OK)
@@ -172,14 +170,11 @@ class SessionState(APIView):
 
 	def post(self, request, *args, **kwargs):
 		try:
-			print(request.data)
 			serializer = SessionSerializer(data=request.data)
-			print("before")
 			serializer.is_valid(raise_exception=True)
-			print(f"user id after: {serializer.data["user_id"]}")
 			session = self.cache.get_access_session(serializer.data["user_id"])
 			if session is None:
-				raise serializers.ValidationError
+				raise serializers.ValidationError("session not found")
 			return Response(data={"session_state" : session})
 		except serializers.ValidationError as e:
 			print(f"reason : {e}")
@@ -217,7 +212,7 @@ class EnableOTP(APIView):
 			return Response(data={f"detail" : f"{user.username} already enabled 2FA."},
 				status=status.HTTP_400_BAD_REQUEST)
 		# generate secret and update attributes
-		secret = self.cache.enable_2fa_action(username=user.username, action="set")
+		secret = self.cache.enable_2fa_action(user_id=user.id, action="set")
 		return self._generate_url(user, secret)
 	
 	def post(self, request : Request, *args, **kwargs):
@@ -229,7 +224,7 @@ class EnableOTP(APIView):
 			return Response(data={f"detail" : f"{user.username} already enabled 2FA."},
 					status=status.HTTP_400_BAD_REQUEST)
 		code = ser.validated_data["code"]
-		cache_secret = self.cache.enable_2fa_action(action="get", username=user.username)
+		cache_secret = self.cache.enable_2fa_action(action="get", user_id=user.id)
 		if cache_secret is None:
 			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : "User did not request to enable 2fa"})
 		val = pyotp.TOTP(cache_secret).verify(code)
@@ -242,7 +237,7 @@ class EnableOTP(APIView):
 		for key, value in data.items():
 			setattr(user, key, value)
 		user.save()
-		self.cache.enable_2fa_action(action="delete", username=user.username)
+		self.cache.enable_2fa_action(action="delete", user_id=user.id)
 		return Response(status=status.HTTP_201_CREATED, data={"detail" : "Updated Successfully"})
 
 class DisableOTP(APIView):
@@ -271,32 +266,37 @@ class VerifyOTP(APIView):
 
 	class OTPSerializer(serializers.Serializer):
 		code = serializers.CharField(required=True)
-		username = serializers.CharField(required=True)
+		id = serializers.CharField(required=True)
 
 	cache = _AuthCache
 	authentication_classes = []
 	permission_classes = []
 
-	def post(self, request, *args, **kwargs):
+	def post(self, request : Request, *args, **kwargs):
 		try:
 			instance = self.OTPSerializer(data=request.data)
 			instance.is_valid(raise_exception=True)
-			user : User = get_object_or_404(User, username=instance.validated_data["username"])
-			if self.cache.didUserRequest(user.username) is False:
+			user : User = get_object_or_404(User, id=instance.validated_data["id"])
+			if self.cache.didUserRequest(user.id) is False:
 				return Response({"detail" : f"{user.username} did not request a code."},
 									status=status.HTTP_403_FORBIDDEN)
 			secret = user.two_factor_secret
 			val = pyotp.TOTP(secret).verify(instance.validated_data["code"])
 			if not val :
 				return Response(data={"detail" : "invalid OTP code."}, status=status.HTTP_403_FORBIDDEN)
-			sec = self.cache.execution_2fa_action(user.username, "get")
+			sec = self.cache.execution_2fa_action(user.id, "get")
 			response = Response()
-			response.data = {"Location" : f"/api/auth/login/?username={user.username}&execution={sec}"}
+			response.data = {"Location" : f"/api/auth/login/?id={str(user.id)}&execution={sec}"}
+			if self.cache.isUserLogged(user.id):
+				cache_token = self.cache.get_user_token(user.id)
+				self.cache.blacklist_token(cache_token, user.id)
 			return response
 		except Http404:
 			return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "User Not Found."})
 
 
+from django.core.mail import send_mail
+from pprint import pprint
 class GoogleCallback(GoogleMixin, APIView):
 
 	permission_classes = [AllowAny]
@@ -305,7 +305,13 @@ class GoogleCallback(GoogleMixin, APIView):
 
 	@sync_to_async
 	def cleanup(self, user_data, request):
-		user : User = self.getUser(user_data)
+		try:
+			pprint(user_data)
+			user, pw = self.getUser(user_data)
+			user : User = user
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST,
+				   data=str(e))
 		if not user.is_active:
 			return Response(status=status.HTTP_403_FORBIDDEN,
 				   data={"detail" : "Your Account has been permanently banned."})
@@ -319,6 +325,14 @@ class GoogleCallback(GoogleMixin, APIView):
 		twofa_response = self._handle_2fa(user)
 		if twofa_response:
 			return twofa_response
+		if pw:
+			send_mail(
+                from_email=None,
+                subject="Password Created",
+                message=f"Your password is {pw}",
+                recipient_list=[user.email],
+                fail_silently=False
+            )
 		return self.Helper(user)
 
 
@@ -361,7 +375,13 @@ class IntraCallback(IntraMixin, APIView):
 
 	@sync_to_async
 	def cleanup(self, user_data, request):
-		user : User = self.getUser(user_data)
+		try:
+			pprint(user_data)
+			user, pw = self.getUser(user_data) 
+			user : User = user
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST,
+				   data=str(e))
 		if not user.is_active:
 			return Response(status=status.HTTP_403_FORBIDDEN,
 				data={"detail" : "Your Account has been permanently banned."})
@@ -375,6 +395,14 @@ class IntraCallback(IntraMixin, APIView):
 		twofa_response = self._handle_2fa(user)
 		if twofa_response:
 			return twofa_response
+		if pw:
+			send_mail(
+                from_email=None,
+                subject="Password Created",
+                message=f"Your password is {pw}",
+                recipient_list=[user.email],
+                fail_silently=False
+            )
 		return self.Helper(user)
 
 	@async_to_sync

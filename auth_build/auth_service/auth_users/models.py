@@ -61,7 +61,7 @@ class User(AbstractBaseUser):
     username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     
-    auth_provider = models.ManyToManyField(AuthProvider, related_name="auth_provider")
+    auth_provider = models.ManyToManyField(AuthProvider, related_name="users")
     icon_url = models.URLField(blank=True, null=True)
     password = models.CharField(max_length=128, blank=True, null=True)
     is_superuser = models.BooleanField(default=False)
@@ -77,6 +77,13 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.username
+    
+from django.conf import settings
+import os
+
+class ImageUser(models.Model):
+    image = models.ImageField(upload_to=settings.MEDIA_ROOT, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
 
 
 class FriendsManager(models.Manager):
@@ -157,8 +164,10 @@ class FriendsManager(models.Manager):
         friends = list(friends_from_user.union(friends_to_user))
         return friends
     
-    def get_blocked_users(self, from_user):
-        return self.filter(from_user=from_user, status='blocked').all().values_list('to_user', flat=True)
+    def get_blocked_users(self, user: User):
+        # Get users that the user has directly blocked (as from_user)
+        blocked_as_from = self.filter(from_user=user, status='blocked').values_list('to_user', flat=True)
+        return blocked_as_from
     
 class Friends(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

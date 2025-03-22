@@ -49,7 +49,6 @@ class Cache:
     def set_user_online(self, user_id: str):
         user_data = self.get_user_data(user_id)
         if user_data:
-            print('set user online : ', user_data)
             user_data["status"] = "online"
             if user_data.get("group_count"):
                 user_data["group_count"] += 1
@@ -76,9 +75,10 @@ class Cache:
             if user_data["group_count"] <= 0 and user_data["status"] == 'online':
                 user_data["status"] = "offline"
                 user_data.pop('group_count')
-            if user_data["auth"]:
+            if user_data.get("auth"):
                 self.redis.set(user_id, json.dumps(user_data))
             else:
+                print("delete set user offline")
                 self.redis.delete(user_id)
 
     def get_user_status(self, user_id: str):
@@ -127,11 +127,32 @@ class Cache:
         user_data = self.get_user_data(user_id)
         auth_data = user_data.get('auth')
         if not auth_data.get('friends'):
+            print("creating friend to user : ", auth_data["username"], friend_id)
             auth_data['friends'] = [friend_id]
         else:
-            auth_data['friends'].append(friend_id)
-        user_data["auth"] = auth_data
-        self.redis.set(user_id, json.dumps(user_data))
+            print("appending friend to user : ", auth_data["username"], friend_id)
+            if friend_id not in auth_data['friends']:
+                auth_data['friends'].append(friend_id)
+        self.set_user_data(user_id, auth_data, "auth")
+    
+    def append_user_blocked(self, user_id : str, blocked_id : str):
+        user_data = self.get_user_data(user_id)
+        auth_data = user_data.get('auth')
+        if not auth_data.get('blocked'):
+            print("creating blocked to user : ", auth_data["username"], blocked_id)
+            auth_data['blocked'] = [blocked_id]
+        else:
+            print("appending blocked to user : ", auth_data["username"], blocked_id)
+            auth_data['blocked'].append(blocked_id)
+        friends : list = auth_data.get("friends")
+        # remove blocked user from friend list
+        if friends:
+            if blocked_id in friends:
+                friends.remove(blocked_id)
+            auth_data["friends"] = friends
+            print("user new friends after append")
+            pprint(friends)
+        self.set_user_data(user_id, auth_data, "auth")
         
 
 _Cache = Cache()

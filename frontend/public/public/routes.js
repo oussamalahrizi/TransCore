@@ -11,7 +11,6 @@ import Verify from "./pages/verify-2fa/index.js";
 import Game from "./pages/game/index.js";
 import Chat from "./pages/chat/index.js";
 import Profile from "./pages/profile/index.js";
-import matchmaking from "./pages/matchmaking/index.js";
 import gamemode from "./pages/Gamemode/index.js";
 
 export default {
@@ -19,37 +18,31 @@ export default {
     view: Verify.View,
     controller: Verify.Controller,
     auth_guard: false,
-    style: "/public/styles/2fa.css",
+    style: "/public/pages/verify-2fa/2fa.css",
   },
   "/404": {
     view: NotFound.View,
     controller: null,
     auth_guard: false,
-    style: "/public/styles/notfound.css",
+    style: "/public/pages/NotFound/notfound.css",
   },
   "/500": {
     view: ServerError.View,
     controller: null,
     auth_guard: false,
-    style: "/public/styles/notfound.css",
+    style: "/public/pages/NotFound/notfound.css",
   },
   "/": {
     view: Home.View,
     controller: Home.Controller,
     auth_guard: true,
-    style: "/public/styles/home.css",
+    style: "/public/pages/Home/home.css",
   },
   "/profile": {
     view: Profile.View,
     controller: Profile.Controller,
     auth_guard: true,
-    style: "/public/styles/profile.css",
-  },
-  "/matchmaking": {
-    view: matchmaking.View,
-    controller: matchmaking.Controller,
-    auth_guard: true,
-    style: "/public/styles/matchmaking.css",
+    style: "/public/pages/profile/profile.css",
   },
   "/auth/google_callback": {
     view: AuthGoogle.View,
@@ -71,7 +64,7 @@ export default {
     view: PasswordReset.View,
     controller: PasswordReset.Controller,
     auth_guard: false,
-    style: "/public/styles/forgotpass.css",
+    style: "/public/pages/PasswordReset/forgotpass.css",
   },
   "/auth/2fa": {
     view: NotFound.View,
@@ -82,19 +75,19 @@ export default {
     view: authLogin.View,
     controller: authLogin.Controller,
     auth_guard: false,
-    style: "/public/styles/authlogin.css",
+    style: "/public/pages/AuthLogin/authlogin.css",
   },
   "/auth/register": {
     view: authRegister.View,
     controller: authRegister.Controller,
     auth_guard: false,
-    style: "/public/styles/register.css",
+    style: "/public/pages/AuthRegister/register.css",
   },
   "/settings": {
     view: Settings.View,
     controller: Settings.Controller,
     auth_guard: true,
-    style: "/public/styles/settings.css",
+    style: "/public/pages/Settings/settings.css",
   },
   "/game": {
     view: Game.View,
@@ -105,6 +98,6 @@ export default {
     view: gamemode.View,
     controller: gamemode.Controller,
     auth_guard: true,
-    style: "/public/styles/gamemode.css",
+    style: "/public/pages/Gamemode/gamemode.css",
   },
 };

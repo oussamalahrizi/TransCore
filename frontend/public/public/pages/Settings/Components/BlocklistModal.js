@@ -63,47 +63,49 @@ const MOCK_BLOCKED_USERS = [
 
 const createBlockedUserItem = (user) => {
     return `
-        <div class="blocked-user-item" data-user-id="${user.id}">
+        <div class="blocked-user-item" data-user-id="${user.auth.id}">
             <div class="blocked-user-info">
-                <img src="${user.avatar || '/public/assets/default-avatar.png'}" alt="${user.username}" class="blocked-user-avatar">
-                <span class="blocked-user-name">${user.username}</span>
+                <img src="${user.auth.icon_url || '/public/assets/dog.png'}" class="blocked-user-avatar">
+                <span class="blocked-user-name">${user.auth.username}</span>
             </div>
-            <button class="unblock-btn" data-user-id="${user.id}">Unblock</button>
+            <button class="unblock-btn" data-user-id="${user.auth.id}">Unblock</button>
         </div>
     `;
 };
 
 const fetchBlocklist = async () => {
-    try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        console.log("Using mock blocklist data:", MOCK_BLOCKED_USERS);
-        return [...MOCK_BLOCKED_USERS]; // Return a copy to avoid mutations affecting our source
-    } catch (error) {
-        console.error("Error in mock fetch blocklist:", error);
-        return null;
+    const {data, error} = await app.utils.fetchWithAuth("/api/main/blocked/")
+    if (error)
+    {
+        app.utils.showToast(error)
+        return
     }
+    return data
 };
 
 const unblockUser = async (userId) => {
-    try {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        console.log(`Mock unblocking user: ${userId}`);
-        
-        app.utils.showToast("User unblocked successfully", "green");
-        return true;
-    } catch (error) {
-        console.error("Error in mock unblock user:", error);
-        app.utils.showToast("Failed to unblock user. Please try again.");
-        return false;
+    const body = JSON.stringify({
+        change : "unblock"
+    })
+    const {data, error} = await app.utils.fetchWithAuth(`/api/auth/friends/change/${userId}/`,
+        "POST",
+        body
+    )
+    if (error)
+    {
+        app.utils.showToast(error)
+        return
     }
+    app.utils.showToast(data.detail, "green")
 };
 
-let sessionBlockedUsers = null;
-
+/**
+ * 
+ * @param {HTMLElement} container 
+ * @param {Array} users 
+ * @returns 
+ */
 const renderBlocklist = (container, users) => {
-    sessionBlockedUsers = [...users];
     
     if (!users || users.length === 0) {
         container.innerHTML = EmptyBlocklistView;
@@ -117,17 +119,13 @@ const renderBlocklist = (container, users) => {
     unblockButtons.forEach(button => {
         button.addEventListener('click', async (e) => {
             const userId = e.target.dataset.userId;
-            if (await unblockUser(userId)) {
-                const item = container.querySelector(`.blocked-user-item[data-user-id="${userId}"]`);
-                if (item) {
-                    item.remove();
-                }
-                
-                sessionBlockedUsers = sessionBlockedUsers.filter(user => user.id !== userId);
-                
-                if (container.querySelectorAll('.blocked-user-item').length === 0) {
-                    container.innerHTML = EmptyBlocklistView;
-                }
+            await unblockUser(userId)
+            const item = container.querySelector(`.blocked-user-item[data-user-id="${userId}"]`);
+            if (item) {
+                item.remove();
+            }
+            if (container.querySelectorAll('.blocked-user-item').length === 0) {
+                container.innerHTML = EmptyBlocklistView;
             }
         });
     });
@@ -139,6 +137,10 @@ export const controller = async () => {
         const modal = view.querySelector("#blocklist-modal-wrapper");
         
         const closeButton = modal.querySelector("#close-blocklist-modal");
+        view.addEventListener("click", (e) => {
+            if (e.target === modal)
+                hideModalWithAnimation(modal, () => view.removeChild(modal))
+        })
         closeButton.addEventListener("click", () => {
             if (typeof hideModalWithAnimation === 'function') {
                 hideModalWithAnimation(modal, () => {
@@ -151,7 +153,7 @@ export const controller = async () => {
         
         const blocklistContainer = modal.querySelector("#blocklist-container");
         
-        const blockedUsers = sessionBlockedUsers || await fetchBlocklist();
+        const blockedUsers = await fetchBlocklist();
         if (blockedUsers === null) {
             blocklistContainer.innerHTML = '<p class="error-message">Failed to load blocklist</p>';
             return;
@@ -160,10 +162,9 @@ export const controller = async () => {
         renderBlocklist(blocklistContainer, blockedUsers);
         
     } catch (error) {
-        console.error("Error in blocklist modal controller:", error);
-        if (error instanceof app.utils.AuthError) {
-            app.Router.navigate("/auth/login");
+        if (error instanceof app.utils.AuthError)
             return;
-        }
+        console.log("error controller blocklist modal", error);
+        
     }
 }; 

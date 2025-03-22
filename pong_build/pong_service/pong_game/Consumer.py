@@ -1,18 +1,25 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json, asyncio
-from core.asgi import GameState, Game, game_task
+from .utils import GameState, Game, game_task
 from .utils import Game_Cache
-from asgiref.sync import sync_to_async
 from channels.layers import get_channel_layer
-from channels.db import aclose_old_connections
+from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 import time
+
+
+from .services import GameService
+from .game_service import save_game_result
 
 # game_task : dict[str, asyncio.Task] = {}
 
 # Game : dict[str, GameState] = {}
 
 layer = get_channel_layer()
+
+@database_sync_to_async
+def record_match_async(player1_id, player2_id, winner_id, p1_score, p2_score):
+    return GameService.record_match(player1_id, player2_id, winner_id, p1_score, p2_score)
 
 
 async def broadcast(Game : GameState):
@@ -34,7 +41,14 @@ async def broadcast(Game : GameState):
         # print("task was cancelled success")
         pass
     finally:
-        # print("sending game end finally")
+        p1_score = Game.p1_score
+        p2_score = Game.p2_score
+        player1_id = Game.players[0]
+        player2_id = Game.players[1]
+        winner_id = Game.winner
+        
+        await record_match_async(player1_id, player2_id, winner_id, p1_score, p2_score)
+        
         await layer.group_send(Game.game_id, {
             'type' : 'game_end',
             'winner' : Game.winner
@@ -132,18 +146,38 @@ class Consumer(AsyncWebsocketConsumer):
     
 
     
-    async def game_end(self, event):
-        print("sending gameEnd to : " ,self.username)
-        winner = 'You Win!'
-        if self.user_id != event['winner']:
-            winner = 'You Lost!'
-        await self.send(json.dumps({
-            'type' : 'gameEnd',
-            'winner' : winner
-            }))
-        await self.channel_layer.group_send(self.game_id, {
-            'type' : 'close_user'
-        })
+async def game_end(self, event):
+    print("sending gameEnd to : ", self.username)
+    winner = 'You Win!'
+    winner_id = event['winner']
+    
+    if self.user_id != winner_id:
+        winner = 'You Lost!'
+    
+    # Get game state to extract scores
+    if Game.get(self.game_id):
+        game_state = Game.get(self.game_id)
+        
+        game_data = {
+            "match_type": "multiplayer",
+            "player1_id": self.players_ids[0],
+            "player2_id": self.players_ids[1],
+            "player1_score": game_state.p1_score,
+            "player2_score": game_state.p2_score,
+            "winner_id": winner_id
+        }
+            
+        # Save game result
+        save_game_result(game_data)
+    
+    await self.send(json.dumps({
+        'type': 'gameEnd',
+        'winner': winner
+    }))
+    
+    await self.channel_layer.group_send(self.game_id, {
+        'type': 'close_user'
+    })
 
     async def gameState(self, event):
         state = event['state']

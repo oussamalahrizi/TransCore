@@ -1,0 +1,113 @@
+
+.reset-container
+{
+    display: flex;
+    background: linear-gradient(to top, #057343, #1D1D1D);
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.inner-container
+{
+    display: flex;
+    max-width: 26rem;
+    width: 100%;
+    flex-direction: column;
+    border-radius: 0.75rem;
+    background-color: #1D1D1D;
+    padding: 1.5rem;
+}
+
+.reset-form-css
+{
+    margin-left: 0.15rem;
+    margin-right: 0.15rem;
+}
+
+.reset-title
+{
+    color: #F7F7F7;
+    text-align: center;
+    font-size: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+    line-height: 1.75rem;
+}
+
+.notes
+{
+    color: #94979C;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5rem;
+}
+
+.reset-form-input
+{
+    color: #CECFD2;
+    background-color: #222;
+    border-color: #373A41;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-width: 1px;
+    border-radius: 0.5rem;
+    width: 100%;
+    transition: 0.5s;
+    margin-top: 1rem;
+}
+
+.reset-form-input::placeholder
+{
+    color: #373A41;
+}
+
+.reset-form-input:hover
+{
+    border-color: #CECFD2;
+}
+
+.reset-button
+{
+    width: 100%;
+    text-align: center;
+    background-color: #029F5B;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.reset-button:hover
+{
+    opacity: 1;
+    background-color: #057343;
+    transition: 0.25s;
+}
+
+.login-page-div
+{
+    display: flex;
+    margin-top: 1rem;
+    margin-left: 0.5rem;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.login-page
+{
+    color: #CECFD2;
+    margin-right: 2rem;
+    transition: 0.3s;
+}
+
+.login-page:hover
+{
+    color:#373A41;
+}

@@ -56,12 +56,16 @@ class RabbitmqBase:
 class APIPub(RabbitmqBase):
     
     async def publish(self, data : dict):
-        message = Message(
-            json.dumps(data).encode(),
-            delivery_mode=1,
-            content_type="application/json")
-        await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
-        print("api publisher : pusblished!")
+        try:
+
+            message = Message(
+                json.dumps(data).encode(),
+                delivery_mode=1,
+                content_type="application/json")
+            await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
+            print("api publisher : pusblished!")
+        except BaseException as e:
+            print(f"error publishing : {e}")
 
 class NotificationPub(RabbitmqBase):
     

@@ -20,57 +20,41 @@ from core.asgi import publishers
 from asgiref.sync import async_to_sync
 
 
-class UpdateUserInfo(UpdateAPIView):
+
+class UpdateUserInfo(APIView):
     serializer_class = UpdateUserSerializer
-    queryset = User.objects.all()
-    lookup_field = 'username'
-    http_method_names = ['patch']
-    permission_classes = [IsSameUser]
+    permission_classes = [IsAuthenticated]
     
-    def patch(self, request, *agrs, **kwargs):
+    def patch(self, request : Request, *agrs, **kwargs):
         if not request.data:
-            return Response({"detail" : "empty request data"},
+            return Response({"detail" : "Empty request data"},
                             status.HTTP_400_BAD_REQUEST)
-        partial = True
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        # check additional fields in the request data
-        for key in request.data.keys():
-            if key not in serializer.get_fields():
-                return Response({"detail" : "ivalid key provided"},
-                    status=status.HTTP_400_BAD_REQUEST)
+        instance : User = request.user
+        serializer = self.serializer_class(instance, data=request.data, partial=True)
         # check serializer validation and perform the update
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        # just copied it from original function, ignore it 
-        ###################
-        if getattr(instance, '_prefetched_objects_cache', None):
-             # If 'prefetch_related' has been applied to a queryset, we need to
-             # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-        ###################
-        response = {
-            "detail" : "update successful",
-            "updated_fields" : request.data.keys()
-        }
-        return Response(response)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
+        serializer.update(instance, serializer.validated_data)
+        async_to_sync(NotifyApi)(instance.id, "clear_cache")
+        return Response(data={ "detail" : f"update successful {instance.username}"})
 
 
-class UpdatePassword(UpdateAPIView):
-    permission_classes = [IsSameUser]
-    queryset = User.objects.all()
-    lookup_field = 'username'
-    http_method_names = ['patch']
+class UpdatePassword(APIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = UpdatePasswordSerializer
     
-    def patch(self, request, *args, **kwargs):
+    def patch(self, request : Request, *args, **kwargs):
         if not request.data:
             return Response({"detail" : "empty request data"},
                             status.HTTP_400_BAD_REQUEST)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer=serializer)
+        instance = request.user
+        serializer = self.serializer_class(instance, data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
+        validated_data = serializer.validated_data
+        serializer.update(instance=instance, validated_data=validated_data)
         return Response(status=status.HTTP_202_ACCEPTED,
                         data={"detail" : "Sucessfully updated the password"})
         
@@ -88,8 +72,6 @@ class GetMyInfo(APIView):
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
 
-from .serializers import AuthProviderSerializer
-
 
 
 class ListUsers(ListAPIView):
@@ -97,12 +79,27 @@ class ListUsers(ListAPIView):
     queryset = User.objects.all()
     authentication_classes = []
 
+"""
+    cleanup functions for api
+"""
+
+from core.asgi import publishers
+
+async def NotifyApi(user_id, type):
+    api = publishers[0]
+    body = {
+        'type' : type,
+        'data' : {
+            "user_id" : str(user_id)
+        }
+    }
+    await api.publish(body)
+
 class GetFriends(APIView):
     class FriendsSerializer(serializers.ModelSerializer):
         class Meta:
             model = User
             fields =  ['id', 'username', 'email', 'icon_url']
-
 
     permission_classes = [IsAuthenticated]
     
@@ -129,7 +126,8 @@ class SendFriendRequest(APIView):
                 'type' : "send_notification",
                 'data' : {
                     'user_id' : str(to_user.id),
-                    'message' : f'you received a friend request from {user.username}'
+                    'message' : f'you received a friend request from {user.username}',
+                    'color' : "green"
                 }
             }
             async_to_sync(self.notif.publish)(data)
@@ -142,20 +140,49 @@ class SendFriendRequest(APIView):
 class CheckReceivedFriend(APIView):
     permission_classes = [IsAuthenticated]
 
+    class ReceivedFriendSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ['id', 'username', 'icon_url']
+
     def get(self, request: Request, *args, **kwargs):
         current_user = request.user
-        data = Friends.objects.get_received_reqs(current_user)
-        return Response(data)
+        received = Friends.objects.get_received_reqs(current_user)
+        users = User.objects.filter(id__in=received)
+        ser = self.ReceivedFriendSerializer(users, many=True)
+        return Response(ser.data)
 
 
 class CheckSentFriend(APIView):
     permission_classes = [IsAuthenticated]
 
+    class SentFriendSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ['id', 'username', 'icon_url']
+
     def get(self, request : Request, *args, **kwargs):
         current_user = request.user
         sent_requests = Friends.objects.get_sent_reqs(current_user)
-        # data = [req.to_user.username for req in sent_requests]
-        return Response(sent_requests)
+        users = User.objects.filter(id__in=sent_requests)
+        ser = self.SentFriendSerializer(users, many=True)
+        return Response(ser.data)
+
+class GetBlocked(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+    def get(self, request : Request, *args, **kwargs):
+        current = request.user
+        blocked = Friends.objects.get_blocked_users(current)
+        final : list[Friends] = []
+        for b in blocked:
+            final.append(Friends.objects.filter(id=b).get())
+        for f in final:
+            print(type(f))
+        objects = User.objects.filter(id__in=blocked)
+        ser = UserDetailSerializer(objects, many=True)
+        return Response(data=ser.data)
 
 class ChangeFriend(APIView):
 
@@ -169,104 +196,121 @@ class ChangeFriend(APIView):
             'reject' : self.reject,
             'unfriend' : self.unfriend,
             'block' : self.block,
+            'unblock' : self.unblock,
+            'cancel' : self.cancel
         }
         super().__init__(**kwargs)
+
     class ChangeSerializer(serializers.Serializer):
         
         change = serializers.CharField(max_length=10, required=True)
 
         def validate_change(self, value):
-            choices = ['accept', 'reject', 'unfriend', 'block']
+            choices = ['accept', 'reject', 'unfriend', 'block', 'cancel', 'unblock']
             if value not in choices:
                 raise serializers.ValidationError("invalid relation change value")
             return value
-    
+
     def get_relation(self, user, other):
         try:
-            relation = self.filter(from_user=user, to_user=other).get()
+            relation = Friends.objects.filter(from_user=user, to_user=other).get()
             return relation
         except Friends.DoesNotExist:
             try:
-                relation = self.filter(from_user=other, to_user=user).get()
+                relation = Friends.objects.filter(from_user=other, to_user=user).get()
                 return relation
             except Friends.DoesNotExist:
                 return None
 
     def accept(self, user : User, other : User):
         try:
-            relation : Friends = Friends.objects.filter(from_user=other, to_user=user).all()
+            relation : Friends = self.get_relation(user, other)
+            if not relation:
+                raise Exception(f"{other.username} Did not send you a friend request")
             if relation.status != "pending":
                 raise Exception(f"Your current relation is : {relation.status}")
             relation.status = "accepted"
             relation.save()
-            return "Success"
+            return f"You accepted {other.username}"
         except Friends.DoesNotExist:
             raise Exception("You didn't receive any friend request from this user.")
+    
     def reject(self, user : User, other : User):
         try:
-            relation : Friends = Friends.objects.filter(from_user=other, to_user=user).all()
+            relation : Friends = self.get_relation(user, other)
+            if not relation:
+                raise Exception(f"{other.username} did not sent you a friend request")
             if relation.status != "pending":
                 raise Exception(f"Your current relation is : {relation.status}")
             relation.delete()
-            return "Success"
+            return f"You rejected {other.username}"
         except Friends.DoesNotExist:
             raise Exception("You didn't receive any friend request from this user.")
 
+    def cancel(self, user : User, other : User):
+        relation : Friends = self.get_relation(user, other)
+        if not relation:
+            raise Exception(f"You did not send any friend request to {other.username}")
+        relation.delete()
+        return f"You canceled friend request to {other.username}"
     def unfriend(self, user : User, other : User):
        
         relation : Friends = self.get_relation(user, other)
         if not relation:
             raise Exception("You are not even friends.")
         relation.delete()
-        return "Success"
+        return f"{other.username} removed from friends"
+
         
     def block(self, user : User, other : User):
-        
         relation : Friends = self.get_relation(user, other)
         if relation:
             if relation.status == "blocked":
-                return "User already blocked you hehe"
+                return f"{other.username} already blocked you hehe"
             relation.status = "blocked"
+            relation.from_user = user
+            relation.to_user = other
             relation.save()
-            return "Success"
-        relation = Friends.objects.create(from_user=user, to_user=other, status="blocked")
-        relation.save()
-        return "Success"
+        else:
+            relation = Friends.objects.create(from_user=user, to_user=other, status="blocked")
+            relation.from_user = user
+            relation.to_user = other
+            relation.save()
+        return f"Successfully blocked {other.username}"
     
     def unblock(self, user : User, other : User):
         relation : Friends = self.get_relation(user, other)
         if not relation:
             raise Exception("You are not even friends or blocking each other")
+        if  relation.status != "blocked":
+            raise Exception("You are not even friends or blocking each other")
         relation.status = "accepted"
         relation.save()
-        return "Success"
+        return f"Successfully unblocked {other.username}"
 
     def post(self, request : Request, *args, **kwargs):
         try:
             user : User = request.user
+            other = kwargs.get('id')
+            if not other:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : 'Missing Username'})
+            other : User = get_object_or_404(User, id=other)
             serializer = self.ChangeSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             change = serializer.data["change"]
-            res = self.actions[change](user)
+            res = self.actions[change](user, other)
+            print(f"publishing for user id {user.id} type : refresh")
+            print(f"publishing for other id {other.id} type : refresh")
+            if change not in ["reject", "cancel"]:              
+                async_to_sync(NotifyApi)(user.id, "refresh_friends")
+                async_to_sync(NotifyApi)(other.id, "refresh_friends")
             return Response(status=status.HTTP_201_CREATED, data={"detail" : res})
-        except Exception as e:
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND,
+                            data={"detail" : f'User Not Found, {kwargs.get("username")}'})
+        except (Exception, ValueError) as e:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : str(e)})
-
-
-class BanSelf(APIView):
-    permission_classes = [IsAuthenticated]
-    cache = _AuthCache
-
-    def get(self, request: Request, *args, **kwargs):
-        current_user: User = request.user
-        if current_user.is_active:
-            print("current user: ", current_user.username)
-            self.cache.BlacklistUserToken(current_user.username)
-            self.cache.remove_access_session(current_user.id)
-            current_user.is_active = False
-            current_user.save()
-            return Response(data={"detail" : "You are now banned!"})
-        return Response(data={"detail" : "You are already banned."})
 
 import json
 from django.core.mail import send_mail
@@ -373,7 +417,6 @@ class Upload(APIView):
     class imageSerial(serializers.Serializer):
         image = serializers.ImageField()
 
-
 class sendNotif(APIView):
     permission_classes = [IsAuthenticated]
     notif = publishers[1]
@@ -394,3 +437,123 @@ class sendNotif(APIView):
         except Exception as e:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             data={"detail" : f"error publishing, {e}"})
+
+from django.http import FileResponse
+import os
+from django.conf import settings
+from .models import ImageUser
+from PIL import Image
+from rest_framework.parsers import FileUploadParser, JSONParser
+from rest_framework.parsers import BaseParser
+
+from uuid import uuid4
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+
+class RawImageParser(BaseParser):
+    """
+    Parser for raw image data.
+    """
+    media_type = 'image/png'
+    
+    def parse(self, stream, media_type=None, parser_context=None):
+        """
+        Convert raw binary content to a file-like object that serializers can use
+        """
+        content = stream.read()
+        
+        # Create a unique filename for the image
+        filename = f"{uuid4()}.png"
+        
+        # Create a Django file object from the raw content
+        file_dict = {
+            'image': SimpleUploadedFile(
+                name=filename,
+                content=content,
+                content_type='image/png'
+            )
+        }
+        return file_dict
+
+from base64 import b64encode
+from io import BytesIO
+
+class UserImageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_parsers(self):
+        if self.request.method == "POST":
+            return [RawImageParser()]
+        return super().get_parsers()
+
+    class UploadSerialize(serializers.Serializer):
+        image = serializers.ImageField()
+
+        def validate_image(self, value):
+            try:
+                # Open the image using Pillow
+                img = Image.open(value)
+                if img.format != 'PNG':
+                    raise serializers.ValidationError("Only PNG images are allowed.")
+            except Exception as e:
+                raise serializers.ValidationError("The uploaded file is not a valid image.")
+            return value
+    
+    def relation(self, user, other):
+        try:
+            relation = Friends.objects.filter(from_user=user, to_user=other).get()
+            return relation
+        except Friends.DoesNotExist:
+            try:
+                relation = Friends.objects.filter(from_user=other, to_user=user).get()
+                return relation
+            except Friends.DoesNotExist:
+                return None
+
+    def get(self, request : Request, *args, **kwargs):
+        user : User = request.user
+        id = kwargs.get("id")
+        try:
+            if not id:
+                id != user.id
+                if id != user.id:
+                    other : User = get_object_or_404(User, id=id)
+                    rel = self.relation(user, other)
+                    if rel.status == "blocked":
+                        return Response(status=status.HTTP_403_FORBIDDEN)
+                    user = other
+            try:
+                image : ImageUser = ImageUser.objects.get(user=user)
+                with open(image.image.path, "rb") as img_file:
+                    image_data = img_file.read()
+                return Response(b64encode(image_data).decode())
+            except ImageUser.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND, data={"detail": "No image found"})
+            except BaseException as e:
+                print(str(e))
+                return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data="Internal Server error")
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    def post(self, request : Request, *args, **kwargs):
+        ser = self.UploadSerialize(data=request.data)
+        ser.is_valid(raise_exception=True)
+        image : SimpleUploadedFile= ser.validated_data["image"]
+        user : User = request.user
+        save, created = ImageUser.objects.get_or_create(user=user)
+        save.image = image
+        save.save()
+        user.icon_url = f"/api/auth/users/image/{user.id}/"
+        user.save()
+        async_to_sync(NotifyApi)(user.id, type="clear_cache")
+        return Response({"detail" :"OK?"})
+    
+    def delete(self, request : Request, *args, **kwargs):
+        user : User = request.user
+        image = ImageUser(user=user)
+        image.delete()
+        user.icon_url = None
+        user.save()
+        async_to_sync(NotifyApi)(user.id, type="clear_cache")
+        return Response(data={"detail": "Successfully deleted your profile image."})
+

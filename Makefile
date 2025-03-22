@@ -8,6 +8,7 @@ down:
 
 clean :
 	@docker compose -f ./docker-compose.yml down --volumes
+	@sudo rm -rf auth_build/auth_service/media
 
 fclean:
 	@docker compose -f ./docker-compose.yml down --volumes --rmi all
