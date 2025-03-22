@@ -7,20 +7,19 @@ export default /*html*/ `
                 <p class="notes">Update your personal informations</p>
                 <form id="img-form" class="profile-card">
                     <h1>Profile picture</h1>
-                    <input id="current" name="image" type="file" accept="image/png">
+                    <label id="label-img-form" for="input-image">
+                        <img id="current" class="w-full" />
+                        <input name="image" id="input-image" type="file" accept="image/png" hidden>
+                    </label>
                     <button type="submit" for="input-profile">Update profile</button>
                 </form>
                 <form id="infos-form" class="form-class">
-                    <label class="input-titles" >First Name</label>
-                    <input class="big-input" type="name" placeholder="Imad">
-                    <label class="input-titles" >Last name</label>
-                    <input class="big-input" type="name" placeholder="Delfag">
                     <label class="input-titles" >Username</label>
-                    <input class="big-input" type="name" placeholder="Yachiro">
+                    <input class="big-input" type="name" name="username" placeholder="Current Username">
                     <label class="input-titles" >Email</label>
-                    <input class="big-input" type="email" placeholder="Player123@gmail.com">
+                    <input class="big-input" type="email" name="email" placeholder="Current Email">
                     <div class="button-div">
-                        <button class="save">Save changes</button>
+                        <button id="save-change-infos" class="save">Save changes</button>
                     </div>
                 </form>
             </div>
@@ -29,11 +28,11 @@ export default /*html*/ `
                 <p class="notes">Complet the steps below to change your password</p>
                 <form id="update-pass-form" class="form-class">
                     <label class="input-titles" >Current password</label>
-                    <input class="big-input" type="password" placeholder="Current password">
+                    <input class="big-input" name="current_password" type="password" placeholder="Current password">
                     <label class="input-titles">New password</label>
-                    <input class="big-input" type="password" placeholder="New password">
+                    <input class="big-input" name="password" type="password" placeholder="New password">
                     <label class="input-titles" >Password confirmation</label>
-                    <input class="big-input" type="password" placeholder="Password confirmation">
+                    <input class="big-input" name="confirm_password" type="password" placeholder="Password confirmation">
                     <div class="button-div">
                         <button class="save">Save changes</button>
                     </div>

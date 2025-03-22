@@ -9,11 +9,11 @@ from .views import (
    CheckReceivedFriend,
    CheckSentFriend,
    GetMyInfo,
-   BanSelf,
    ResetPassword,
    PasswordVerify,
    CDNVerify,
-   sendNotif
+   ChangeFriend,
+   GetBlocked
 )
 
 from .AuthViews import (
@@ -65,24 +65,27 @@ urlpatterns = [
 
 urlpatterns += api_urlpatterns
 
+from .views import UserImageView
+
 # user management urls
 urlpatterns += [
    path('users/', ListUsers.as_view(), name='list-users'),
-   path('users/ban_me/', BanSelf.as_view(), name='ban-self'),
    path('users/me/', GetMyInfo.as_view(), name='profile-info'),
+   path('users/image/', UserImageView.as_view(), name='profile-image'),
+   path('users/image/<str:id>/', UserImageView.as_view(), name='profile-image'),
    path('users/verify-2fa/', VerifyOTP.as_view(), name='verify-2fa'),
    path('users/enable-2fa/', EnableOTP.as_view(), name='enable-2fa'),
    path('users/disable-2fa/', DisableOTP.as_view(), name='disable-2fa'),
+   path('users/update/', UpdateUserInfo.as_view(), name='update-info'),
+   path('users/update_password/', UpdatePassword.as_view(), name='update-password'),
    path('users/<str:username>/', GetUser.as_view(), name='user-info'),
-   path('users/<str:username>/update/', UpdateUserInfo.as_view(), name='update'),
-   path('users/<str:username>/update_password/', UpdatePassword.as_view(), name='update'),
    path('friends/', GetFriends.as_view(), name='friend-list'),
+   path('friends/blocked/', GetBlocked.as_view(), name='block-list'),
    path('friends/received/', CheckReceivedFriend.as_view(), name='recv-list'),
    path('friends/sent/', CheckSentFriend.as_view(), name='sent-list'),
-   path('friends/change/', CheckSentFriend.as_view(), name='change-friends-relations'),
+   path('friends/change/<str:id>/', ChangeFriend.as_view(), name='change-friends-relations'),
    path('add_friend/<str:username>/', SendFriendRequest.as_view(), name='add-friend'),
    path('swagger/', schema_view.with_ui(), name='schema-swagger-ui'),
    path('cdn_verify/', CDNVerify.as_view(), name='cdn-nginx'),
-   path('send_notif/', sendNotif.as_view(), name='send-notif')
 ]
 

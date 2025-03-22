@@ -22,7 +22,7 @@ const getState = async (forceRefresh = false) => {
     }
     catch (error) {
         if (error instanceof app.utils.AuthError)
-            app.Router.navigate("/auth/login")
+            return
         return null
     }
 }
@@ -112,7 +112,6 @@ const toggleCallback = async (e) => {
     } catch (error) {
         console.error("Error in toggle callback:", error);
         if (error instanceof app.utils.AuthError) {
-            app.Router.navigate("/auth/login")
             return;
         }
         app.utils.showToast("An error occurred. Please try again.");
@@ -133,20 +132,23 @@ const handleRefreshState = async () => {
     updateButtonText(state);
 }
 
-const handleLogout = async () => {
+export const handleLogout = async () => {
     try {
         const {data, error} = await app.utils.fetchWithAuth("/api/auth/logout/")
         if (!error) {
             app.utils.removeCookie("access_token")
             dispatchEvent(new CustomEvent("websocket", {detail : {type : "close"}}))
+            console.log("dispatch socket");
             dispatchEvent(new CustomEvent("navbar-profile"))
+            console.log("dispatch navbar");
+            dispatchEvent(new CustomEvent("play-button"));
+            console.log("dispatch play button");
             app.Router.navigate("/auth/login")
             return
         }
         app.utils.showToast(data.detail)
     } catch (error) {
         if (error instanceof app.utils.AuthError) {
-            app.Router.navigate("/auth/login")
             return
         }
         console.error("Logout error:", error)
@@ -221,36 +223,226 @@ export default async () => {
         
         logoutBtn.addEventListener("click", handleLogout)
         
+        // set image form
+        const {error, data} = await app.utils.fetchWithAuth("/api/main/user/me/")
+        if (error)
+        {
+            app.utils.showToast(error)
+            setImageUpload("/public/assets/icon-placeholder.svg")
+        }
+        else
+            setImageUpload(data.auth.icon_url)
+        // bind image form to submit
         const imageform = document.getElementById("img-form")
-        imageform.addEventListener("submit", (e)=>{
+        imageform.addEventListener("submit", async (e)=>{
             e.preventDefault();
             const formdata = new FormData(imageform);
             const file = formdata.get("image");
             if (file)
-            {
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-                if (fileExtension !== 'png')
+            {                
+                if (file.type !== 'image/png')
                 {
                     alert("Please upload a PNG image.");
+                    imageform.reset()
                     return;
                 }
             }
             else
             {
                 alert("Please select an image to upload.");
+                imageform.reset()
+                return
             }
             const data = Object.fromEntries(formdata.entries());
-            var profile = document.getElementById("current")
-            profile.value = formdata.name;
-            console.log(data);
+            console.log("image : ", data["image"]);
+            
+            const bool = await handleUpload({image : data["image"]})
+            if (bool)
+            {
+                const {error, data} = await app.utils.fetchWithAuth("/api/main/user/me/")
+                if (error)
+                {
+                    app.utils.showToast(error)
+                    setImageUpload("/public/assets/icon-placeholder.svg")
+                }
+                else
+                    setImageUpload(data.auth.icon_url)
+            }
+            imageform.reset()
+        })
+        // hady dial bind form event to send request to update user info f backend
+        bindUpdateInfo()
+        // other bind forms ba9i dial icon and password 
+
+        const pw_container = document.getElementById("update-pass")
+        const form_password = pw_container.querySelector("#update-pass-form")
+        form_password.addEventListener("submit", async (e)=> {
+            e.preventDefault()
+            const formdata = new FormData(form_password)
+            const data = Object.fromEntries(formdata.entries())
+            console.log("form data",data);
+            await handlePassword({
+                current : data.current_password,
+                new_pass : data.password,
+                confirm_pass : data.confirm_password
+            })
+            form_password.reset()
         })
     }
     catch (error) {
         console.error("Error in Settings controller:", error);
         if (error instanceof app.utils.AuthError) {
-            app.Router.navigate("/auth/login")
             return
         }
         app.utils.showToast("An error occurred loading settings.");
+    }
+}
+/**
+ * 
+ * @param {string} url 
+ */
+const setImageUpload = async (url) => {
+    const current = document.getElementById("current")   
+    console.log("url ", url);
+    if (!url)
+    {
+        current.src = "/public/assets/icon-placeholder.svg"
+        return
+    }
+    if (url.startsWith("/"))
+    {
+        const {data, error} = await app.utils.fetchWithAuth(url)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        url = "data:image/png;base64," + data
+        current.src = url
+    }
+    else
+        current.src = url
+    current.className ="object-cover"    
+}
+
+const handleUpload = async ({image}) => {
+    
+    const {data, error} = await app.utils.fetchWithAuth(
+        "/api/auth/users/image/",
+        'POST',
+        image,
+        "image/png"
+    )
+    if (error)
+    {
+        console.error(error);
+        app.utils.showToast(error)
+        return false
+    }
+    return true
+}
+
+/**
+ * @param {Object} options
+ * @param {string} options.current
+ * @param {string} options.new_pass
+ * @param {string} options.confirm_pass
+ */
+const handlePassword = async ({current, new_pass , confirm_pass}) => {
+    const body = {}
+    if (!current || !current.trim().length)
+    {
+        app.utils.showToast("missing value current")
+        return
+    }
+    if (!new_pass || !new_pass.trim().length)
+    {
+        app.utils.showToast("missing value new password")
+        return
+    }
+    if (!confirm_pass || !confirm_pass.trim().length)
+    {
+        app.utils.showToast("missing value confirm password")
+        return
+    }
+    if (confirm_pass !== new_pass)
+    {
+        app.utils.showToast("Password Missmatch")
+        return
+    }
+    body.old_password = current
+    body.new_password = confirm_pass
+    const {error, data} = await app.utils.fetchWithAuth("/api/auth/users/update_password/",
+        'PATCH',
+        JSON.stringify(body)
+    )
+    if (error)
+    {
+        app.utils.showToast(error)
+        return
+    }
+    app.utils.showToast(data.detail, "green")
+}
+
+/**
+ * 
+ * @param {Object} options
+ * @param {string} options.username 
+ * @param {string} options.email 
+ * @returns 
+ */
+
+const handleUpdate = async ({username, email}) => {
+    // Only include non-empty fields in the request body
+    const requestBody = {};
+    if (username && username.trim() !== '') {
+        requestBody.username = username;
+    }
+    if (email && email.trim() !== '') {
+        requestBody.email = email;
+    }
+    if (Object.keys(requestBody).length === 0)
+    {
+        app.utils.showToast("Please fill in your infos")
+        return
+    }
+    console.log(requestBody);
+    
+    const {data, error} = await app.utils.fetchWithAuth(
+        "/api/auth/users/update/",
+        "PATCH",
+       JSON.stringify(requestBody)
+    )
+    if (error)
+    {
+        app.utils.showToast(error)
+        return
+    }
+    console.log("data after patch info : ", data);
+    app.utils.showToast(data.detail, "green")
+}
+
+const bindUpdateInfo = () => {
+    try {
+        const view = document.getElementById("settings")
+        const form = view.querySelector("#infos-form")
+        const button = view.querySelector("#save-change-infos")
+        form.addEventListener("submit", async (e)=> {
+            e.preventDefault()
+            button.disabled = true
+            const formdata = new FormData(form)
+            const data = Object.fromEntries(formdata.entries())
+            await handleUpdate(data)
+            button.disabled = false
+            form.reset()
+    })
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+        {
+            return
+        }
+        app.utils.showToast("Something went wrong, check console")
+        console.log(error);
+        return
     }
 }

@@ -1,3 +1,25 @@
+import { fetchStatus } from "../../main.js";
+
+
+const findmatch = async () => {
+  try {
+    const {error, data} = await app.utils.fetchWithAuth("/api/match/findmatch/pong/")
+    if (error)
+    {
+      app.utils.showToast(error)
+      return
+    }
+    console.log("data find match : ", data);
+    app.utils.showToast(data.detail, "green")
+  
+  } catch (error) {
+    if (error instanceof app.utils.AuthError)
+      return
+    console.log("error in find match: ", error);
+    
+  }
+}
+
 export default () => {
   // Game mode variables - all initially set to false;
   app.gameInfo = {
@@ -24,25 +46,31 @@ export default () => {
   }
 
   // Function to handle card clicks
-  function handleCardClick(cardNumber) {
+  async function handleCardClick(cardNumber) {
     // First, reset all modes
     resetModes();
 
     // Set the appropriate variable to true based on the card clicked
     // and prepare redirection
-    let redirectURL = "";
+    
 
     switch (cardNumber) {
       case 1:
         app.gameInfo.Singleplayer = true;
-        redirectURL = SINGLEPLAYER_URL;
+        const data = await fetchStatus()
+        if (!data)
+          break
+        if (data.status !== "online")
+        {
+          app.utils.showToast(`Error: you are ${data.status}`)
+          break
+        }
+        app.Router.navigate(SINGLEPLAYER_URL);
         console.log("Singleplayer mode selected");
         break;
       case 2:
         app.gameInfo.Multiplayer = true;
-        redirectURL = MULTIPLAYER_URL;
-        app.utils.showToast("You are now in queue", "orange");
-        console.log("Multiplayer mode selected");
+        findmatch()
         break;
       case 3:
         app.gameInfo.Tournament = true;
@@ -56,9 +84,8 @@ export default () => {
       `.card:nth-child(${cardNumber})`
     );
     selectedCard.classList.add("selected");
-
     // Add visual feedback before redirecting
-    app.Router.navigate(redirectURL);
+    // app.Router.navigate(redirectURL);
   }
 
   // Wait for the DOM to be fully loaded before adding event listeners

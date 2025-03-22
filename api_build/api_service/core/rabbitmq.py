@@ -60,19 +60,71 @@ class AsyncRabbitMQConsumer:
             print(f"Stopped {self.queue_name}")
 
 
+from pprint import pprint
+
 class APIConsumer(AsyncRabbitMQConsumer):
 
     cache = _Cache
 
+    def __init__(self, host, port, queue_name):
+        self.actions = {
+            "clear_cache" : self.clear_cache,
+            "refresh_friends" : self.refresh_friends
+        }
+        super().__init__(host, port, queue_name)
+
+    async def refresh_friends(self, data : dict):
+        user_id = data.get("user_id")
+        # get user data to delete his friends attrs
+        user_data : dict = self.cache.get_user_data(user_id)
+        print("refresh user data")
+        pprint(user_data)
+        auth_data = user_data.get("auth")
+        if auth_data.get("friends"):
+            print("AAAAAAAAAAAA", auth_data["username"], "ba7")
+            auth_data.pop("friends")
+        if auth_data.get("blocked"):
+            auth_data.pop("blocked")
+        user_data["auth"] = auth_data
+        self.cache.redis.set(user_id, json.dumps(user_data))
+        layer = get_channel_layer()
+        group_name = f"notification_{user_id}"
+        await layer.group_send(group_name, {
+            "type" : "refresh_friends"
+        })
+
+    async def clear_cache(self, data : dict):
+        user_id = data.get('user_id')
+        old_status = self.cache.get_user_status(user_id)
+        old_group_count = self.cache.get_group_count(user_id)
+        self.cache.remove_user_data(user_id)
+        new_data = {
+            'status' : old_status,
+            'group_count' : old_group_count
+        }
+        self.cache.redis.set(user_id, json.dumps(new_data))
+        layer = get_channel_layer()
+        group_name = f"notification_{user_id}"
+        await layer.group_send(group_name, {
+            'type' : "update_info"
+        })
+
     async def on_message(self, message : IncomingMessage):
         try:
-            data = message.body.decode()
-            print(f"{self.queue_name} : received message : {data}")
+            body = json.loads(message.body.decode())
+            print("received message :")
+            pprint(body)
+            type = body.get("type")
+            if type not in self.actions:
+                await message.ack()
+                return
+            await self.actions[type](body.get('data'))
             await message.ack()
         except json.JSONDecodeError:
-            print(f"{self.queue_name} : invalid json data")
+            print("invalid json data")
+            await message.reject()
         except Exception as e:
-            print(f"{self.queue_name} : Error processing the message : {e}")
+            print(f"Error processing the message : {e}")
             await message.reject()
 
 
@@ -88,25 +140,28 @@ class NotifConsumer(AsyncRabbitMQConsumer):
             "send_notification" : self.send_notification,
             'disconnect_user' : self.disconnect_user,
             'set_inqueue' : self.set_inqueue,
-            'match_found' : self.set_ingame
+            'match_found' : self.set_ingame,
+            'cancel_queue' : self.cancel_queue
         }
         super().__init__(host, port, queue_name)
 
     async def send_notification(self, data : dict):
         group_name = f"notification_{data.get('user_id')}"
         layer = get_channel_layer()
-
-        await layer.group_send(group_name, {
+        body = {
             'type' : 'send_notification',
             'message' : data.get('message')
-        })
+        }
+        if data.get("color"):
+            body["color"] = data["color"]
+        await layer.group_send(group_name, body)
         
     async def disconnect_user(self, data : dict):
         group_name = f"notification_{data.get('user_id')}"
         layer = get_channel_layer()
         await layer.group_send(group_name, {
             'type' : 'disconnect_user',
-            'code' : 4003,
+            'code' : 4242,
             'message' : f"""You have been forcibly disconnected.
                 {data.get('reason') if data.get('reason') else ""}."""
         })
@@ -116,7 +171,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         group_name = f"notification_{data.get('user_id')}"
         layer = get_channel_layer()
         await layer.group_send(group_name, {
-            'type' : "set_user_queue",
+            'type' : "status_update",
+            'status' : 'inqueue'
         })
     
     async def set_ingame(self, data : dict):
@@ -130,6 +186,19 @@ class NotifConsumer(AsyncRabbitMQConsumer):
                 'game_id' : data.get("game_id")
             })
     
+    async def cancel_queue(self, data : dict):
+        user_id = data.get("user_id")
+        user_data =  self.cache.get_user_data(user_id)
+        user_data["status"] = "online"
+        self.cache.redis.set(user_id, json.dumps(user_data))
+        print(f"user : {user_id} back online")
+        layer = get_channel_layer()
+        group = f"notification_{user_id}"
+        await layer.group_send(group, {
+            'type' : "status_update",
+            "status" : 'online'
+        })
+
     async def on_message(self, message : IncomingMessage):
         try:
             body : dict = json.loads(message.body.decode())
@@ -206,9 +275,12 @@ from aio_pika import Message
 class QueuePublisher(RabbitmqBase):
     
     async def publish(self, data : dict):
-        message = Message(
-            json.dumps(data).encode(),
-            delivery_mode=1,
-            content_type="application/json")
-        await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
-        print("queue publisher : pusblished!")
+        try:
+            message = Message(
+                json.dumps(data).encode(),
+                delivery_mode=1,
+                content_type="application/json")
+            await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
+            print("queue publisher : pusblished!")
+        except BaseException as e:
+            print(f"error publishing to queue : {e}")

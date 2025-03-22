@@ -15,6 +15,9 @@ const handleLocation = async (url) => {
         }
         app.utils.setCookie("access_token", data.access_token)
         app.utils.showToast("Logged in successfully", 'green')
+        dispatchEvent(new CustomEvent("websocket", {detail : {type : "open"}}))
+        dispatchEvent(new CustomEvent("navbar-profile"))
+        dispatchEvent(new CustomEvent("play-button"));
         app.Router.navigate("/")
     } catch (error) {
         app.utils.showToast(error)
@@ -25,7 +28,7 @@ const handleLocation = async (url) => {
 /**
  * @param {object} code - code from form 
 */
-const handleVerify = async (code, username) => {
+const handleVerify = async (code, user_id) => {
     try {
         const response = await fetch("http://localhost:8000/api/auth/users/verify-2fa/", {
             method : "POST",
@@ -33,7 +36,7 @@ const handleVerify = async (code, username) => {
                 "Content-Type" : "application/json",
                 "Accept" : "application/json"
             },
-            body : JSON.stringify({code, username})
+            body : JSON.stringify({code, id : user_id})
         })
         const data = await response.json()
         if (!response.ok)
@@ -51,9 +54,9 @@ const handleVerify = async (code, username) => {
 }
 
 export default () => {
-    if (!app.username)
+    if (!app.user_id)
     {
-        app.utils.showToast("Username missing")
+        app.utils.showToast("user id missing")
         app.Router.navigate("/auth/login")
         return
     }
@@ -63,6 +66,6 @@ export default () => {
         e.preventDefault()
         const formdata = new FormData(form)
         const data = Object.fromEntries(formdata.entries())
-        await handleVerify(data["code"], app.username)
+        await handleVerify(data["code"], app.user_id)
     })
 }

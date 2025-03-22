@@ -8,6 +8,8 @@ from .Middleware import ProxyUser
 import httpx
 from asgiref.sync import async_to_sync
 
+from core.publishers import publishers
+
 API_DATA = "http://api-service/api/main/user/"
 
 class APIException(Exception):
@@ -17,7 +19,7 @@ class APIException(Exception):
         self.detail = detail
         super().__init__(*args)
 
-from core.asgi import notifspub
+
 
 class FindMatchPong(APIView):
 
@@ -52,7 +54,7 @@ class FindMatchPong(APIView):
             if user_data["status"] != "online":
                 return Response(status=status.HTTP_400_BAD_REQUEST,
                                 data={"detail" : f'It appears that you are {user_data["status"]}'})
-            self.cache.store_player(current_user['id'], "pong", notif=notifspub)
+            self.cache.store_player(current_user['id'], "pong")
             return Response(data={"detail" : "We are looking for a match."})
             
         except APIException as e:
@@ -65,6 +67,8 @@ from .utils import Queue
 
 class CheckGame(APIView):
 
+    permission_classes = []
+    authentication_classes = []
     cache = Queue
     class CheckGameSerializer(serializers.Serializer):
         game_id  = serializers.CharField()
@@ -76,7 +80,6 @@ class CheckGame(APIView):
             if value not in types:
                 raise serializers.ValidationError("game type not supported")
             return value
-
 
     def post(self, request : Request, *args, **kwargs):
         try:
@@ -97,3 +100,25 @@ class CheckGame(APIView):
             return Response(status=status.HTTP_200_OK)
         except serializers.ValidationError:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
+
+
+
+class CancelQueue(APIView):
+    permission_classes = [IsAuthenticated]
+
+    cache = Queue
+
+    def get(self, request : Request, *args, **kwargs):
+        current : ProxyUser = request.user
+        current = current.to_dict()
+        id = current["id"]
+        self.cache.remove_player(id)
+        notif = publishers[1]
+        body = {
+            'type' : "cancel_queue",
+            'data': {
+                'user_id' : id
+            }
+        }
+        async_to_sync(notif.publish)(body)
+        return Response(data={"detail" : "Queue Canceled"})

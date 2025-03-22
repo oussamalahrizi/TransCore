@@ -5,18 +5,20 @@ from rest_framework.request import Request
 
 class IsAllowedHost(BasePermission):
     """
-    Custom permission to only allow access from specific hosts.
+        Custom permission to only allow access from specific hosts.
     """
 
-    try:
-        api = gethostbyname("api-service")
-        match = gethostbyname("match-service")
-        chat = gethostbyname("chat-service")
-    except:
-        api = ""
-        match = ""
-        chat = ""
-    allowed_hosts = [api, match, chat]
+    SERVICES = ["api-service", "match-service", "chat-service", "pong-game"]
+    allowed_hosts = []
+    
+    def  __init__(self):
+        for service in self.SERVICES:
+            try:
+                ip = gethostbyname(service)
+                self.allowed_hosts.append(ip)
+            except:
+                pass
+        super().__init__()
 
     def has_permission(self, request, view):
         incoming_host = request.META.get('REMOTE_ADDR')

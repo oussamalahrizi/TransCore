@@ -1,0 +1,608 @@
+.settings-container
+{
+    display: flex;
+    background: linear-gradient(to top, #057343, #1D1D1D);
+    background-attachment: fixed;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-div
+{
+    display: flex;
+    width: 83.25rem;
+    align-content: center;
+    flex-direction: column;
+    gap: 2.875rem;
+    flex-wrap: wrap;
+}
+
+.infos
+{
+    display: flex;
+    width: 40rem;
+    padding: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1D1D1D;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.password
+{
+    display: flex;
+    width: 40rem;
+    padding: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1D1D1D;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.security
+{
+    display: flex;
+    width: 40rem;
+    padding: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1D1D1D;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    
+}
+
+.section
+{
+    display: flex;
+    padding: 1rem;
+    align-items: center;
+    align-self: stretch;
+    background-color: #212121;
+    border-radius: 0.75rem;
+    margin: 0.5rem;
+    justify-content: space-between;
+}
+
+.headers
+{
+    color: #FFFFFF;
+    font-size: 1rem;
+    font-weight: 600;
+    align-self: flex-start;
+}
+
+.notes
+{
+    color: #94979C;
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    line-height: 1.5rem;
+    white-space: nowrap;
+    margin: 1rem;
+    align-self: start;
+}
+
+.input-titles
+{
+    color: #94979C;
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+}
+
+
+.form-class
+{
+    padding-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    align-self: stretch;
+}
+
+.small-input:hover
+{
+    border-color: #CECFD2;
+}
+
+.big-input
+{
+    color: #CECFD2;
+    background-color: #222;
+    border-color: #373A41;
+    padding: 0.85rem;
+    padding-left: 1rem;
+    border-width: 1px;
+    border-radius: 2rem;
+    width: 100%;
+    transition: 0.5s;
+    margin-bottom: 0.5rem;
+    
+}
+
+.big-input::placeholder
+{
+    color: #373A41;
+}
+
+.big-input:hover
+{
+    border-color: #CECFD2;
+}
+
+.save
+{
+    width: 25%;
+    text-align: center;
+    align-self: end;
+    background-color: #029F5B;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 1rem;
+    margin-right: 0.65rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.save:hover
+{
+    opacity: 1;
+    background-color: #057343;
+    transition: 0.25s;
+}
+
+.profile-card
+{
+    display: flex;
+    width: 400px;
+    background-color: #1D1D1D;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    align-content: center;
+    justify-content: center;
+    flex-direction: column;
+    align-content: center;
+    color: #000;
+}
+
+.profile-card img
+{
+    border-radius: 0.5rem;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    width: 12.5rem;
+    height: 12.5rem;
+    cursor: pointer;
+
+}
+.profile-card label
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-card h1
+{
+    font-weight: 600;
+    color: #CECFD2;
+}
+
+.profile-card button
+{
+    display: block;
+    width: 200px;
+    background: #029F5B;
+    color: #CECFD2;
+    padding: 12px;
+    align-self: center;
+    border-radius: 2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.profile-card button:hover
+{
+    background-color: #057343;
+    transition: 0.25s;
+}
+
+
+.profile-card input[type="file"]::-webkit-file-upload-button {
+    visibility: hidden;
+}
+
+.header
+{
+    font-size: 3rem;
+    align-self: center;
+    color: #FFFFFF;
+    margin-top: 2rem;
+}
+
+.enable
+{
+    text-align: center;
+    width: 25%;
+    background-color: #029F5B;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 2rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    padding-right: 2rem;
+    padding-left: 2rem;
+    font-weight: 600;
+}
+
+.enable:hover
+{
+    opacity: 1;
+    background-color: #057343;
+    transition: 0.25s;
+}
+
+.logout-title
+{
+    color: #E22626;
+    font-size: 1.125rem;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    letter-spacing: 0.03375rem;
+    margin-bottom: 0.25rem;
+}
+
+.logout-small
+{
+    color: #8D4141;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.logout
+{
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.logout:hover
+{
+    transform: translateX(5px);
+}
+
+#logout-section:hover
+{
+    background-color: rgba(226, 38, 38, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+.twofanote
+{
+    color: #94969C;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.twofa-title
+{
+    color: #CECFD2;
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    letter-spacing: 0.03375rem;
+    margin-bottom: 0.25rem;
+}
+
+.button-div
+{
+    display: flex;
+    justify-content: end;
+    width: 100%;
+}
+
+.fa-container
+{
+    color: white;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.5rem;
+    background-color: #1D1D1D;
+    max-width: 24rem;
+    width: 100%;
+    padding: 1rem;
+    box-shadow: 0 0 10px rgba(52, 101, 62, 0.847);
+}
+
+.fa-elements-container
+{
+    display: flex;
+    border-radius: 0.75rem;
+    max-width: 26.5rem;
+    width: 100%;
+    padding: 1.5rem;
+    flex-direction: column;
+    background-color: #222222;
+}
+
+.fa-upper-elements
+{
+    display: flex;
+    justify-content: space-between;
+    flex: 1 1 0;
+}
+
+.fa-cross-title-div
+{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.fa-title
+{
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    color: #CDCDCD;
+}
+
+.fa-enable2fatext
+{
+    text-align: center;
+    font-size: 1.75rem;
+    line-height: 2.25rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #F7F7F7;
+}
+
+.fa-notes
+{
+    color: #94979C;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 350;
+    margin-bottom: 0.5rem;
+    line-height: 1.5rem;
+}
+
+.fa-image
+{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.fa-verifybutton
+{
+    text-align: center;
+    background-color: #029F5B;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+    font-weight: 600;
+}
+
+.fa-verifybutton:hover
+{
+    opacity: 1;
+    background-color: #057343;
+    transition: 0.25s;
+}
+
+.fa-code-input
+{
+    color: #CECFD2;
+    background-color: #222;
+    border-color: #373A41;
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    border-width: 1px;
+    border-radius: 2rem;
+    transition: 0.5s;
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    text-align: center;
+}
+
+.fa-code-input::placeholder
+{
+    color: #373A41;
+    text-align: center;
+}
+.fa-code-input:hover
+{
+    border-color: #CECFD2;
+}
+
+.cross-hover
+{
+    opacity: 0.8;
+    transition: 0.25s;
+}
+
+.cross-hover:hover
+{
+    opacity: 1;
+}
+
+.loading-div
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+@keyframes spin 
+{
+    to
+    {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-animation
+{
+    border-bottom-width: 2px;
+    border-top-width: 2px;
+    border-radius: 9999px;
+    width: 2rem;
+    height: 2rem;
+    animation: spin 1s linear infinite;
+}
+
+.blocklist-container {
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.blocklist-container::-webkit-scrollbar {
+    display: none;
+}
+
+.blocklist-items {
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+    background-color: #222222;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.blocklist-items::-webkit-scrollbar {
+    display: none;
+}
+
+.empty-blocklist {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    color: #94969C;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.blocked-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #313131;
+}
+
+.blocked-user-item:last-child {
+    border-bottom: none;
+}
+
+.blocked-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.blocked-user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #333333;
+}
+
+.blocked-user-name {
+    color: #CECFD2;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.unblock-btn {
+    background-color: #2D2D2D;
+    color: #E22626;
+    border: 1px solid #E22626;
+    border-radius: 1rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.unblock-btn:hover {
+    background-color: rgba(226, 38, 38, 0.15);
+}
+
+.error-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    color: #E22626;
+    font-size: 0.9rem;
+}
+
+#twofa-section:hover {
+    background-color: rgba(2, 159, 91, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+#twofa-section .logout:hover {
+    transform: translateX(5px);
+}
+
+#blocklist-section:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+#blocklist-section .logout:hover {
+    transform: translateX(5px);
+}
+
+#logout-section:hover {
+    background-color: rgba(226, 38, 38, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+.logout {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.logout:hover {
+    transform: translateX(5px);
+}

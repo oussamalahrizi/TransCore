@@ -153,6 +153,17 @@ function updateScoreDisplay() {
   }
 }
 
+const startGame = () => {
+  app.gameInfo.ws.send(
+    JSON.stringify({
+      type: "init_game",
+    })
+  );
+  document.getElementById("waiting")?.remove();
+  app.gameInfo.renderer.domElement.setAttribute("tabindex", "0");
+  app.gameInfo.renderer.domElement.focus();
+};
+
 /**
  *
  * @param {MessageEvent} event
@@ -169,8 +180,15 @@ export const onmessage = (event) => {
       view.id = "waiting";
       view.className =
         "absolute w-full min-h-screen top-0 left-0 z-50 flex justify-center items-center text-white text-2xl bg-black/40";
-      view.textContent = "waiting for other player to join";
       gameContainer.appendChild(view);
+      if (app.gameInfo.Singleplayer) {
+        view.textContent = "Press Space bar to start the game";
+        view.addEventListener("keydown", (e) => {
+          if (e.code == "Space") startGame();
+        });
+        view.setAttribute("tabindex", "0");
+        view.focus();
+      } else view.textContent = "waiting for other player to join";
       break;
 
     case "gameStart":
@@ -188,12 +206,8 @@ export const onmessage = (event) => {
       break;
 
     case "send_init_data":
-      console.log("send init data : ", data.user_id);
       app.gameInfo.player_id = data.user_id;
       break;
-    // case "redirect":
-    //   window.location.href = data.url;
-    //   break;
     case "error":
       console.error("Game error:", message);
       break;

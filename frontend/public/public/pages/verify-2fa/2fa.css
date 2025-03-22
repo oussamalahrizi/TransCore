@@ -1,0 +1,116 @@
+
+.twofa-container
+{
+    display: flex;
+    background: linear-gradient(to top, #057343, #1D1D1D);
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.inner-container
+{
+    display: flex;
+    max-width: 26rem;
+    width: 100%;
+    flex-direction: column;
+    border-radius: 0.75rem;
+    background-color: #1D1D1D;
+    padding-top: 1.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.verify-form
+{
+    display: flex;
+    flex-direction: column;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.verify-input
+{
+    color: #CECFD2;
+    background-color: #222;
+    border-color: #373A41;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    padding-left: 1rem;
+    border-width: 1px;
+    border-radius: 250rem;
+    width: 100%;
+    transition: 0.5s;
+}
+
+.verify-input::placeholder
+{
+    color: #373A41;
+}
+
+.verify-input:hover
+{
+    border-color: #CECFD2;
+}
+
+.verify-button
+{
+    width: 100%;
+    text-align: center;
+    background-color: #029F5B;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+    transition: 0.25s;
+}
+
+.verify-button:hover
+{
+    opacity: 1;
+    background-color: #057343;
+}
+
+.title
+{
+    color: #FFF;
+    font-size: 1.75rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    align-self: center;
+}
+
+.notes
+{
+    color: #94979C;
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    line-height: 1.5rem;
+    white-space: nowrap;
+    align-self: center;
+}
+
+.login-page-div
+{
+    display: flex;
+    margin-top: 1rem;
+    margin-left: 0.5rem;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.login-page
+{
+    color: #CECFD2;
+    margin-right: 2rem;
+    transition: 0.3s;
+}
+
+.login-page:hover
+{
+    color:#373A41;
+} 

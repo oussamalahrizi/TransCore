@@ -10,13 +10,14 @@ const IntraCallback = async (code) => {
         data.detail ? data.detail : JSON.stringify(data, null, 2)
       );
     if (data["2fa"] === true) {
-      app.username = data.username;
+      app.user_id = data.user_id
       app.Router.navigate("/auth/verify-2fa");
       return;
     }
     app.utils.setCookie("access_token", data.access_token);
     dispatchEvent(new CustomEvent("websocket", { detail: { type: "open" } }));
     dispatchEvent(new CustomEvent("navbar-profile"));
+    dispatchEvent(new CustomEvent("play-button"));
 
     app.Router.navigate("/");
   } catch (error) {

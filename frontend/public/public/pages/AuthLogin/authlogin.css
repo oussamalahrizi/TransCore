@@ -1,0 +1,239 @@
+
+.login-container
+{
+    display: flex;
+    background: linear-gradient(to top, #057343, #1D1D1D);
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.inner-container
+{
+    display: flex;
+    max-width: 26rem;
+    width: 100%;
+    flex-direction: column;
+    border-radius: 0.75rem;
+    background-color: #1D1D1D;
+    padding: 1.5rem;
+}
+
+.login-form-css
+{
+    margin-left: 0.15rem;
+    margin-right: 0.15rem;
+}
+
+.login-form-input
+{
+    color: #CECFD2;
+    background-color: #222;
+    border-color: #373A41;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-width: 1px;
+    border-radius: 0.5rem;
+    width: 100%;
+    transition: 0.5s;
+}
+
+.login-form-input::placeholder
+{
+    color: #373A41;
+}
+
+.login-form-input:hover
+{
+    border-color: #CECFD2;
+}
+
+.login-title
+{
+    color: #F7F7F7;
+    text-align: center;
+    font-size: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+    line-height: 1.75rem;
+}
+
+.notes
+{
+    color: #94979C;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5rem;
+}
+
+.emailandpass
+{
+    color: #CECFD2;
+    margin-bottom: 0.5rem;
+}
+
+
+.force-label
+{
+    color: #CECFD2;
+    font-size: 0.90rem;
+    font-weight: 600;
+    padding-left: 0.25rem;
+}
+
+.checkboxcss {
+    appearance: none;
+    background-color: #1D1D1D;
+    border: 1px solid #373A41;
+    border-radius: 0.25rem;
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.checkboxcss:checked {
+    background-color: #029F5B;
+}
+
+.checkboxcss:checked::before {
+    content: '✔';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    color: #CECFD2;
+    font-weight: bold;
+}
+
+.checkboxcss:hover {
+    border-color: #8a8d93;
+}
+
+
+.labeldiv
+{
+    display: flex;
+    align-items: center;
+}
+
+.a
+{
+    display: flex;
+    justify-content: space-between;
+}
+
+.signinbutton
+{
+    width: 100%;
+    text-align: center;
+    background-color: #029F5B;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.signinbutton:hover
+{
+    opacity: 1;
+    background-color: #057343;
+    transition: 0.25s;
+}
+
+.signinintrabutton
+{
+    width: 100%;
+    text-align: center;
+    background-color: #222;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.signinintrabutton:hover
+{
+    opacity: 1;
+    background-color: #2e3033;
+    transition: 0.25s;
+}
+
+.signingooglebutton
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    text-align: center;
+    background-color: #222;
+    border-width: 1px;
+    border-color: #373A41;
+    color: #FFF;
+    border-radius: 250rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.signingooglebutton:hover
+{
+    opacity: 1;
+    background-color: #2e3033;
+    transition: 0.25s;
+}
+
+.forgot-pass-div
+{
+    display: flex;
+    margin-top: 0.75rem;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.register-div
+{
+    display: flex;
+    margin-top: 1.5rem;
+    justify-content: space-between;
+    width: 100%;
+
+}
+
+.forgot-pass
+{
+    color: #CECFD2;
+    margin-right: 2rem;
+    transition: 0.3s;
+}
+
+.forgot-pass:hover
+{
+    color: grey;
+}
+
+.register
+{
+    color: #CECFD2;
+    margin-right: 0.75rem;
+}
+
+.register:hover
+{
+    color: grey;
+    transition: 0.3s;
+}
+
