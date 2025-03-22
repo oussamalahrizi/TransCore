@@ -77,6 +77,13 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.username
+    
+from django.conf import settings
+import os
+
+class ImageUser(models.Model):
+    image = models.ImageField(upload_to=settings.MEDIA_ROOT, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
 
 
 class FriendsManager(models.Manager):

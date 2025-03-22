@@ -8,7 +8,20 @@ const getReceived = async () => {
         app.utils.showToast(error)
         return
     }
-    console.log("data received : ",data)
+    data.forEach(async user => {
+        if (user.icon_url && !user.icon_url.startsWith("/"))
+            return
+        console.log("received url : ", user);
+        
+        const res = await app.utils.fetchWithAuth(user.icon_url)
+        if (res.error)
+            app.utils.showToast(error, "red");
+        else
+        {
+            console.log("before : ", user.icon_url);
+            user.icon_url = res.data
+        }
+    })
     return data
 }
 
@@ -113,10 +126,15 @@ export default async () => {
         receivedModal.className = "received-requests-modal";
         
         // Fetch received friend requests
-        const receivedRequests = await getReceived()
-        
+        const users = await getReceived()
+        console.log("users", users);
+        const rec = users
+        console.log("users", rec);
+
         // Create modal content
-        receivedModal.innerHTML = View(receivedRequests)
+        while(receivedModal.firstChild)
+            receivedModal.removeChild(receivedModal.firstChild)
+        receivedModal.innerHTML = View(rec)
         AttachAccept(receivedModal)
         AttachReject(receivedModal)
         

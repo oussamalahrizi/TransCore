@@ -7,7 +7,10 @@ export default /*html*/ `
                 <p class="notes">Update your personal informations</p>
                 <form id="img-form" class="profile-card">
                     <h1>Profile picture</h1>
-                    <input id="current" name="image" type="file" accept="image/png">
+                    <label id="label-img-form" for="input-image">
+                        <img id="current" class="w-full" />
+                        <input name="image" id="input-image" type="file" accept="image/png" hidden>
+                    </label>
                     <button type="submit" for="input-profile">Update profile</button>
                 </form>
                 <form id="infos-form" class="form-class">

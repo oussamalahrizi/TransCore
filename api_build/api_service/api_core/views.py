@@ -11,7 +11,6 @@ from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from asgiref.sync import async_to_sync
 from .jwtMiddleware import ProxyUser
-from .models import Notification
 import httpx
 from pprint import pprint
 import asyncio
@@ -74,23 +73,7 @@ class GetUserData(APIView):
         user = self.cache.get_user_data(id)
         return Response(data=user)
 
-class NotifcationDetail(serializers.ModelSerializer):
-    class Meta:
-        model = Notification
-        fields = ["message", "created_at"]
 
-import uuid
-
-class GetNotification(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    def get(self, request: Request, *args, **kwargs):
-        user : ProxyUser = request.user
-        id = uuid.UUID(user.id)
-        notif = Notification.objects.filter(user=id).all().order_by("created_at").last()
-        serializer = NotifcationDetail(instance=notif)
-        return Response(data=serializer.data)
 
 async def fetch_friends_auth(user_id : str):
     try:

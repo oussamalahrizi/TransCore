@@ -2,6 +2,7 @@
 {
     display: flex;
     background: linear-gradient(to top, #057343, #1D1D1D);
+    background-attachment: fixed;
     min-height: 100vh;
     align-items: center;
     justify-content: center;
@@ -175,12 +176,19 @@
 
 .profile-card img
 {
-    width: 200px;
-    height: 200px;
-    border-radius: 3rem;
+    border-radius: 0.5rem;
     margin-top: 30px;
     margin-bottom: 30px;
-    margin-left: 4rem;
+    width: 12.5rem;
+    height: 12.5rem;
+    cursor: pointer;
+
+}
+.profile-card label
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-card h1
@@ -208,19 +216,7 @@
     background-color: #057343;
     transition: 0.25s;
 }
-.profile-card input
-{
-    background-image: url("/public/assets/dog.png");
-    background-size: cover;
-    color: transparent;
-    cursor: pointer;
-    width: 200px;
-    height: 200px;
-    border-radius: 1.5rem;
-    margin-top: 2.5rem;
-    margin-bottom: 1rem;
-    margin-left: 3.75rem;
-}
+
 
 .profile-card input[type="file"]::-webkit-file-upload-button {
     visibility: hidden;

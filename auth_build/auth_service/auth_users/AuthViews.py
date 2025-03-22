@@ -170,7 +170,6 @@ class SessionState(APIView):
 
 	def post(self, request, *args, **kwargs):
 		try:
-			print(request.data)
 			serializer = SessionSerializer(data=request.data)
 			serializer.is_valid(raise_exception=True)
 			session = self.cache.get_access_session(serializer.data["user_id"])
@@ -297,7 +296,7 @@ class VerifyOTP(APIView):
 
 
 from django.core.mail import send_mail
-
+from pprint import pprint
 class GoogleCallback(GoogleMixin, APIView):
 
 	permission_classes = [AllowAny]
@@ -307,6 +306,7 @@ class GoogleCallback(GoogleMixin, APIView):
 	@sync_to_async
 	def cleanup(self, user_data, request):
 		try:
+			pprint(user_data)
 			user, pw = self.getUser(user_data)
 			user : User = user
 		except Exception as e:
@@ -376,6 +376,7 @@ class IntraCallback(IntraMixin, APIView):
 	@sync_to_async
 	def cleanup(self, user_data, request):
 		try:
+			pprint(user_data)
 			user, pw = self.getUser(user_data) 
 			user : User = user
 		except Exception as e:

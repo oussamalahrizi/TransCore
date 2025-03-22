@@ -26,7 +26,11 @@ export default (pendingRequests) => /*html*/`
                     pendingRequests.map(request => `
                         <div class="pending-request-item">
                             <div class="pending-request-info">
-                                <img src="${request.icon_url || '/public/assets/dog.png'}" class="pending-avatar" alt="${request.username}">
+                                <img src="${
+                                    !request.icon_url ? '/public/assets/icon-placeholder.svg'
+                                    : !request.icon_url.startsWith("https") ? 'data:image/png;base64,'+request.icon_url
+                                    : request.icon_url
+                                    }" class="pending-avatar" alt="${request.username}">
                                 <span class="pending-username">${request.username}</span>
                             </div>
                             <span class="pending-status">Pending</span>

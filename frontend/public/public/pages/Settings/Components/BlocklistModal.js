@@ -96,10 +96,15 @@ const unblockUser = async (userId) => {
         app.utils.showToast(error)
         return
     }
-    app.utils.showToast(data.detail)
+    app.utils.showToast(data.detail, "green")
 };
 
-
+/**
+ * 
+ * @param {HTMLElement} container 
+ * @param {Array} users 
+ * @returns 
+ */
 const renderBlocklist = (container, users) => {
     
     if (!users || users.length === 0) {
@@ -114,14 +119,13 @@ const renderBlocklist = (container, users) => {
     unblockButtons.forEach(button => {
         button.addEventListener('click', async (e) => {
             const userId = e.target.dataset.userId;
-            if (await unblockUser(userId)) {
-                const item = container.querySelector(`.blocked-user-item[data-user-id="${userId}"]`);
-                if (item) {
-                    item.remove();
-                }                
-                if (container.querySelectorAll('.blocked-user-item').length === 0) {
-                    container.innerHTML = EmptyBlocklistView;
-                }
+            await unblockUser(userId)
+            const item = container.querySelector(`.blocked-user-item[data-user-id="${userId}"]`);
+            if (item) {
+                item.remove();
+            }
+            if (container.querySelectorAll('.blocked-user-item').length === 0) {
+                container.innerHTML = EmptyBlocklistView;
             }
         });
     });
@@ -133,6 +137,10 @@ export const controller = async () => {
         const modal = view.querySelector("#blocklist-modal-wrapper");
         
         const closeButton = modal.querySelector("#close-blocklist-modal");
+        view.addEventListener("click", (e) => {
+            if (e.target === modal)
+                hideModalWithAnimation(modal, () => view.removeChild(modal))
+        })
         closeButton.addEventListener("click", () => {
             if (typeof hideModalWithAnimation === 'function') {
                 hideModalWithAnimation(modal, () => {
