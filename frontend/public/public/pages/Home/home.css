@@ -260,6 +260,8 @@
     border-radius: 50%;
     margin-right: 0.75rem;
     margin-left: 0.5rem;
+    object-fit: cover;
+
 }
 
 .friend-info
