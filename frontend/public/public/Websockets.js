@@ -1,5 +1,6 @@
 
 let friendsContainer= null
+let chat = null
 
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
@@ -36,10 +37,15 @@ export const SetOnline = () => {
                 break
             
             case "refresh_friends":
-                friendsContainer = document.getElementById("friend-list-items")                
-                if (!friendsContainer)
-                    break
-                friendsContainer.dispatchEvent(new CustomEvent('refresh'))
+                friendsContainer = document.getElementById("friend-list-items")    
+                if (friendsContainer)
+                    friendsContainer.dispatchEvent(new CustomEvent('refresh'))
+                chat = document.getElementById("user-list-container")
+                if (chat)
+                {
+                    console.log("chat here");
+                    chat.dispatchEvent(new CustomEvent("refresh"))
+                }
                 break
             
             case 'status_update':

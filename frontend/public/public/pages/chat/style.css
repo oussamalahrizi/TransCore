@@ -92,9 +92,9 @@ body {
   color: #888;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
-  padding: 8px 12px;
+  padding: 0px 0px;
   border-radius: 8px;
-  background-color: #444;
+  background-color: #333;
 }
 
 .filter-label:hover {
@@ -118,6 +118,8 @@ body {
 .filter-checkbox:checked {
   background-image: url("filter-active.png"); 
   opacity: 0.8; 
+  background-color: #555;
+
 }
 
 .filter-checkbox:hover {
@@ -491,8 +493,8 @@ body {
 }
 
 .profile-header .profile-name {
-  font-size: 22px;
-  color: #029F5B;
+  font-size: 20px;
+  color: #e6e6e6;
   font-weight: 600;
   text-align: center;
   text-transform: uppercase;
@@ -516,7 +518,7 @@ body {
   padding: 12px;
   border: none;
   border-radius: 8px;
-  background-color: #029F5B;;
+  background-color: #282828;;
   color: white;
   cursor: pointer;
   font-size: 14px;
@@ -538,15 +540,15 @@ body {
 }
 
 .block-icon {
-  background-image: url("block.png"); 
+  background-image: url("block2.png"); 
 }
 
 .unblock-icon {
-  background-image: url("block.png"); 
+  background-image: url("block2.png"); 
 }
 
 .game-icon {
-  background-image: url("game.png");
+  background-image: url("game2.png");
 }
 
 .profile-icon {
@@ -734,4 +736,21 @@ body {
 }
 
 
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: grey;
+}
 
+.status-text {
+  color: grey;
+}
+
+.online .status-indicator {
+  background-color: #029F5B; 
+}
+
+.online .status-text {
+  color: #029F5B; 
+}
