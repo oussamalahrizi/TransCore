@@ -28,7 +28,13 @@ export default /*html*/ `
                 <!-- Chat User Info (Left Side) -->
                 <div class="chat-header-info flex items-center">
                     <img id="chat-user-image" src="default-profile.png" alt="User Profile" class="profile-image">
-                    <h3 class="chat-with-user ml-2"><span id="chat-with-user">User Name</span></h3>
+                    <div class="ml-2">
+                        <h3 class="chat-with-user"><span id="chat-with-user">User Name</span></h3>
+                        <div id="chat-user-status" class="text-sm flex items-center">
+                            <span class="status-indicator"></span>
+                            <span class="status-text ml-1">Offline</span> <!-- Default status -->
+                        </div>
+                    </div>
                 </div>
                 <!-- Menu Button (Right Side) -->
                 <button id="menu-button" class="text-gray-400 hover:text-white transition-colors text-2xl" aria-label="Open menu">⋮</button>
@@ -64,11 +70,11 @@ export default /*html*/ `
                 <button id="unblock-button" class="profile-button" aria-label="Unblock user" style="display: none;">
                     <span class="icon unblock-icon"></span> Unblock
                 </button>
+                <button id="view-profile-button" class="profile-button" aria-label="View profile">
+                <span class="icon profile-icon"></span> View Profile
+                </button>
                 <button id="invite-to-game-button" class="profile-button" aria-label="Invite to game">
                     <span class="icon game-icon"></span> Invite to Game
-                </button>
-                <button id="view-profile-button" class="profile-button" aria-label="View profile">
-                    <span class="icon profile-icon"></span> View Profile
                 </button>
                 </div>
         </div>

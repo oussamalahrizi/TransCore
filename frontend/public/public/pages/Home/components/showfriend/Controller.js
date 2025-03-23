@@ -111,9 +111,7 @@ const handlers = (container, friend) => {
             console.log("error in block friend", error);
         }
     });
-    // view-profile-${friend.id}
-    const profile = container.querySelector(`#view-profile-${friend.id}`)
-    profile.addEventListener("click", Profile.Controller(friend.id))
+    
 }
 
 

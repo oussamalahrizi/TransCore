@@ -1,5 +1,3 @@
-
-
 async function fetchUsers() {
     try {
         const {data, error} = await app.utils.fetchWithAuth("/api/main/friends/")
@@ -8,7 +6,6 @@ async function fetchUsers() {
             app.utils.showToast(error)
             return []
         }
-        console.log("friends first : ", data);
         const friends = data
         
         friends.map(async friend => {
@@ -20,7 +17,6 @@ async function fetchUsers() {
                     return
                 }
                 friend = data
-                console.log("friend : ", friend);
                 
             } catch (error) {
                 if (error instanceof  app.utils.AuthError)
@@ -63,6 +59,7 @@ export default async () => {
     let blockedUsers = new Set(JSON.parse(localStorage.getItem('blockedUsers')) || []);
     let currentUserId = null; 
     let roomName = null;
+
 
     // document.addEventListener('DOMContentLoaded', () => {
     //     const inviteToGameButton = document.getElementById('invite-to-game-button');
@@ -144,51 +141,98 @@ export default async () => {
         return filteredUsers;
     }
 
-    
+    const userListContainer = document.getElementById('user-list-container');
+    userListContainer.addEventListener('refresh', async () => {
+        const users = await fetchUsers()
+        
+        updateUserList(users)
+    })
     function updateUserList(friends) {
         const filteredUsers = friends
-        const userListContainer = document.getElementById('user-list-container');
-        userListContainer.innerHTML = ''; 
     
-        filteredUsers.forEach(user => userListContainer.appendChild(createUserItem(user)));
+        const userListContainer = document.getElementById('user-list-container');
+        if (!userListContainer) {
+            console.error('user-list-container element not found');
+            return;
+        }
+        userListContainer.innerHTML = ''
+    
+        filteredUsers.forEach(user => {
+            const userItem = createUserItem(user);
+            if (userItem) {
+                userListContainer.appendChild(userItem);
+            }
+        });
     }
 
 
+    function createUserItem(user) {
+        const isBlocked = blockedUsers.has(user.auth.username); 
+        const userItem = document.createElement('div');
+        userItem.className = `user-item ${isBlocked ? 'blocked' : ''}`;
+    
+        const unreadCount = isBlocked ? 0 : unreadMessages[user.auth.username] || 0; 
+        const statusColor = user.status === "online" ? "green" : "grey"; 
+        const lastMessage = isBlocked ? "" : lastMessages[user.auth.username]?.message || ""; 
+        const lastMessageTimestamp = isBlocked ? "" : lastMessages[user.auth.username]?.timestamp || ""; 
+    
+        const chatUserImage = document.getElementById('chat-user-image');
+        if (chatUserImage) {
+            chatUserImage.src = user.auth.icon_url || 'default-profile.png'; 
+        }
+    
+        const profileImage = document.querySelector('#profile-section .profile-header img');
+        if (profileImage) {
+            profileImage.src = user.auth.icon_url || 'default-profile.png'; 
+        }
+    
+        const chatWithUser = document.getElementById('chat-with-user');
+        if (chatWithUser) {
+            chatWithUser.textContent = user.auth.username;
+        }
+        const chatUserStatus = document.getElementById('chat-user-status');
 
-function createUserItem(user) {
-    const userItem = document.createElement('div');
-    const isBlocked = blockedUsers.has(user.username); 
-    userItem.className = `user-item ${isBlocked ? 'blocked' : ''}`;
-
-    const unreadCount = isBlocked ? 0 : unreadMessages[user.username] || 0; 
-    const statusColor = user.isActive ? "green" : "grey";
-    const lastMessage = isBlocked ? "" : lastMessages[user.username]?.message || ""; 
-    const lastMessageTimestamp = isBlocked ? "" : lastMessages[user.username]?.timestamp || ""; 
-
-    userItem.innerHTML = `
-        <div class="user-avatar-container">
-            <img src="${user.profileImage}" alt="${user.username}" class="user-avatar">
-            <span class="active-status" style="background-color: ${statusColor};"></span>
-        </div>
-        <div class="user-info">
-            <div class="username">${user.username}</div>
-            ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
-        </div>
-        <div class="user-meta">
-            ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
-            ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
-        </div>
-    `;
-
-    userItem.onclick = () => {
-        startChat(user.username, user.id);
-        userItem.classList.add('active');
-        updateUserList();
-        toggleProfileSection();
-    };
-
-    return userItem;
-}
+        if (chatUserStatus) {
+            const statusIndicator = chatUserStatus.querySelector('.status-indicator');
+            const statusText = chatUserStatus.querySelector('.status-text');
+    
+            if (user.status === "online") {
+                chatUserStatus.classList.add('online');
+                statusText.textContent = "Online";
+            } else {
+                chatUserStatus.classList.remove('online');
+                statusText.textContent = "Offline";
+            }
+        }
+        const profileUserName = document.getElementById('profile-user-name');
+        if (profileUserName) {
+            profileUserName.textContent = user.auth.username;
+        }
+    
+        userItem.innerHTML = `
+            <div class="user-avatar-container">
+                <img src="${user.auth.icon_url || 'default-profile.png'}" alt="${user.auth.username}" class="user-avatar">
+                <span class="active-status" style="background-color: ${statusColor};"></span>
+            </div>
+            <div class="user-info">
+                <div class="username">${user.auth.username}</div>
+                ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
+            </div>
+            <div class="user-meta">
+                ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
+                ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
+            </div>
+        `;
+    
+        userItem.onclick = () => {
+            startChat(user.auth.username, user.auth.id);
+            userItem.classList.add('active');
+            updateUserList();
+            toggleProfileSection();
+        };
+    
+        return userItem;
+    }
 
 
 function loadMessages() {
