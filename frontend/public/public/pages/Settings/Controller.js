@@ -293,8 +293,6 @@ const setImageUpload = async () => {
     else if (data.icon_url)
         url = data.icon_url
     current.src = url
-    console.log(current);
-    
 }
 
 const handleUpload = async ({image}) => {

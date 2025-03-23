@@ -1,6 +1,6 @@
 export default /*html*/ `
     <div id="profile" class="pf-profile-container">
-        <div class="pf-profile-header">
+        <div id="pf-profile-header-id" class="pf-profile-header">
             <div class="pf-match-history-section">
                 <h3 class="pf-section-title">Recent Matches</h3>
                 <div id="match-history" class="pf-match-history-items">
