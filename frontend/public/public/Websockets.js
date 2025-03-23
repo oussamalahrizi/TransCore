@@ -66,6 +66,8 @@ export const SetOnline = () => {
                 if (friendsContainer)
                     friendsContainer.dispatchEvent(new CustomEvent('refresh'))
                 dispatchEvent(new CustomEvent("navbar-profile"))
+                console.log("update navbar");
+                
                 break
             default:
                 app.utils.showToast("ma3rt chhadshy ja mn back : ", message)

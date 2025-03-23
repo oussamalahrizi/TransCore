@@ -116,16 +116,22 @@ const handlers = (container, friend) => {
     viewProfile.addEventListener('click', async (e) => {
         container.remove()
         const view = profile.View
-        const modal = document.createElement("div")
+        var modal = document.getElementById("profile-view-modal")
+        if (modal)
+            modal.remove()
+        modal = document.createElement("div")
         modal.id = "profile-view-modal"
-        modal.className = "add-friend-modal"
-        modal.style.display = "none"
-        modal.innerHTML = view
+        modal.className = "profile-show-modal"
+        // Remove first and last line of the view HTML
+        const viewLines = view.trim().split('\n');
+        const trimmedView = viewLines.slice(1, -1).join('\n');
+        modal.innerHTML = trimmedView;
         document.body.appendChild(modal)
-        showModalWithAnimation(modal)
+        void modal.offsetWidth;
+        modal.classList.add("show")
         await profile.Controller(friend)
         modal.addEventListener("click", (e) => {
-            if (e.target !== document.getElementById("pf-profile-header"))
+            if (e.target === modal)
             {
                 hideModalWithAnimation(modal)
                 modal.remove()
