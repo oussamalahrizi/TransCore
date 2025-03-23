@@ -18,8 +18,6 @@ const renderFriendsList = async (container) => {
 		"ingame": 3,
 		"offline": 4
 	};
-		console.log("requesting friend list");
-		
 		const {data, error} = await app.utils.fetchWithAuth("/api/main/friends/")
 		if (error)
 		{
@@ -51,16 +49,7 @@ const renderFriendsList = async (container) => {
 			
 			friendItem.addEventListener('click', (e) => {
 				e.preventDefault();
-				console.log("friend click data" , friend);
-				if (document.querySelector("#profile-modal"))
-					document.querySelector("#profile-modal").remove()
-				const modal = document.createElement("div")
-				modal.id = "profile-modal"
-				modal.className = "absolute top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center"
-				modal.innerText = 'profile modal'
-				const root = document.getElementById("root")
-				root.appendChild(modal)
-				// showfriend.Controller(friend.auth, container)
+				showfriend.Controller(friend.auth, e.currentTarget)
 			});
 			
 			friendList.appendChild(friendItem);
@@ -127,7 +116,7 @@ const RightSide = (container) => {
 	
 	receivedRequestsBtn.addEventListener("click", receivedComp.Controller);
 	const friendsContainer = container.querySelector("#friend-list-items")
-	friendsContainer.addEventListener("refresh", renderFriendsList(container))
+	friendsContainer.addEventListener("refresh", async ()=> await renderFriendsList(container))
 	friendsContainer.dispatchEvent(new CustomEvent("refresh"))
 }
 
