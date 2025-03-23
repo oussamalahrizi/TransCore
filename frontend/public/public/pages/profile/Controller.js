@@ -1,14 +1,12 @@
-import View from "./View.js";
-
 const MOCK_USER_DATA = {
     username: "GamerPro42",
     status: "online",
     avatar: "/public/assets/dog.png",
-    stats: {
+    game1state: {
         gamesWon: 28,
         gamesLost: 12,
         score: 1250
-    }
+    },
 };
 
 const MOCK_MATCH_HISTORY = [
@@ -25,65 +23,76 @@ const MOCK_MATCH_HISTORY = [
 ];
 
 const createMatchHistoryItem = (match) => {
-    const resultClass = match.result === 'win' ? 'match-win' : 'match-loss';
+    const resultClass = match.result === 'win' ? 'pf-match-win' : 'pf-match-loss';
     const resultIcon = match.result === 'win' ? '🏆' : '❌';
     
     return `
-        <div class="match-item ${resultClass}">
-            <div class="match-result-icon">${resultIcon}</div>
-            <div class="match-details">
-                <div>vs ${match.opponent}</div>
-                <div class="match-score">${match.score}</div>
+        <div class="pf-match-item ${resultClass}">
+            <div class="pf-match-result-icon">${resultIcon}</div>
+            <div class="pf-match-details">
+                <p class="pf-match-score">vs ${match.opponent}</p>
+                <div class="pf-match-score">${match.score}</div>
             </div>
-            <div class="match-time">${match.date}</div>
+            <div class="pf-match-time">${match.date}</div>
         </div>
     `;
 };
 
 const MOCK_CURRENT_USER = {
     id: "current123",
-    username: "CurrentUser"
+    username: "CurrentUser",
+    status: "online",
+    game1state: {
+        gamesWon: 28,
+        gamesLost: 12,
+        score: 1250
+    },
+}
+
+const fetchUserData = async (user) => {
+    var url = "/api/main/user/me/"
+    if (user)
+        url = "/api/main/user/" + user.id
+    const { data, error } = await app.utils.fetchWithAuth(
+        url
+    );
+    if (error) {
+        app.utils.showToast('Error loading profile data. Please try again later.');
+        return;
+    }
+    console.log(data, "data")
+    MOCK_CURRENT_USER.username = data.auth.username
+    MOCK_CURRENT_USER.status = data.status
+    MOCK_CURRENT_USER.avatar = data.auth.icon_url
+    return MOCK_CURRENT_USER
 };
 
-const fetchUserData = async (userId) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return MOCK_USER_DATA;
-};
-
-const fetchMatchHistory = async (userId) => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
+const fetchMatchHistory = async () => {
     return MOCK_MATCH_HISTORY;
 };
 
-
 export default async (user) => {
     try {
-        const url = user ? "/api/main/user/me" : `/api/main/user/${user.id}`
-        const {data, error} = await app.utils.fetchWithAuth(url)
-        if (error)
-        {
-            app.utils.showToast(error)
-            return
-        }
-        const UserData = data
-        const container = document.getElementById("profile-container")
-        container.innerHTML = View(UserData)
-        const { gamesWon, gamesLost, score } = userData.stats;
+        const params = new URLSearchParams(window.location.search);
+        const userData = await fetchUserData(user);
+        document.getElementById('username').textContent = userData.username;
+        document.getElementById('user-status').textContent = userData.status;
+        document.getElementById('user-avatar').src = userData.avatar;
+        const { gamesWon, gamesLost, score } = userData.game1state;
         document.getElementById('games-won').textContent = gamesWon;
         document.getElementById('games-lost').textContent = gamesLost;
         document.getElementById('score').textContent = score;
         const totalGames = gamesWon + gamesLost;
         const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
         document.getElementById('win-rate').textContent = `${winRate}%`;
-        const matchHistory = await fetchMatchHistory(userId || 'some-user-id');
+        const matchHistory = await fetchMatchHistory();
         const matchHistoryContainer = document.getElementById('match-history');
         
         if (matchHistory.length > 0) {
             const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
             matchHistoryContainer.innerHTML = matchHistoryHTML;
         } else {
-            matchHistoryContainer.innerHTML = '<p class="no-matches">No recent matches</p>';
+            matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
         }
         
     } catch (error) {
