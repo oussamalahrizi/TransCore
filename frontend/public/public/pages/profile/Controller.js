@@ -1,3 +1,5 @@
+import View from "./View.js";
+
 const MOCK_USER_DATA = {
     username: "GamerPro42",
     status: "online",
@@ -54,14 +56,19 @@ const fetchMatchHistory = async (userId) => {
     return MOCK_MATCH_HISTORY;
 };
 
-export default async () => {
+
+export default async (user) => {
     try {
-        const params = new URLSearchParams(window.location.search);
-        const userId = params.get('id'); // If null, we'll use a dummy ID to show buttons
-        const userData = await fetchUserData(userId || 'some-user-id');
-        document.getElementById('username').textContent = userData.username;
-        document.getElementById('user-status').textContent = userData.status;
-        document.getElementById('user-avatar').src = userData.avatar;
+        const url = user ? "/api/main/user/me" : `/api/main/user/${user.id}`
+        const {data, error} = await app.utils.fetchWithAuth(url)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        const UserData = data
+        const container = document.getElementById("profile-container")
+        container.innerHTML = View(UserData)
         const { gamesWon, gamesLost, score } = userData.stats;
         document.getElementById('games-won').textContent = gamesWon;
         document.getElementById('games-lost').textContent = gamesLost;

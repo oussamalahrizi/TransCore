@@ -14,6 +14,8 @@ done
 echo "Database is up! Starting the application..."
 
 python3 manage.py makemigrations
+python3 manage.py makemigrations chat
 python3 manage.py migrate
+python3 manage.py check
 
 exec "$@"

@@ -1,4 +1,46 @@
-export default () => {
+
+
+async function fetchUsers() {
+    try {
+        const {data, error} = await app.utils.fetchWithAuth("/api/main/friends/")
+        if (error)
+        {
+            app.utils.showToast(error)
+            return []
+        }
+        console.log("friends first : ", data);
+        const friends = data
+        
+        friends.map(async friend => {
+            try {
+                const {data, error} = await app.utils.fetchWithAuth(`/api/main/user/${friend.auth.id}`)
+                if (error)
+                {
+                    app.utils.showToast(error)
+                    return
+                }
+                friend = data
+                console.log("friend : ", friend);
+                
+            } catch (error) {
+                if (error instanceof  app.utils.AuthError)
+                    return
+                console.log("error in fetching friend info", error);
+            }
+        })
+            return friends
+    }
+    catch (error)
+    {
+        if (error instanceof  app.utils.AuthError)
+            return
+        console.log("error in fetch friends ", error);
+    }
+}
+
+export default async () => {
+    try {
+        
     
     // DOM Elements
     const chatBox = document.getElementById('chat-box');
@@ -83,42 +125,28 @@ export default () => {
         saveStateToLocalStorage();
     }
 
-    function fetchUsers() {
-        const token = app.utils.getCookie("access_token");
-        fetch("http://localhost:8000/api/auth/users/?format=json", {
-            headers: { "Authorization": `Bearer ${token}` },
-        })
-            .then(response => response.json())
-            .then(fetchedUsers => {
-                const newUsers = fetchedUsers.filter(user => !users.some(existingUser => existingUser.id === user.id));
-                if (newUsers.length > 0) {
-                    users = [...users, ...newUsers];
-                    console.log("Fetched new users:", newUsers);
-                    updateUserList();
-                }
-            })
-            .catch(error => console.error("Error fetching users:", error));
-    }
+    const friends = await fetchUsers()
+    updateUserList(friends)
 
     
-    function filterUsers() {
-        let filteredUsers = users.filter(user => user.username !== currentUser?.username);
+    function filterUsers(users) {
+        let filteredUsers = users.filter(user => user.auth.username !== currentUser.auth.username);
     
         const searchQuery = searchInput.value.toLowerCase();
         if (searchQuery) {
-            filteredUsers = filteredUsers.filter(user => user.username.toLowerCase().includes(searchQuery));
+            filteredUsers = filteredUsers.filter(user => user.auth.username.toLowerCase().includes(searchQuery));
         }
     
         if (filterUnreadCheckbox.checked) {
-            filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
+            filteredUsers = filteredUsers.filter(user => (unreadMessages[user.auth.username] || 0) > 0);
         }
     
         return filteredUsers;
     }
 
     
-    function updateUserList() {
-        const filteredUsers = filterUsers();
+    function updateUserList(friends) {
+        const filteredUsers = friends
         const userListContainer = document.getElementById('user-list-container');
         userListContainer.innerHTML = ''; 
     
@@ -440,4 +468,10 @@ window.addEventListener('load', () => {
     }
     
     initializeUserList();
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+            return
+        console.log("error in chat controller :", error);
+        
+    }
 };

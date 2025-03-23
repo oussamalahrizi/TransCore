@@ -30,7 +30,7 @@ export const SetOnline = () => {
         switch (type)
         {
             case "notification":
-                const message = data
+                const message = data.message
                 const color = data.color ? data.color : "red"
                 Notification(message, color)
                 break
@@ -51,6 +51,7 @@ export const SetOnline = () => {
                 console.log("received in game event");
                 console.log(data);
                 dispatchEvent(new CustomEvent("play-button"))
+                app.Router.navigate(`/game?game_id=${data.game_id}`)
                 break
             case 'invite':
                 app.utils.showToast("wslatk invite")

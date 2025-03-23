@@ -34,6 +34,8 @@ addEventListener("websocket", (e) => {
 		return;
 	}
 	if (!app.utils.getCookie("access_token")) return;
+	if (app.websocket && app.websocket.readyState === WebSocket.OPEN)
+		return
 	SetOnline();
 	if (app.websocket.readyState === WebSocket.CLOSED) {
 		console.log("failed");
@@ -126,6 +128,9 @@ addEventListener("play-button", async (e)=> {
 import { handleLogout } from "./pages/Settings/Controller.js";
 import { rendergame } from "./pages/game/websockets.js";
 
+let count = 1
+
+
 addEventListener("navbar-profile", async (e) => {
 	var token = app.utils.getCookie("access_token");
 	const view = document.getElementById("profile-container");
@@ -137,40 +142,24 @@ addEventListener("navbar-profile", async (e) => {
 						<h1 class="signin-text">Sign In</h1>
 				 </a>
 			`;
+		app.Router.disableReload()
+		dispatchEvent(new CustomEvent("play-button"));
 		return;
 	}
 	try {
+		
 		const { data, error } = await app.utils.fetchWithAuth(
-			"/api/auth/users/me/"
+			"/api/main/user/me/"
 		);
 		if (error) {
 			view.innerHTML = placeholder;
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		const img = data.icon_url
-		console.log("image url : ", img);
-		
-		if (img && img.startsWith("/"))
-		{
-			console.log("fetching image navbar");
-			
-			const res = await app.utils.fetchWithAuth(img);
-			console.log("res", res);
-			
-			if (res.error)
-			{
-				view.innerHTML = placeholder;
-				app.utils.showToast("Failed to get your data");
-				return;
-			}
-			view.innerHTML = NavProfile({
-				username : data.username,
-				icon_url : res.data
-			})	
-		}
-		else
-			view.innerHTML = NavProfile(data);
+		const img = data.auth.icon_url
+		console.log("image url : ", img, count);
+		count +=1
+		view.innerHTML = NavProfile({icon_url : img, username : data.auth.username});
 
 		const existingModal = document.getElementById("profile-modal");
 		if (existingModal) {
@@ -251,6 +240,7 @@ addEventListener("navbar-profile", async (e) => {
 				
 			});
 			app.Router.disableReload()
+			dispatchEvent(new CustomEvent("play-button"));
 	} catch (error) {
 		if (error instanceof app.utils.AuthError) {
 			return;

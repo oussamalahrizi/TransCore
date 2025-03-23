@@ -22,12 +22,14 @@ async def fetch_user_by_username(username: str):
         raise DenyConnection("Failed to fetch receipent info form auth")
     except httpx.HTTPStatusError as e:
         if e.response.status_code == httpx.codes.NOT_FOUND:
-            logger.error(f"User not found: {user_id}")
+            logger.error(f"User not found: {username}")
             raise DenyConnection("User Not Found.")
         logger.error(f"HTTP error fetching user info: {e}")
         raise DenyConnection("Failed to fetch user info form auth")
     except:
         raise DenyConnection("Failed to fetch user info form auth")
+
+from pprint import pprint
 
 class ChatConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -47,6 +49,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.close(code=4002 if not self.user else 4003, reason="Receipent not found or invalid.")
                     return
                 self.other = await fetch_user_by_username(other)
+                pprint(other)
             except DenyConnection as e:
                 await self.close(code=4002 if not self.user else 4003, reason=str(e))
                 return
@@ -107,7 +110,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "type": "send_notification",
                 "data": {
                     "user_id": str(recipient_id),  
-                    "message": f"New message from {sender_id}: {message}",
+                    "message": f"New message from {self.user["username"]}: {message}",
+                    "color" : "green"
                 },
             }
             notifspub = self.scope.get("notifspub")  

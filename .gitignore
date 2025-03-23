@@ -2,5 +2,4 @@ frontend/public/node_modules
 **/venv/
 auth_build/build/conf/.env
 **/__pycache__/
-**/migrations/
 **/.vscode/

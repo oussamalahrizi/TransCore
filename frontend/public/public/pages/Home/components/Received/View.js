@@ -12,10 +12,8 @@ export default (receivedRequests) =>  /*html*/`
                     <div class="received-request-info">
                     ${!request.icon_url ?
                         '<img src="/public/assets/icon-placeholder.svg" class="received-avatar"/>' 
-                        : request.icon_url.startsWith("https") ?
-                        `<img src="${request.icon_url}" class="received-avatar"/>`
                         :
-                        `<img src="data:image/png;base64,${request.icon_url}" class="received-avatar"/>`
+                        `<img src="${request.icon_url}" class="received-avatar"/>`
                     }
                         <span class="received-username">${request.username}</span>
                     </div>
