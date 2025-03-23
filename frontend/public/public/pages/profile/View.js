@@ -1,4 +1,12 @@
-export default /*html*/ `
+/**
+ * @param {Object} UserData
+ * @param {Object} UserData.auth
+ * @param {Object} UserData.auth.username
+ * @param {string} UserData.auth.icon_url
+ * @param {string} UserData.status
+ * @returns
+ */
+export default ({ auth, status }) => /*html*/ `
     <div id="profile" class="profile-container">
         <div class="profile-header">
             <div class="match-history-section">
@@ -12,13 +20,13 @@ export default /*html*/ `
             
             <div class="profile-middle-section">
                 <div class="profile-avatar-container">
-                    <img id="user-avatar" class="profile-avatar" src="/public/assets/dog.png" alt="Profile picture">
+                    <img id="user-avatar" class="profile-avatar" src="${auth.icon_url || '/public/assets/icon-placeholder.svg'}">
                 </div>
                 <div class="profile-info">
-                    <h1 id="username" class="profile-username">Loading...</h1>
+                    <h1 id="username" class="profile-username">${auth.username}</h1>
                     <div class="status-container">
                         <div class="online-status online"></div>
-                        <p id="user-status" class="profile-status">Online</p>
+                        <p id="user-status" class="profile-status">${status}</p>
                     </div>
                     <div class="profile-actions" style="display: flex;">
                     </div>

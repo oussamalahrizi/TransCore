@@ -475,16 +475,28 @@ class RawImageParser(BaseParser):
         }
         return file_dict
 
-from base64 import b64encode
-from io import BytesIO
-
+from django.http.response import FileResponse
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import AllowAny
 class UserImageView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     def get_parsers(self):
         if self.request.method == "POST":
             return [RawImageParser()]
         return super().get_parsers()
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return super().get_permissions()
+
+    def get_authenticators(self):
+        if self.request.method == "GET":
+            return []
+        return super().get_authenticators()
+
 
     class UploadSerialize(serializers.Serializer):
         image = serializers.ImageField()
@@ -511,42 +523,34 @@ class UserImageView(APIView):
                 return None
 
     def get(self, request : Request, *args, **kwargs):
-        user : User = request.user
         id = kwargs.get("id")
+        user : User = request.user
+        if not id:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "Missing id"})
         try:
-            if not id:
-                id != user.id
-                if id != user.id:
-                    other : User = get_object_or_404(User, id=id)
-                    rel = self.relation(user, other)
-                    if rel.status == "blocked":
-                        return Response(status=status.HTTP_403_FORBIDDEN)
-                    user = other
-            try:
-                image : ImageUser = ImageUser.objects.get(user=user)
-                with open(image.image.path, "rb") as img_file:
-                    image_data = img_file.read()
-                return Response(b64encode(image_data).decode())
-            except ImageUser.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND, data={"detail": "No image found"})
-            except BaseException as e:
-                print(str(e))
-                return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data="Internal Server error")
+            user : User = get_object_or_404(User, id=id)
+            image = get_object_or_404(ImageUser, user=user)
+            print("sending response")
+            return FileResponse(image.image)
         except Http404:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-    
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "Not Found"})
+
     def post(self, request : Request, *args, **kwargs):
         ser = self.UploadSerialize(data=request.data)
         ser.is_valid(raise_exception=True)
         image : SimpleUploadedFile= ser.validated_data["image"]
         user : User = request.user
         save, created = ImageUser.objects.get_or_create(user=user)
+        if not created:
+            save.image.delete()
+        print("setting image")
         save.image = image
         save.save()
-        user.icon_url = f"/api/auth/users/image/{user.id}/"
+        user.icon_url = f'/api/auth/users/image/{user.id}/'
         user.save()
         async_to_sync(NotifyApi)(user.id, type="clear_cache")
-        return Response({"detail" :"OK?"})
+        return Response({"detail" :"Image changed successfully."})
     
     def delete(self, request : Request, *args, **kwargs):
         user : User = request.user

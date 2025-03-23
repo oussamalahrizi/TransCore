@@ -110,7 +110,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			if user is None:
 				raise InvalidToken("User Not Found", custom_code=status.HTTP_404_NOT_FOUND)
 			if not user["is_active"]:
-				raise InvalidToken('User is not active.', custom_code=status.HTTP_423_LOCKED)
+				raise InvalidToken('User is not active.', custom_code=status.HTTP_423_LOCKED, clear=True)
 			"""
 				verify if the session id in the token is same in the cache,
 				the only source of truth for session validity is the cache 
@@ -124,7 +124,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			if sess_cache is None:
 				raise jwt.ExpiredSignatureError
 			if sess_cache != sess_id:
-				raise InvalidToken("Access token revoked",custom_code=status.HTTP_423_LOCKED)
+				raise InvalidToken("Access token revoked",custom_code=status.HTTP_423_LOCKED, clear=True)
 		except jwt.ExpiredSignatureError:
 			raise InvalidToken('Token expired.', custom_code=status.HTTP_401_UNAUTHORIZED)
 		except jwt.InvalidTokenError:

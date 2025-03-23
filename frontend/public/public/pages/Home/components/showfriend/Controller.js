@@ -1,5 +1,6 @@
 import View from "./View.js";
 import { showModalWithAnimation, hideModalWithAnimation } from "../../../../modalAnimations.js";
+import Profile from "../../../profile/index.js"
 
 /**
  * 
@@ -110,6 +111,9 @@ const handlers = (container, friend) => {
             console.log("error in block friend", error);
         }
     });
+    // view-profile-${friend.id}
+    const profile = container.querySelector(`#view-profile-${friend.id}`)
+    profile.addEventListener("click", Profile.Controller(friend.id))
 }
 
 

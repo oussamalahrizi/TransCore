@@ -15,7 +15,7 @@ USERINFO_URL = "http://auth-service/api/auth/internal/userid/"
 class JWTMiddleware(BaseMiddleware):
     def __init__(self, app, notifspub=None):
         super().__init__(app)
-        self.notifspub = notifspub  
+        self.notifspub = notifspub
 
     async def __call__(self, scope: dict, receive, send):
         try:
