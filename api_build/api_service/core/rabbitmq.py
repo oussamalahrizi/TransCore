@@ -69,7 +69,7 @@ class APIConsumer(AsyncRabbitMQConsumer):
     def __init__(self, host, port, queue_name):
         self.actions = {
             "clear_cache" : self.clear_cache,
-            "refresh_friends" : self.refresh_friends
+            "refresh_friends" : self.refresh_friends,
         }
         super().__init__(host, port, queue_name)
 

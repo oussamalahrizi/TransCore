@@ -64,10 +64,10 @@ const handleblock = async (id, container) => {
     }
     console.log("block friend : ", data)
     app.utils.showToast(data.detail, 'green')
-    container.classList.remove('show');
-    container.remove();
     const friendscontainer = document.querySelector("#friend-list-items")
     friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
+    container.classList.remove('show');
+    container.remove();
 }
 
 /**
@@ -126,7 +126,7 @@ export default async (friend, target) => {
     try {
         const existingModal = document.getElementById("friend-modal");
         if (existingModal)
-            existingModal.remove();
+            return
         
         const friendModal = document.createElement("div");
         friendModal.id = "friend-modal";

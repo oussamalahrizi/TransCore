@@ -18,8 +18,6 @@ const renderFriendsList = async (container) => {
 		"ingame": 3,
 		"offline": 4
 	};
-		console.log("requesting friend list");
-		
 		const {data, error} = await app.utils.fetchWithAuth("/api/main/friends/")
 		if (error)
 		{
@@ -51,7 +49,6 @@ const renderFriendsList = async (container) => {
 			
 			friendItem.addEventListener('click', (e) => {
 				e.preventDefault();
-				console.log("friend click data" , friend);
 				showfriend.Controller(friend.auth, e.currentTarget)
 			});
 			
@@ -119,7 +116,7 @@ const RightSide = (container) => {
 	
 	receivedRequestsBtn.addEventListener("click", receivedComp.Controller);
 	const friendsContainer = container.querySelector("#friend-list-items")
-	friendsContainer.addEventListener("refresh", renderFriendsList(container))
+	friendsContainer.addEventListener("refresh", async ()=> await renderFriendsList(container))
 	friendsContainer.dispatchEvent(new CustomEvent("refresh"))
 }
 
