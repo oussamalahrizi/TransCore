@@ -19,7 +19,10 @@
   position: relative;
   width: 210px;
   height: 284px;
-  background-color: #1D1D1D;
+  background-image: url("../../assets/singleplayer2.png");
+  background-color: #84ed8bcb;
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: column;
   justify-content: end;
@@ -94,7 +97,7 @@
 
 #multiplayer-card::before,
 #multiplayer-card::after {
-  background: linear-gradient(-45deg, #00c3ff 0%, #0575e6 100%);
+  background: linear-gradient(-45deg, #84c9df 0%, #0575e6 100%);
 }
 
 #tournament-card::before,
