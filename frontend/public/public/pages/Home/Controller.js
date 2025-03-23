@@ -2,8 +2,6 @@ import { showModalWithAnimation, hideModalWithAnimation } from '../../modalAnima
 import receivedComp from "./components/Received/index.js"
 import showfriend from "./components/showfriend/index.js"
 import AddFriendModal from "./components/AddFriendModal/index.js"
-import ProfileModal from "./components/Profile/View.js"
-
 
 /**
  * 

@@ -1,6 +1,6 @@
 import View from "./View.js";
 import { showModalWithAnimation, hideModalWithAnimation } from "../../../../modalAnimations.js";
-import Profile from "../../../profile/index.js"
+import profile from "../../../profile/index.js";
 
 /**
  * 
@@ -64,10 +64,10 @@ const handleblock = async (id, container) => {
     }
     console.log("block friend : ", data)
     app.utils.showToast(data.detail, 'green')
-    const friendscontainer = document.querySelector("#friend-list-items")
-    friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
     container.classList.remove('show');
     container.remove();
+    const friendscontainer = document.querySelector("#friend-list-items")
+    friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
 }
 
 /**
@@ -111,7 +111,27 @@ const handlers = (container, friend) => {
             console.log("error in block friend", error);
         }
     });
-    
+
+    const viewProfile = container.querySelector(`#view-profile-${friend.id}`)
+    viewProfile.addEventListener('click', async (e) => {
+        container.remove()
+        const view = profile.View
+        const modal = document.createElement("div")
+        modal.id = "profile-view-modal"
+        modal.className = "add-friend-modal"
+        modal.style.display = "none"
+        modal.innerHTML = view
+        document.body.appendChild(modal)
+        showModalWithAnimation(modal)
+        await profile.Controller(friend)
+        modal.addEventListener("click", (e) => {
+            if (e.target !== document.getElementById("pf-profile-header"))
+            {
+                hideModalWithAnimation(modal)
+                modal.remove()
+            }
+        })
+    })
 }
 
 
@@ -126,7 +146,7 @@ export default async (friend, target) => {
     try {
         const existingModal = document.getElementById("friend-modal");
         if (existingModal)
-            return
+            existingModal.remove();
         
         const friendModal = document.createElement("div");
         friendModal.id = "friend-modal";
