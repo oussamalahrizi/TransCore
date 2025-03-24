@@ -17,10 +17,8 @@ export default /*html*/ `
                 <div class="pf-profile-info">
                     <h1 id="username" class="pf-profile-username">Loading...</h1>
                     <div class="pf-status-container">
-                        <div class="pf-online-status pf-online"></div>
-                        <p id="user-status" class="pf-profile-status">Online</p>
-                    </div>
-                    <div class="pf-profile-actions" style="display: flex;">
+                        <div id="status-circle" class="pf-online-status"></div>
+                        <p id="user-status"></p>
                     </div>
                 </div>
             </div>

@@ -130,14 +130,15 @@ const handlers = (container, friend) => {
         void modal.offsetWidth;
         modal.classList.add("show")
         await profile.Controller(friend)
-        modal.addEventListener("click", (e) => {
-            if (e.target === modal)
-            {
-                hideModalWithAnimation(modal)
-                modal.remove()
-            }
+            modal.addEventListener("click", (e) => {
+                if (e.target !== modal)
+                    return
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            });
         })
-    })
 }
 
 

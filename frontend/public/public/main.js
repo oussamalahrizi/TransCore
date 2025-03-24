@@ -206,10 +206,8 @@ addEventListener("navbar-profile", async (e) => {
 
 			if (profileModal.style.display === "none") {
 				showModalWithAnimation(profileModal);
-				console.log("Modal shown with animation");
 			} else {
 				hideModalWithAnimation(profileModal);
-				console.log("Modal hidden with animation");
 			}
 		});
 
@@ -226,7 +224,6 @@ addEventListener("navbar-profile", async (e) => {
 				e.target !== button
 			) {
 				hideModalWithAnimation(profileModal);
-				console.log("Modal closed by outside click");
 			}
 		});
 
@@ -235,7 +232,6 @@ addEventListener("navbar-profile", async (e) => {
 			.addEventListener("click", async (e) => {
 				e.preventDefault();
 				hideModalWithAnimation(profileModal);
-
 				await handleLogout()
 				
 			});

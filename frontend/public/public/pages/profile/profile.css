@@ -152,17 +152,40 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 2px solid #1f2937;
+    border: 1px solid #1f2937;
     display: inline-block;
     position: static;
-}
-
-.pf-online {
     background-color: #10b981;
 }
 
-.pf-offline {
+.pf-offline-status {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #1f2937;
+    display: inline-block;
+    position: static;
     background-color: #6b7280;
+}
+
+.pf-inqueue-status {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #1f2937;
+    display: inline-block;
+    position: static;
+    background-color: #e2aa00;
+}
+
+.pf-ingame-status {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #1f2937;
+    display: inline-block;
+    position: static;
+    background-color: #0041c3;
 }
 
 .pf-profile-info {
@@ -180,45 +203,36 @@
     text-align: center;
 }
 
-.pf-profile-status {
+.pf-profile-online-status {
     font-size: 1.05rem;
-    color: #9ca3af;
+    color: #10b981;
     margin: 0;
     display: inline;
     text-transform: capitalize;
 }
 
-.pf-profile-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 0.5rem;
-    justify-content: center;
-    width: 100%;
-}
-
-.pf-action-button {
-    padding: 0.6rem 1.2rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
+.pf-profile-offline-status {
     font-size: 1.05rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    background-color: #029F5B;
-    color: white;
-    min-width: 120px;
+    color: #6b7280;
+    margin: 0;
+    display: inline;
+    text-transform: capitalize;
 }
 
-.pf-action-button:hover {
-    background-color: #017d47;
+.pf-profile-inqueue-status {
+    font-size: 1.05rem;
+    color: #e2aa00;
+    margin: 0;
+    display: inline;
+    text-transform: capitalize;
 }
 
-.pf-action-button.danger {
-    background-color: #E22626;
-}
-
-.pf-action-button.danger:hover {
-    background-color: #bf1f1f;
+.pf-profile-ingame-status {
+    font-size: 1.05rem;
+    color: #0041c3;
+    margin: 0;
+    display: inline;
+    text-transform: capitalize;
 }
 
 .pf-profile-stats {
@@ -241,8 +255,18 @@
     color: #f3f4f6;
 }
 
-.pf-win-rate {
+.pf-win-rate-positive {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
     color: #029F5B;
+}
+
+.pf-win-rate-negative {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #E22626;
 }
 
 .pf-stat-label {
