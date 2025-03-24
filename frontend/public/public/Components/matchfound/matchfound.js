@@ -11,8 +11,8 @@ export default  /*html*/`
             </div>
             <p class="matchfound-message">Match Found!</p>
             <div class="matchfound-buttons">
-                <button id="accept-match" class="decline-btn">Decline</button>
-                <button id="decline-match" class="accept-btn">Accept</button>
+                <button id="decline-match" class="decline-btn">Decline</button>
+                <button id="accept-match" class="accept-btn">Accept</button>
             </div>
         </div>
     </div>

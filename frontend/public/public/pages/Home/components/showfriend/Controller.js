@@ -82,6 +82,7 @@ const handlers = (container, friend) => {
             e.preventDefault();
             app.utils.showToast(`Invited ${friend.username} to a game`, "green");
             hideModalWithAnimation(container);
+            container.remove()
         } catch (error) {
             if (error instanceof app.utils.AuthError)
                 return
@@ -92,7 +93,8 @@ const handlers = (container, friend) => {
     unfriend.addEventListener('click', async () => {
         try {
             await handleUnfriend(friend.id, container)
-            hideModalWithAnimation(container);    
+            hideModalWithAnimation(container);   
+            container.remove()
         } catch (error) {
             if (error instanceof app.utils.AuthError)
                 return
@@ -105,6 +107,7 @@ const handlers = (container, friend) => {
         {
             await handleblock(friend.id, container)
             hideModalWithAnimation(container);
+            container.remove()
         } catch (error) {
             if (error instanceof app.utils.AuthError)
                 return
@@ -175,6 +178,7 @@ export default async (friend, target) => {
                 !friendModal.contains(e.target) && 
                 !target.contains(e.target)) {
                 hideModalWithAnimation(friendModal);
+                friendModal.remove()
                 document.removeEventListener("click", closeModal);
             }
         });

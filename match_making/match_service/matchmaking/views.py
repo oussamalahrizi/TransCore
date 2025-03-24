@@ -129,21 +129,27 @@ class AcceptMatchPong(APIView):
     cache = Queue
     class GIDSerialier(serializers.Serializer):
         game_id = serializers.CharField(required=True)
+        state = serializers.BooleanField(required=True)
 
     def post(self, request : Request, *args, **kwargs):
         current : ProxyUser = request.user
-        id = current["id"]
+        id = current.to_dict()["id"]
         ser = self.GIDSerialier(data=request.data)
         ser.is_valid(raise_exception=True)
         game_id = ser.validated_data["game_id"]
         game_info = self.cache.get_game_info(game_id=game_id, type="pong")
         if not game_info:
             return Response(status=status.HTTP_400_BAD_REQUEST,
-                            data={"detail" : "Game Not Found."})
+                            data={"detail" : "Game Not Found Or"
+                            "Canceled"})
         players = game_info["players"]
         if id not in players:
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data={"detail" : "You are not in this game"})
+        state = ser.validated_data["state"]
+        if not state:
+            self.cache.handle_decline(game_id, "pong", id)
+            return Response(data={"detail" : "You declined"})
         notif = publishers[1]
         body = {
             'type' : "update_status",
@@ -151,8 +157,8 @@ class AcceptMatchPong(APIView):
             'status' : "ingame"
         }
         async_to_sync(notif.publish)(body)
-        return Response(data={'game_id' : game_id})
-        # respond with game id
+        return Response(data={'detail' : "Redirecting to the game"})
+
 
 """
     TODO :

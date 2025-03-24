@@ -42,7 +42,7 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
 		print(f"{self.user['username']} disconnected")
 		await self.send_friends()
-	
+
 
 	async def disconnect_user(self, event):
 		print("disconnect user consumer", event)
@@ -66,6 +66,10 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		}
 		await self.send(json.dumps(data))
 
+	async def cancel_game(self, event):
+		await self.send(json.dumps({
+			"type" : 'cancel_game'
+		}))
 	
 	async def status_update(self, event):
 		print("status update event")
@@ -93,8 +97,6 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		user_id = self.user["id"]
 		user_data = self.cache.get_user_data(user_id)
 		friends = user_data["auth"].get("friends")
-		print(f"{self.user["username"]} friends")
-		pprint(friends)
 		if not friends:
 			return
 		for f in friends:
