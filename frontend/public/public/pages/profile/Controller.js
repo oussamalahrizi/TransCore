@@ -4,7 +4,7 @@ const MOCK_USER_DATA = {
     avatar: "/public/assets/dog.png",
     game1state: {
         gamesWon: 28,
-        gamesLost: 12,
+        gamesLost: 16,
         score: 1250
     },
 };
@@ -44,7 +44,7 @@ const MOCK_CURRENT_USER = {
     status: "online",
     game1state: {
         gamesWon: 28,
-        gamesLost: 12,
+        gamesLost: 29,
         score: 1250
     },
 }
@@ -76,7 +76,10 @@ export default async (user) => {
         const params = new URLSearchParams(window.location.search);
         const userData = await fetchUserData(user);
         document.getElementById('username').textContent = userData.username;
-        document.getElementById('user-status').textContent = userData.status;
+        var statustext = document.getElementById('user-status');
+        statustext.textContent = userData.status;
+        statustext.className = "pf-profile-" + userData.status + "-status";
+        document.getElementById('status-circle').className = "pf-" + userData.status + "-status";
         document.getElementById('user-avatar').src = userData.avatar;
         const { gamesWon, gamesLost, score } = userData.game1state;
         document.getElementById('games-won').textContent = gamesWon;
@@ -85,6 +88,7 @@ export default async (user) => {
         const totalGames = gamesWon + gamesLost;
         const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
         document.getElementById('win-rate').textContent = `${winRate}%`;
+        document.getElementById('win-rate').className = "pf-win-rate-" + (winRate > 50 ? "positive" : "negative");
         const matchHistory = await fetchMatchHistory();
         const matchHistoryContainer = document.getElementById('match-history');
         
