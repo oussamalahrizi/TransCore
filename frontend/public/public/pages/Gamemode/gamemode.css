@@ -20,9 +20,9 @@
   width: 210px;
   height: 284px;
   background-image: url("../../assets/singleplayer2.png");
-  background-color: #84ed8bcb;
   background-size: cover;
   background-position: center;
+  background-color: #6eae57;
   display: flex;
   flex-direction: column;
   justify-content: end;
@@ -35,7 +35,6 @@
 .card::before {
   content: "";
   position: absolute;
-  background-image: url("../../assets/singleplayer2.png");
   inset: 0;
   left: -5px;
   margin: auto;
@@ -52,7 +51,6 @@
   content: "";
   z-index: -1;
   position: absolute;
-  background-image: url("../../assets/singleplayer2.png");
   inset: 0;
   background: linear-gradient(-45deg, #f7ff00 0%, #05f239 100%);
   transform: translate3d(0, 0, 0) scale(0.95);
@@ -92,13 +90,14 @@
 }
 
 /* Add IDs for specific card styling if needed */
+#singleplayer-card::before,
 #singleplayer-card::after {
   background: linear-gradient(-45deg, #f7ff00 0%, #05f239 100%);
 }
 
 #multiplayer-card::before,
 #multiplayer-card::after {
-  background-color: linear-gradient(-45deg, #84c9df 0%, #0575e6 100%);
+  background: linear-gradient(-45deg, #65dbff 0%, #0080ff 100%);
 }
 
 #tournament-card::before,

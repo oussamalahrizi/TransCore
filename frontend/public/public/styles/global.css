@@ -190,7 +190,7 @@
 }
 
 
-.inqueue {
+.in-queue {
   align-items: center;
   line-height: 1.5rem;
   background-color: #ff9800;
@@ -208,14 +208,14 @@
   transition: 0.25s;
 }
 
-.inqueue:hover {
+.in-queue:hover {
   opacity: 1;
   background-color: #d18411;
   box-shadow: 0 0 10px rgba(188, 144, 2, 0.74);
   color: #fff;
 }
 
-.ingame {
+.in-game {
   text-align: center;
   line-height: 1.5rem;
   background-color: #2e00fd;
@@ -233,7 +233,7 @@
   transition: 0.25s;
 }
 
-.ingame:hover {
+.in-game:hover {
   opacity: 1;
   background-color: #3718c1;
   box-shadow: 0 0 10px rgba(0, 21, 255, 0.553);
