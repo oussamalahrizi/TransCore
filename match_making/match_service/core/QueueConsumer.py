@@ -79,8 +79,7 @@ class QueueConsumer(AsyncRabbitMQConsumer):
 
     def remove_pqueue(self, data : dict):
         user_id = data.get('user_id')
-        type = data.get('queue_type')
-        self.cache.remove_player(user_id, type)
+        self.cache.remove_player(user_id)
     
     async def game_over(self, data : dict):
         match_type = data.get("match_type")

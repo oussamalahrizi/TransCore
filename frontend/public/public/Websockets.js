@@ -5,6 +5,7 @@ export let lastMessages = {};
 import { isChatActive, selectedChatUser } from './pages/chat/Controller.js';
 import MatchFound from "./Components/matchfound/Controller.js"
 import MatchFoundView from "./Components/matchfound/matchfound.js"
+import { hideModalWithAnimation } from './modalAnimations.js';
 
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
@@ -83,8 +84,18 @@ export const SetOnline = () => {
                 const game_id = data.game_id
                 await MatchFound(game_id)
                 break
+            case 'cancel_game':
+                const modalContainer = document.getElementById("match-found-modal")
+                if (modalContainer)
+                {
+                    hideModalWithAnimation(modalContainer)
+                    modalContainer.remove()
+                }
+                if (location.pathname === "/game")
+                    app.Router.navigate("/")
+                break
             default:
-                app.utils.showToast("ma3rt chhadshy ja mn back : ", message)
+                app.utils.showToast("ma3rt chhadshy ja mn back : ", type)
                 break
         }
     }
