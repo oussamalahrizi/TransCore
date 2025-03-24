@@ -63,21 +63,29 @@ class JWTAuthentication(authentication.BaseAuthentication):
 	async def get_user_data(self, user_id):
 		try:
 			user_data = self.cache.get_user_data(user_id)
-			if user_data and user_data.get("auth"):
+			if user_data and user_data.get("auth") and user_data.get("auth").get("friends"):
 				return user_data["auth"]
 			timeout = httpx.Timeout(5.0, read=5.0)
-			async with httpx.AsyncClient(timeout=timeout) as client:
-				response = await client.get(f"{USER_INFO}{user_id}/")
-				response.raise_for_status()
-				self.cache.set_user_data(user_id, data=response.json(), service="auth")
-				return response.json()
-		except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
+			client = httpx.AsyncClient(timeout=timeout)
+			response = await client.get(f"{USER_INFO}{user_id}/")
+			response.raise_for_status()
+			self.cache.set_user_data(user_id, data=response.json(), service="auth")
+			data = response.json()
+			response = await client.get(f"http://auth-service/api/auth/internal/friends/{user_id}/")
+			response.raise_for_status()
+			friends = response.json()
+			for f in friends:
+				self.cache.set_user_data(data=f, user_id=f["id"], service="auth")
+				self.cache.append_user_friends(user_id, f["id"])
+			return data
+		except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError) as e:
+			print(e)
 			raise InvalidToken(detail="Failed to get user data from Auth service",
 					  custom_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		except httpx.HTTPStatusError as e:
 			if e.response.status_code == httpx._status_codes.codes.NOT_FOUND:
 				return None
-			raise InvalidToken("Internal Server Error",
+			raise InvalidToken(f"Internal Server Error {e.response.json()}",
 					  custom_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
 	async def get_session_state(self, user_id):

@@ -22,18 +22,7 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await sync_to_async(self.cache.set_user_online)(self.user["id"])
 		await self.channel_layer.group_add(self.group_name, self.channel_name)
 		print(f"{self.user['username']} connected")
-		friends = self.cache.get_user_data(self.user["id"]).get("auth").get("friends")
-		if not friends:
-			print("no friends connect")
-			return
-		for f in friends:
-			f_status = self.cache.get_user_status(f)
-			if f_status != "offline":
-				print("sending to user ", f)
-				group = f"notification_{f}"
-				await get_channel_layer().group_send(group, {
-					"type": "refresh_friends"
-				})
+		await self.send_friends()
 
 	async def disconnect(self, code):
 		if code == 4001:
@@ -50,22 +39,9 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 				}
 			}
 			await queue_publisher.publish(body)
-		# TODO also notify game and tournament to remove the player
-		# notify his friends to refresh the friend list
-		user_data = self.cache.get_user_data(self.user["id"])
-		friends = user_data.get("auth").get("friends")
 		await sync_to_async(self.cache.set_user_offline)(self.user['id'])
 		print(f"{self.user['username']} disconnected")
-		if not friends:
-			return
-		for f in friends:
-			f_status = self.cache.get_user_status(f)
-			if f_status != "offline":
-				print("sending to user ", f)
-				group = f"notification_{f}"
-				await get_channel_layer().group_send(group, {
-					"type": "refresh_friends"
-				})
+		await self.send_friends()
 	
 
 	async def disconnect_user(self, event):
@@ -82,23 +58,24 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		if event.get("color"):
 			data["color"] = event["color"]
 		await self.send(text_data=json.dumps(data))
-		print("send regular notification message")
-	
-	async def set_user_game(self, event):
-		data = {
-			'type' : "ingame",
+
+	async def match_found(self, event):
+		data =  {
+			"type" : "match_found",
 			'game_id' : event["game_id"]
 		}
-		await self.send(text_data=json.dumps(data))
+		await self.send(json.dumps(data))
+
 	
 	async def status_update(self, event):
 		print("status update event")
-		pprint(event)
 		data = {
 			"type" : "status_update",
-			"status" : event["status"]
 		}
+		self.cache.set_user_status(self.user["id"], event["status"])
 		await self.send(json.dumps(data))
+		print("sending friends")
+		await self.send_friends()
 
 	async def refresh_friends(self, event):
 		await self.send(text_data=json.dumps({
@@ -109,3 +86,22 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data=json.dumps({
 			'type' : "update_info"
 		}))
+		await self.send_friends()
+
+
+	async def send_friends(self):
+		user_id = self.user["id"]
+		user_data = self.cache.get_user_data(user_id)
+		friends = user_data["auth"].get("friends")
+		print(f"{self.user["username"]} friends")
+		pprint(friends)
+		if not friends:
+			return
+		for f in friends:
+			data = self.cache.get_user_status(f)
+			if data == "offline":
+				continue
+			group_name = f"notification_{f}"
+			await self.channel_layer.group_send(group_name, {
+				'type': 'refresh_friends'
+			})

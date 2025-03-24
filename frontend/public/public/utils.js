@@ -204,6 +204,20 @@ const LoadCss = async (href) => {
 }
 
 
+
+const LoadCompCss = async (href) => {
+    const load = ()=> new Promise((resolve) => {
+        const link = document.createElement("link")
+        link.onload = () => resolve({loaded : true, elment : link})
+        link.onerror = () => resolve({loaded : false, elment : link})
+        link.href = href
+        link.rel = "stylesheet"
+        document.head.appendChild(link)
+    })
+    return await load()
+}
+
+
 export default {
 	setCookie,
 	removeCookie,
@@ -214,5 +228,6 @@ export default {
     showToast,
     AuthError,
     ButtonHandler,
-    LoadCss
+    LoadCss,
+    LoadCompCss
 };
