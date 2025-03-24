@@ -112,7 +112,6 @@ async function handleGameEnd(winner) {
   gameContainer.appendChild(view);
   await sleep(2);
   view.remove();
-  app.Router.navigate("/");
 }
 
 function updateScoreDisplay() {
