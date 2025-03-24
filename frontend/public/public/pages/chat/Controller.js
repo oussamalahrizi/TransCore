@@ -1,3 +1,8 @@
+
+import Profile from "../profile/index.js"
+import { hideModalWithAnimation } from "../../modalAnimations.js";
+
+
 async function fetchUsers() {
     try {
         const { data, error } = await app.utils.fetchWithAuth("/api/main/friends/");
@@ -33,6 +38,8 @@ async function fetchUsers() {
     }
 }
 import { unreadMessages, lastMessages } from '../../Websockets.js'; 
+import profile from "../profile/index.js";
+import { sleep } from "../game/websockets.js";
 export let isChatActive = false; 
 export let selectedChatUser = null;
 
@@ -415,21 +422,15 @@ export default async () => {
             const blockButton = document.getElementById('block-button');
             if (blockButton) {
                 blockButton.addEventListener('click', () => {
-                    blockUser(selectedChatUser);
+                    blockUser(selectedChatUserId);
                 });
             }
-        
-            const unblockButton = document.getElementById('unblock-button');
-            if (unblockButton) {
-                unblockButton.addEventListener('click', () => {
-                    unblockUser(selectedChatUser);
-                });
-            }
+
         
             const viewProfileButton = document.getElementById('view-profile-button');
             if (viewProfileButton) {
                 viewProfileButton.addEventListener('click', () => {
-                    viewProfile(selectedChatUser);
+                    viewProfile(selectedChatUserId);
                 });
             }
         
@@ -440,33 +441,62 @@ export default async () => {
                 });
             }
         }
-        function blockUser(username) {
-            if (username && !blockedUsers.has(username)) {
-                blockedUsers.add(username);
-                // localStorage.setItem('blockedUsers', JSON.stringify([...blockedUsers]));
-                console.log(`Blocked user: ${username}`);
-        
-                updateUserList(friends);
-                toggleBlockButtons(username);
+        async function blockUser(user_id) {
+            try {
+                const body = JSON.stringify({
+                    change : 'block'
+                })
+                const {data, error} = await app.utils.fetchWithAuth(
+                    `/api/auth/friends/change/${user_id}/`,
+                    'POST',
+                    body
+                )
+                if (error)
+                {
+                    app.utils.showToast(error)
+                    return
+                }
+                app.utils.showToast(data.detail, 'green')
+                const chatbox = document.getElementById("chat-box")
+                const select_user = chatBox.querySelector("#select-user-prompt")
+                select_user.style.display = "flex"
+                chatBox.innerHTML = ''
+                chatBox.classList.remove('w-1-2');
+                chatBox.appendChild(select_user)
+                const sidebar = document.querySelector("#profile-section")
+                if (sidebar)
+                    sidebar.remove()
+            } catch (error) {
+                if (error instanceof app.utils.AuthError)
+                    return
+                console.log("error in block friend chat", error);
             }
         }
         
-        function unblockUser(username) {
-            if (username && blockedUsers.has(username)) {
-                blockedUsers.delete(username);
-                // localStorage.setItem('blockedUsers', JSON.stringify([...blockedUsers])); // Save to localStorage
-                console.log(`Unblocked user: ${username}`);
-        
-                updateUserList(friends);
-                toggleBlockButtons(username);
-            }
-        }
-        
-        function viewProfile(username) {
-            if (username) {
-                console.log(`Viewing profile of: ${username}`);
-                // app.Router.navigate(`/profile/${username}`);
-            }
+        async function viewProfile(user_id) {
+            const view = profile.View
+            var modal = document.getElementById("profile-view-modal")
+            if (modal)
+                modal.remove()
+            modal = document.createElement("div")
+            modal.id = "profile-view-modal"
+            modal.className = "profile-show-modal"
+            // Remove first and last line of the view HTML
+            const viewLines = view.trim().split('\n');
+            const trimmedView = viewLines.slice(1, -1).join('\n');
+            modal.innerHTML = trimmedView;
+            document.body.appendChild(modal)
+            void modal.offsetWidth;
+            modal.classList.add("show")
+            await profile.Controller({id : user_id})
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal)
+                {
+                    hideModalWithAnimation(modal)
+                    modal.remove()
+                }
+            })
+            
         }
         
         function inviteToGame(username) {
