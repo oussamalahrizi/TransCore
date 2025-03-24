@@ -56,23 +56,17 @@ class Cache:
                 user_data["group_count"] = 1
             self.redis.set(user_id, json.dumps(user_data))
     
-    def set_user_game(self, user_id: str):
+    def set_user_status(self, user_id : str, status : str):
         user_data = self.get_user_data(user_id)
         if user_data:
-            user_data["status"] = "ingame"
-            self.redis.set(user_id, json.dumps(user_data))
-    
-    def set_user_queue(self, user_id: str):
-        user_data = self.get_user_data(user_id)
-        if user_data:
-            user_data["status"] = "inqueue"
+            user_data["status"] = status
             self.redis.set(user_id, json.dumps(user_data))
     
     def set_user_offline(self, user_id: str):
         user_data : dict = self.get_user_data(user_id)
         if user_data:
             user_data["group_count"] -= 1
-            if user_data["group_count"] <= 0 and user_data["status"] == 'online':
+            if user_data["group_count"] <= 0:
                 user_data["status"] = "offline"
                 user_data.pop('group_count')
             if user_data.get("auth"):

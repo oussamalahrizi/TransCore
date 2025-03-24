@@ -15,7 +15,6 @@ echo "Database is up! Starting the application..."
 
 
 python3 manage.py makemigrations
-python3 manage.py makemigrations api_core
 python3 manage.py migrate
 
 exec "$@"

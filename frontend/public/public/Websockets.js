@@ -3,6 +3,8 @@ let chat = null
 export let unreadMessages = {};
 export let lastMessages = {}; 
 import { isChatActive, selectedChatUser } from './pages/chat/Controller.js';
+import MatchFound from "./Components/matchfound/Controller.js"
+import MatchFoundView from "./Components/matchfound/matchfound.js"
 
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
@@ -61,21 +63,12 @@ export const SetOnline = () => {
                     friendsContainer.dispatchEvent(new CustomEvent('refresh'))
                 chat = document.getElementById("user-list-container")
                 if (chat)
-                {
                     chat.dispatchEvent(new CustomEvent("refresh"))
-                }
                 break
             
             case 'status_update':
                 console.log("received update status event");
                 dispatchEvent(new CustomEvent("play-button"))
-                break
-
-            case 'ingame':
-                console.log("received in game event");
-                console.log(data);
-                dispatchEvent(new CustomEvent("play-button"))
-                app.Router.navigate(`/game?game_id=${data.game_id}`)
                 break
             case 'invite':
                 app.utils.showToast("wslatk invite")
@@ -85,7 +78,10 @@ export const SetOnline = () => {
                     friendsContainer.dispatchEvent(new CustomEvent('refresh'))
                 dispatchEvent(new CustomEvent("navbar-profile"))
                 console.log("update navbar");
-                
+                break
+            case 'match_found':
+                const game_id = data.game_id
+                await MatchFound(game_id)
                 break
             default:
                 app.utils.showToast("ma3rt chhadshy ja mn back : ", message)

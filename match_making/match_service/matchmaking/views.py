@@ -96,7 +96,7 @@ class CheckGame(APIView):
             players = game_info['players']
             if user_id not in players:
                 return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={'detail' : 'User Not in the game'})
+                                data={'detail' : 'User Not in this game'})
             return Response(status=status.HTTP_200_OK, data={"detail" : "OK"})
         except serializers.ValidationError:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
@@ -122,3 +122,39 @@ class CancelQueue(APIView):
         }
         async_to_sync(notif.publish)(body)
         return Response(data={"detail" : "Queue Canceled"})
+
+
+class AcceptMatchPong(APIView):
+    permission_classes = [IsAuthenticated]
+    cache = Queue
+    class GIDSerialier(serializers.Serializer):
+        game_id = serializers.CharField(required=True)
+
+    def post(self, request : Request, *args, **kwargs):
+        current : ProxyUser = request.user
+        id = current["id"]
+        ser = self.GIDSerialier(data=request.data)
+        ser.is_valid(raise_exception=True)
+        game_id = ser.validated_data["game_id"]
+        game_info = self.cache.get_game_info(game_id=game_id, type="pong")
+        if not game_info:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "Game Not Found."})
+        players = game_info["players"]
+        if id not in players:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "You are not in this game"})
+        notif = publishers[1]
+        body = {
+            'type' : "update_status",
+            'user_id' : id,
+            'status' : "ingame"
+        }
+        async_to_sync(notif.publish)(body)
+        return Response(data={'game_id' : game_id})
+        # respond with game id
+
+"""
+    TODO :
+        generate game for single player
+"""

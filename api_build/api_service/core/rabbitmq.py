@@ -139,8 +139,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         self.actions = {
             "send_notification" : self.send_notification,
             'disconnect_user' : self.disconnect_user,
-            'set_inqueue' : self.set_inqueue,
-            'match_found' : self.set_ingame,
+            'update_status' : self.update_status,
+            'match_found' : self.match_found,
             'cancel_queue' : self.cancel_queue
         }
         super().__init__(host, port, queue_name)
@@ -166,38 +166,35 @@ class NotifConsumer(AsyncRabbitMQConsumer):
                 {data.get('reason') if data.get('reason') else ""}."""
         })
     
-    async def set_inqueue(self, data : dict):
-        self.cache.set_user_queue(data.get('user_id'))
+    async def update_status(self, data : dict):
         group_name = f"notification_{data.get('user_id')}"
+        status = data.get("status")
         layer = get_channel_layer()
         await layer.group_send(group_name, {
             'type' : "status_update",
-            'status' : 'inqueue'
+            'status' : status
         })
     
-    async def set_ingame(self, data : dict):
-        self.cache.set_user_game(data.get('user1'))
-        self.cache.set_user_game(data.get('user2'))
-        groups = [f"notification_{data.get('user1')}", f"notification_{data.get('user2')}"]
-        layer = get_channel_layer()
-        for group in groups:
-            await layer.group_send(group, {
-                'type' : "set_user_game",
-                'game_id' : data.get("game_id")
-            })
+    
+    async def match_found(self, data : dict):
+        user_id = data.get("user_id")
+        game_id = data.get("game_id")
+        group_name = f"notification_{user_id}"
+        layer =  get_channel_layer()
+        await layer.group_send(group_name,{
+            'type' : "match_found",
+            'game_id' : game_id
+        })
     
     async def cancel_queue(self, data : dict):
         user_id = data.get("user_id")
-        user_data =  self.cache.get_user_data(user_id)
-        user_data["status"] = "online"
-        self.cache.redis.set(user_id, json.dumps(user_data))
-        print(f"user : {user_id} back online")
         layer = get_channel_layer()
         group = f"notification_{user_id}"
         await layer.group_send(group, {
             'type' : "status_update",
             "status" : 'online'
         })
+
 
     async def on_message(self, message : IncomingMessage):
         try:

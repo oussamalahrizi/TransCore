@@ -152,6 +152,8 @@ function updateScoreDisplay() {
   }
 }
 
+let gameContainer = null
+
 const startGame = () => {
   app.gameInfo.ws.send(
     JSON.stringify({
@@ -175,7 +177,7 @@ export const onmessage = (event) => {
   switch (type) {
     case "waiting":
       const view = document.createElement("div");
-      const gameContainer = document.getElementById("game");
+      gameContainer = document.getElementById("game");
       view.id = "waiting";
       view.className =
         "absolute w-full min-h-screen top-0 left-0 z-50 flex justify-center items-center text-white text-2xl bg-black/40";
@@ -194,6 +196,8 @@ export const onmessage = (event) => {
       console.log("game has started");
       document.getElementById("waiting")?.remove();
       console.log("popup msg removed");
+      gameContainer = document.getElementById("game")
+      gameContainer.dispatchEvent(new CustomEvent("start"))
       break;
 
     case "gameState":
@@ -202,6 +206,8 @@ export const onmessage = (event) => {
 
     case "gameEnd":
       handleGameEnd(winner);
+      gameContainer = document.getElementById("game")
+      gameContainer.dispatchEvent(new CustomEvent("end"))
       break;
 
     case "send_init_data":

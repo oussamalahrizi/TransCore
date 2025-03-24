@@ -72,7 +72,8 @@ class QueueConsumer(AsyncRabbitMQConsumer):
 
     def __init__(self, host, port, queue_name):
         self.actions = {
-            'remove_pqueue' : self.remove_pqueue
+            'remove_pqueue' : self.remove_pqueue,
+            'game_over' : self.game_over
         }
         super().__init__(host, port, queue_name)
 
@@ -80,6 +81,12 @@ class QueueConsumer(AsyncRabbitMQConsumer):
         user_id = data.get('user_id')
         type = data.get('queue_type')
         self.cache.remove_player(user_id, type)
+    
+    async def game_over(self, data : dict):
+        match_type = data.get("match_type")
+        if match_type == "tournament":
+            pass
+        self.cache.redis.delete(data.get("game_id"))
 
     async def on_message(self, message):
         try:
