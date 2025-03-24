@@ -1,6 +1,8 @@
-
 let friendsContainer= null
 let chat = null
+export let unreadMessages = {};
+export let lastMessages = {}; 
+import { isChatActive, selectedChatUser } from './pages/chat/Controller.js';
 
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
@@ -31,11 +33,28 @@ export const SetOnline = () => {
         switch (type)
         {
             case "notification":
-                const message = data.message
-                const color = data.color ? data.color : "red"
-                Notification(message, color)
-                break
+                const message = data.message;
+                const color = data.color ? data.color : "red";
+                Notification(message, color);
             
+                if (message.startsWith("New message from")) {
+                    const [senderPart, messageContent] = message.split(": ");
+                    const username = senderPart.replace("New message from ", "").trim();
+            
+                    if (!isChatActive || selectedChatUser !== username) {
+                        unreadMessages[username] = (unreadMessages[username] || 0) + 1;
+                    }            
+                    lastMessages[username] = {
+                        message: messageContent,
+                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+                    };
+                    saveStateToLocalStorage();
+                    chat = document.getElementById("user-list-container");
+                    if (chat) {
+                        chat.dispatchEvent(new CustomEvent("refresh"));
+                    }
+                }
+                break;
             case "refresh_friends":
                 friendsContainer = document.getElementById("friend-list-items")    
                 if (friendsContainer)
@@ -43,7 +62,6 @@ export const SetOnline = () => {
                 chat = document.getElementById("user-list-container")
                 if (chat)
                 {
-                    console.log("chat here");
                     chat.dispatchEvent(new CustomEvent("refresh"))
                 }
                 break
@@ -80,4 +98,10 @@ export const SetOnline = () => {
 
 const Notification = (message, color) => {
     app.utils.showToast(message, color)
+}
+
+function saveStateToLocalStorage() {
+    localStorage.setItem('unreadMessages', JSON.stringify(unreadMessages));
+    localStorage.setItem('lastMessages', JSON.stringify(lastMessages));
+    console.log("State saved to localStorage");
 }
