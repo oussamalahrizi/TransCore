@@ -74,7 +74,7 @@ addEventListener("play-button", async (e)=> {
 	try
 	{
 		const Play = /*html*/`<button href="/gamemode" class="playnow">Play Now</button>`
-		const inqueue = /*html*/`<button class="inqueue">In Queue</a>`
+		const inqueue = /*html*/`<button class="in-queue">In Queue</a>`
 		const ingame = /*html*/`<button class="playnow">In Game</a>`
 		const token = app.utils.getCookie("access_token")
 		const view = document.getElementById("play-container")
