@@ -9,13 +9,14 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to top, #057343, #1D1D1D);
+  background: radial-gradient(circle, rgba(5,115,67,1) 0%, rgba(29,29,29,1) 100%);
   min-height: 100vh;
   width: 100%;
 }
 
 .pang-container
 {
+  margin-top: 1.5rem;
   display: flex;
   justify-content: space-between;
   flex-direction: row;
@@ -36,17 +37,22 @@
   position: relative;
   width: 210px;
   height: 284px;
-  background-image: url("../../assets/singleplayer2.png");
+  background-image: url("../../assets/cardbackground.svg");
   background-size: cover;
   background-position: center;
-  background-color: #6eae57;
+  /* background-color: #6eae57; */
   display: flex;
   flex-direction: column;
-  justify-content: end;
+  justify-content: space-between;
   padding: 12px;
   gap: 12px;
   border-radius: 10px;
   cursor: pointer;
+  box-shadow:  0 0 10px rgba(1, 72, 41, 0.8), 
+  0 0 20px rgba(1, 72, 41, 0.7), 
+  0 0 40px rgba(1, 72, 41, 0.6), 
+  0 0 80px rgba(1, 72, 41, 0.5);
+  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .card::before {
@@ -58,7 +64,6 @@
   width: 220px;
   height: 294px;
   border-radius: 12px;
-  background-image: url("../../assets/singleplayer2.png");
   background-size: cover;
   background-position: center;
   z-index: -10;
@@ -71,7 +76,6 @@
   z-index: -1;
   position: absolute;
   inset: 0;
-  background-image: url("../../assets/singleplayer2.png");
   background-size: cover;
   background-position: center;
   background-color: #6eae57;
@@ -83,7 +87,26 @@
   font-size: 20px;
   text-transform: capitalize;
   font-weight: 700;
-  color: white;
+  color: rgb(1, 53, 31);
+  text-shadow: 0 0 5px rgb(1, 160, 94), 
+  0 0 5px rgba(105, 187, 151, 0.7), 
+  0 0 5px rgba(105, 187, 151, 0.5), 
+  0 0 5px rgba(105, 187, 151, 0.3);
+}
+
+.title
+{
+  align-self: flex-end;
+  justify-self: flex-start;
+  font-size: 20px;
+  text-transform: capitalize;
+  font-weight: 700;
+  color: rgb(1, 53, 31);;
+  color: rgb(1, 53, 31);;
+  text-shadow: 0 0 5px rgb(1, 160, 94), 
+  0 0 5px rgba(105, 187, 151, 0.7), 
+  0 0 5px rgba(105, 187, 151, 0.5), 
+  0 0 5px rgba(105, 187, 151, 0.3);
 }
 
 .card:hover::after {
@@ -114,22 +137,22 @@
 /* Add IDs for specific card styling if needed */
 #singleplayer-card::before,
 #singleplayer-card::after {
-  background: linear-gradient(-45deg, #f7ff00 0%, #05f239 100%);
+  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
 }
 
 #multiplayer-card::before,
 #multiplayer-card::after {
-  background: linear-gradient(-45deg, #65dbff 0%, #0080ff 100%);
+  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
 }
 
 #singleplayer-card-xo::before,
 #singleplayer-card-xo::after {
-  background: linear-gradient(-45deg, #8100f1 0%, #c30c52 100%);
+  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
 }
 
 #multiplayer-card-xo::before,
 #multiplayer-card-xo::after {
-  background: linear-gradient(-45deg, #cf04f3 0%, #7c07d0 100%);
+  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
 }
 
 .game-title {
@@ -140,25 +163,10 @@
   text-transform: uppercase;
   font-family: Arial, sans-serif; /* Uses a system font */
   text-align: center;
-  color: rgb(2, 159, 91);
+  color: rgb(1, 53, 31);
   text-shadow: 0 0 10px rgba(2, 159, 91, 0.8), 
                0 0 20px rgba(2, 159, 91, 0.7), 
                0 0 40px rgba(2, 159, 91, 0.6), 
                0 0 80px rgba(2, 159, 91, 0.5);
   animation: glow 1.5s infinite alternate ease-in-out;
-}
-
-@keyframes glow {
-  0% {
-      text-shadow: 0 0 10px rgba(2, 159, 91, 0.8), 
-                   0 0 20px rgba(2, 159, 91, 0.7), 
-                   0 0 40px rgba(2, 159, 91, 0.6), 
-                   0 0 80px rgba(2, 159, 91, 0.5);
-  }
-  100% {
-      text-shadow: 0 0 20px rgba(2, 159, 91, 1), 
-                   0 0 40px rgba(2, 159, 91, 0.9), 
-                   0 0 60px rgba(2, 159, 91, 0.8), 
-                   0 0 100px rgba(2, 159, 91, 0.7);
-  }
 }
