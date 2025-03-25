@@ -70,8 +70,6 @@ class LoginMixin:
 	def Helper(self, user : User) -> Response:
 		token_pair = GenerateTokenPair(str(user.id))
 		self.cache.store_token(user.id, token_pair['refresh'], token_pair["exp_refresh"])
-		user.last_login = datetime.datetime.now(datetime.timezone.utc)
-		user.save()
 		response = Response(
 			status=status.HTTP_202_ACCEPTED,
 			data={"access_token": token_pair['access'], "refresh_token": token_pair['refresh']}
