@@ -257,6 +257,7 @@ export default async () => {
         const form_password = pw_container.querySelector("#update-pass-form")
         form_password.addEventListener("submit", async (e)=> {
             e.preventDefault()
+            e.stopPropagation()
             const formdata = new FormData(form_password)
             const data = Object.fromEntries(formdata.entries())
             console.log("form data",data);
@@ -281,7 +282,7 @@ const setImageUpload = async () => {
     console.log("setting image");
     
     const {error, data} = await app.utils.fetchWithAuth("/api/auth/users/me/")
-    const current = document.getElementById("current")   
+    const current = document.getElementById("current")
     var url = "/public/assets/icon-placeholder.svg"
     current.className ="object-cover"    
     if (error)
@@ -290,9 +291,10 @@ const setImageUpload = async () => {
         current.src = url
         return
     }
-    else if (data.icon_url)
-        url = data.icon_url
+    url = data.icon_url + `?nocache=${Date.now()}`
+    console.log("new image : ", url);
     current.src = url
+    
 }
 
 const handleUpload = async ({image}) => {

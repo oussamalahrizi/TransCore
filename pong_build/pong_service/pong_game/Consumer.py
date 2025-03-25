@@ -4,15 +4,20 @@ from .utils import GameState, Game, game_task
 from .utils import Game_Cache
 from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
-from channels.exceptions import StopConsumer
 import time
 
 
 from .services import GameService
+from core.publisher import publishers
 
 # game_task : dict[str, asyncio.Task] = {}
 
 # Game : dict[str, GameState] = {}
+
+queue = publishers[0]
+
+async def publishQueue(data : dict):
+    await queue.publish(data)
 
 layer = get_channel_layer()
 
@@ -52,8 +57,17 @@ async def broadcast(Game : GameState):
             'type' : 'game_end',
             'winner' : Game.winner
         })
+        body = {
+                'type' : "game_over",
+                'data' : {
+                    'game_id' : Game.game_id,
+                    'match_type' :Game.match_type,
+                    'game_type' : "pong"
+                }
+            }
+        await publishQueue(body)
         
-
+from pprint import pprint
 
 class Consumer(AsyncWebsocketConsumer):
     
@@ -87,6 +101,7 @@ class Consumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.game_id, self.channel_name)
         player_count =  self.cache.get_player_count(self.game_id)
         self.players_ids = self.cache.get_players(self.game_id)
+        self.game_info = self.scope["game_info"]
         if player_count == 2:
             await self.send(json.dumps({
                 'type' : 'waiting',
@@ -112,12 +127,16 @@ class Consumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.game_id, self.channel_name)
         print(f"{self.username} removed")
         if Game.get(self.game_id):
-            Game.get(self.game_id).winner = self.cache.get_players(self.game_id)[0]
+            print("setting winner")
+            pprint(self.cache.get_players(self.game_id))
+            players= self.cache.get_players(self.game_id)
+            if len(players):
+                Game.get(self.game_id).winner = self.cache.get_players(self.game_id)[0] ## work around
             Game.get(self.game_id).gameover = True
             # print(f'{self.username} game over ? ', Game.get(self.game_id).gameover)
-            game_task.get(self.game_id).cancel()
-            game_task.pop(self.game_id)
+            
         if game_task.get(self.game_id):
+            game_task.get(self.game_id).cancel()
             game_task.pop(self.game_id)
         if Game.get(self.game_id):
             Game.pop(self.game_id)

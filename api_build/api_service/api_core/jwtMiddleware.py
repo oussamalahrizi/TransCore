@@ -63,7 +63,9 @@ class JWTAuthentication(authentication.BaseAuthentication):
 	async def get_user_data(self, user_id):
 		try:
 			user_data = self.cache.get_user_data(user_id)
-			if user_data and user_data.get("auth") and user_data.get("auth").get("friends"):
+			if not user_data or not user_data.get("auth"):
+				pass
+			elif user_data.get("auth").get("friends"):
 				return user_data["auth"]
 			timeout = httpx.Timeout(5.0, read=5.0)
 			client = httpx.AsyncClient(timeout=timeout)
@@ -75,7 +77,9 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			response.raise_for_status()
 			friends = response.json()
 			for f in friends:
-				self.cache.set_user_data(data=f, user_id=f["id"], service="auth")
+				if f is None or not f.get("auth"):
+					self.cache.set_user_data(data=f, user_id=f["id"], service="auth")
+					self.cache.append_user_friends(f["id"], user_id)
 				self.cache.append_user_friends(user_id, f["id"])
 			return data
 		except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError) as e:

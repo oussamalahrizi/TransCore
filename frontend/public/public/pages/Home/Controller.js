@@ -28,19 +28,24 @@ const renderFriendsList = async (container) => {
 		});
 		const friendList = container.querySelector('#friend-list-items');
 		friendList.innerHTML = ''
-		
+		console.log("cleared friend list");
+		const temp = {
+			"online" : "Online",
+			"inqueue" : "In Queue",
+			"ingame" : "In Game",
+			"offline" : "Offline",
+		}
 		friendsData.forEach(friend => {
 			const friendItem = document.createElement('li');
 			friendItem.className = 'friend-item';
 			friendItem.dataset.friendId = friend.auth.id;
-			if (!friend.auth.icon_url)
-				friend.auth.icon_url = "/public/assets/dog.png"
 			friendItem.innerHTML = `
-				<img class="profile-photo" src="${friend.auth.icon_url}">
+				<img class="profile-photo" src="${friend.auth.icon_url ? friend.auth.icon_url+`?nocache=${Date.now()}`
+					 : "/public/assets/icon-placeholder.svg"}">
 				<div class="friend-info">
 					<span class="friend-name">${friend.auth.username}</span>
 					<span class="friend-status ${friend.status}">
-						<span class="status-circle"></span> ${friend.status.replace('-', ' ').charAt(0).toUpperCase() + friend.status.replace('-', ' ').slice(1)}
+						<span class="status-circle"></span> ${temp[friend.status]}
 					</span>
 				</div>
 			`;

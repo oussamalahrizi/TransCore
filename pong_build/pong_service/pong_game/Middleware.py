@@ -49,7 +49,8 @@ class jwtMiddleware(BaseMiddleware):
             user_id = payload.get("user_id")
 
             user_info = await self.fetch_user_info(user_id)
-            # await self.check_game_id(game_id, user_id)
+            game_info = await self.check_game_id(game_id, user_id)
+            scope["game_info"] = game_info["game_info"]
             scope["user"] = user_info
             scope['game_id'] = game_id
         

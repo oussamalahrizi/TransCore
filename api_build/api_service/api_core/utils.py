@@ -49,7 +49,8 @@ class Cache:
     def set_user_online(self, user_id: str):
         user_data = self.get_user_data(user_id)
         if user_data:
-            user_data["status"] = "online"
+            if user_data["status"] == "offline":
+                user_data["status"] = "online"
             if user_data.get("group_count"):
                 user_data["group_count"] += 1
             else:
@@ -61,6 +62,8 @@ class Cache:
         if user_data:
             user_data["status"] = status
             self.redis.set(user_id, json.dumps(user_data))
+            print("updated status")
+            pprint(user_data)
     
     def set_user_offline(self, user_id: str):
         user_data : dict = self.get_user_data(user_id)

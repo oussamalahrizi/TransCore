@@ -12,7 +12,8 @@ export default /*html*/ `
             
             <div class="pf-profile-middle-section">
                 <div class="pf-profile-avatar-container">
-                    <img id="user-avatar" class="pf-profile-avatar" src="/public/assets/dog.png" alt="Profile picture">
+                    <img id="user-avatar" class="pf-profile-avatar" src="/public/assets/icon-placeholder.svg"
+                     alt="Profile picture">
                 </div>
                 <div class="pf-profile-info">
                     <h1 id="username" class="pf-profile-username">Loading...</h1>

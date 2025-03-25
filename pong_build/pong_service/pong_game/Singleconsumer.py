@@ -20,8 +20,6 @@ def record_single_match_async(player_id, is_win, player_score, cpu_score):
 async def broadcastSingle(instance: GameState):
     try:
         lasttime = time.time()
-        print("gameover ? :", instance.gameover)
-        blast = time.time()
         while not instance.gameover:
             current = time.time()
             delta = current - lasttime

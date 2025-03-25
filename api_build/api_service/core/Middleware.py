@@ -82,7 +82,11 @@ class jwtmiddleware(BaseMiddleware):
         """
         try:
             user = self.cache.get_user_data(user_id=user_id)
-            if user and user.get("auth") and user.get("auth").get("friends"):
+            if not user or not user.get("auth"):
+                # Fetch data from service if user or auth data is missing
+                pass
+            elif user.get("auth").get("friends"):
+                # Return cached data if we already have friends info
                 return user["auth"]
             timeout = httpx.Timeout(5.0, read=5.0)
             async with httpx.AsyncClient(timeout=timeout) as client:
@@ -95,7 +99,10 @@ class jwtmiddleware(BaseMiddleware):
                 response.raise_for_status()
                 friends = response.json()
                 for f in friends:
-                    self.cache.set_user_data(data=f, user_id=f["id"], service="auth")
+                    f_data = self.cache.get_user_data(f["id"])
+                    if f_data is None or not f_data.get("auth"):
+                        self.cache.set_user_data(data=f, user_id=f["id"], service="auth")
+                        self.cache.append_user_friends(f["id"], user_id)
                     self.cache.append_user_friends(user_id, f["id"])
                 return data
         except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
