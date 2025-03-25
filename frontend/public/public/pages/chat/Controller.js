@@ -60,31 +60,6 @@ export default async () => {
         let currentUserId = null;
         let roomName = null;
 
-
-        
-        function toggleProfileSection() {
-            const profileSection = document.getElementById('profile-section');
-            const chatBox = document.getElementById('chat-box');
-            if (!profileSection || !chatBox) {
-                console.error('Profile section or chat box not found');
-                return;
-            }
-
-            if (profileSection.classList.contains('hidden')) {
-                profileSection.classList.remove('hidden');
-                chatBox.classList.add('w-1-2');
-            } else {
-                profileSection.classList.add('hidden');
-                chatBox.classList.remove('w-1-2');
-            }
-        }
-
-        if (!selectedChatUser) {
-            resetChatBox();
-        }
-
-
-
         const friends = await fetchUsers();
         updateUserList(friends);
 
@@ -107,38 +82,180 @@ export default async () => {
 
         const userListContainer = document.getElementById('user-list-container');
         userListContainer.addEventListener('refresh', async () => {
-            // console.log("Refresh event triggered");
             const users = await fetchUsers();
             if (users) {
-                // console.log("Updating user list with users:", users);
                 updateUserList(users);
             } else {
                 console.error('Failed to fetch users');
             }
         });
 
-        function updateUserList(friends) {
-            friends = friends || [];
-            // console.log("Updating user list with friends:", friends);
-        
-            const filteredUsers = filterUsers(friends);
-        
-            const userListContainer = document.getElementById('user-list-container');
-            if (!userListContainer) {
-                console.error('user-list-container element not found');
+        function toggleProfileSection() {
+            const profileSection = document.getElementById('profile-section');
+            const chatBox = document.getElementById('chat-box');
+            if (!profileSection || !chatBox) {
+                console.error('Profile section or chat box not found');
                 return;
             }
         
-            userListContainer.innerHTML = '';
-        
-            filteredUsers.forEach(user => {
-                const userItem = createUserItem(user); 
-                if (userItem) {
-                    userListContainer.appendChild(userItem);
+            if (profileSection.classList.contains('hidden')) {
+                profileSection.classList.remove('hidden');
+                chatBox.classList.remove('flex-1', 'w-3/4');
+                chatBox.classList.add('flex-1');
+            } else {
+                profileSection.classList.add('hidden');
+                chatBox.classList.remove('flex-1');
+                if (selectedChatUser) {
+                    chatBox.classList.add('flex-1');
+                } else {
+                    chatBox.classList.add('flex-1');
                 }
-            });
+            }
         }
 
+
+        function updateUserList(friends = []) {
+            try {
+                const userListContainer = document.getElementById('user-list-container');
+                if (!userListContainer) {
+                    console.error('User list container not found');
+                    return;
+                }
+        
+                userListContainer.textContent = '';
+        
+                const filteredUsers = filterUsers(friends);
+        
+                if (selectedChatUser) {
+                    const userStillExists = filteredUsers.some(user => 
+                        user?.auth?.username === selectedChatUser && 
+                        !blockedUsers.has(user.auth.username)
+                    );
+        
+                    if (!userStillExists) {
+                        const previousUser = selectedChatUser;
+                        resetChatBox();
+                        
+                        setTimeout(() => {
+                            const chatBox = document.getElementById("chat-box");
+                            if (chatBox) {
+                                chatBox.classList.remove("w-1/2", "w-3/4");
+                                chatBox.classList.add("w-full");
+                            }
+                        }, 50);
+                    }
+                }
+        
+                const fragment = document.createDocumentFragment();
+                filteredUsers.forEach(user => {
+                    try {
+                        const userItem = createUserItem(user);
+                        if (userItem) {
+                            fragment.appendChild(userItem);
+                        }
+                    } catch (error) {
+                        console.error('Error creating user item:', error);
+                    }
+                });
+                userListContainer.appendChild(fragment);
+        
+            } catch (error) {
+                console.error('Error updating user list:', error);
+            }
+        }
+        
+        function startChat(chatWith, chatWithId) {
+            const messagesContainer = document.getElementById("messages");
+            const chatHeader = document.getElementById("chat-header");
+            const inputArea = document.getElementById("input-area");
+            const selectUserPrompt = document.getElementById("select-user-prompt");
+            const chatWithUserElement = document.getElementById("chat-with-user");
+            const profileUserName = document.getElementById("profile-user-name");
+            const profileSection = document.getElementById("profile-section");
+            const chatBox = document.getElementById("chat-box");
+        
+            if (!messagesContainer || !chatHeader || !inputArea || !selectUserPrompt || 
+                !chatWithUserElement || !profileUserName || !profileSection || !chatBox) {
+                console.error("Required chat elements not found");
+                return;
+            }
+        
+            selectedChatUser = chatWith;
+            selectedChatUserId = chatWithId;
+            isChatActive = true;
+        
+            unreadMessages[chatWith] = 0;
+            saveStateToLocalStorage();
+        
+            messagesContainer.innerHTML = "";
+            chatWithUserElement.textContent = chatWith;
+            chatHeader.classList.add("active");
+            inputArea.style.display = "flex";
+            selectUserPrompt.style.display = "none";
+        
+            const userItems = document.querySelectorAll('.user-item');
+            userItems.forEach(item => {
+                item.classList.remove('active');
+                const usernameElement = item.querySelector('.username');
+                if (usernameElement && usernameElement.textContent === chatWith) {
+                    item.classList.add('active');
+                }
+            });
+        
+            if (socket) {
+                socket.close();
+            }
+            connectChatSocket();
+        
+            profileUserName.textContent = chatWith;
+            profileSection.classList.add("hidden");
+            chatBox.classList.remove("w-1/2");
+            chatBox.classList.add("w-3/4");
+        }
+        
+        function resetChatBox() {
+            const messagesContainer = document.getElementById("messages");
+            const chatHeader = document.getElementById("chat-header");
+            const inputArea = document.getElementById("input-area");
+            const selectUserPrompt = document.getElementById("select-user-prompt");
+            const profileSection = document.getElementById("profile-section");
+            const chatBox = document.getElementById("chat-box");
+            const chatContainer = document.querySelector(".chat-container"); 
+            const userListContainer = document.getElementById("user-list-container");
+        
+            if (messagesContainer) messagesContainer.innerHTML = "";
+            if (chatHeader) chatHeader.classList.remove("active");
+            if (inputArea) inputArea.style.display = "none";
+            if (selectUserPrompt) selectUserPrompt.style.display = "flex";
+        
+            selectedChatUser = null;
+            selectedChatUserId = null;
+            isChatActive = false;
+        
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        
+            if (profileSection) {
+                profileSection.classList.add("hidden");
+            }
+            
+            if (chatBox) {
+                chatBox.classList.remove("w-1/2", "w-3/4", "w-full"); 
+                chatBox.classList.add("w-full"); 
+            }
+        
+            if (chatContainer) {
+                chatContainer.classList.remove("grid-cols-2"); 
+                chatContainer.classList.add("grid-cols-1"); 
+            }
+        
+            if (userListContainer) {
+                userListContainer.classList.remove("w-1/4");
+                userListContainer.classList.add("w-full");
+            }
+        }
 
         function createUserItem(user) {
             const isBlocked = blockedUsers.has(user.auth.username);
@@ -148,9 +265,7 @@ export default async () => {
             const unreadCount = unreadMessages[user.auth.username] || 0;
             const lastMessage =  lastMessages[user.auth.username]?.message || "";
             const lastMessageTimestamp =  lastMessages[user.auth.username]?.timestamp || "";
-        
-            // console.log(`Creating user item for ${user.auth.username} with unread count: ${unreadCount}`);
-        
+                
             const statusColor = user.status === "online" ? "green" : "grey";
             const chatUserImage = document.getElementById('chat-user-image');
             if (chatUserImage) {
@@ -239,15 +354,12 @@ export default async () => {
             socket = new WebSocket(`ws://localhost:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
 
             socket.onopen = () => {
-                // console.log('Chat WebSocket connected');
                 scrollToBottom();
             };
 
             socket.onmessage = async (e) => {
                 const data = JSON.parse(e.data);
                 const { type } = data;
-                // console.log("on message", e.data);
-
                 switch (type) {
                     case 'user_info':
                         currentUserId = data.user_id;
@@ -323,66 +435,6 @@ export default async () => {
             scrollToBottom();
         }
 
-        function resetChatBox() {
-            document.getElementById("messages").innerHTML = "";
-            document.getElementById("chat-header").classList.remove("active");
-            document.getElementById("input-area").style.display = "none";
-            document.getElementById("select-user-prompt").style.display = "flex";
-            selectedChatUser = null;
-            selectedChatUserId = null;
-            isChatActive = false; 
-
-            if (socket) {
-                socket.close();
-                socket = null;
-            }
-
-            const profileSection = document.getElementById("profile-section");
-            const chatBox = document.getElementById("chat-box");
-            profileSection.classList.add("hidden");
-            chatBox.classList.remove("w-1/2");
-            chatBox.classList.add("w-3/4");
-        }
-
-        function startChat(chatWith, chatWithId) {
-            selectedChatUser = chatWith;
-            selectedChatUserId = chatWithId;
-            isChatActive = true;
-        
-            unreadMessages[chatWith] = 0;
-        
-            saveStateToLocalStorage();
-        
-            document.getElementById("messages").innerHTML = "";
-        
-            document.getElementById("chat-with-user").textContent = chatWith;
-            document.getElementById("chat-header").classList.add("active");
-        
-            document.getElementById("input-area").style.display = "flex";
-            document.getElementById("select-user-prompt").style.display = "none";
-        
-            // Update the block/unblock buttons
-            toggleBlockButtons(chatWith);
-        
-            const userItems = document.querySelectorAll('.user-item');
-            userItems.forEach(item => {
-                item.classList.remove('active');
-                if (item.querySelector('.username').textContent === chatWith) {
-                    item.classList.add('active');
-                }
-            });
-        
-            if (socket) socket.close();
-            connectChatSocket();
-        
-            document.getElementById("profile-user-name").textContent = chatWith;
-        
-            const profileSection = document.getElementById("profile-section");
-            const chatBox = document.getElementById("chat-box");
-            profileSection.classList.add("hidden");
-            chatBox.classList.remove("w-1/2");
-            chatBox.classList.add("w-3/4");
-        }
 
         function formatDate(date) {
             const today = new Date();
@@ -457,15 +509,6 @@ export default async () => {
                     return
                 }
                 app.utils.showToast(data.detail, 'green')
-                const chatbox = document.getElementById("chat-box")
-                const select_user = chatBox.querySelector("#select-user-prompt")
-                select_user.style.display = "flex"
-                chatBox.innerHTML = ''
-                chatBox.classList.remove('w-1-2');
-                chatBox.appendChild(select_user)
-                const sidebar = document.querySelector("#profile-section")
-                if (sidebar)
-                    sidebar.remove()
             } catch (error) {
                 if (error instanceof app.utils.AuthError)
                     return
@@ -511,19 +554,6 @@ export default async () => {
                 }
             }
         }
-        
-        function toggleBlockButtons(username) {
-            const blockButton = document.getElementById('block-button');
-            const unblockButton = document.getElementById('unblock-button');
-        
-            if (blockedUsers.has(username)) {
-                blockButton.style.display = 'none';
-                unblockButton.style.display = 'block';
-            } else {
-                blockButton.style.display = 'block';
-                unblockButton.style.display = 'none';
-            }
-        }
         function sendMessage() {
             const message = chatInput.value;
             if (message && socket && selectedChatUser) {
@@ -560,10 +590,7 @@ export default async () => {
         }
         function saveStateToLocalStorage() {
             localStorage.setItem('unreadMessages', JSON.stringify(unreadMessages));
-        
             localStorage.setItem('lastMessages', JSON.stringify(lastMessages));
-        
-            console.log("State saved to localStorage");
         }
         
         function initializeUserList() {
@@ -571,8 +598,11 @@ export default async () => {
             setupEventListeners();
             loadStateFromLocalStorage(); 
         }
-        
+
+
+
         initializeUserList();
+
     } catch (error) {
         if (error instanceof app.utils.AuthError)
             return;
