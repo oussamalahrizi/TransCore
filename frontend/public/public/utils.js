@@ -49,7 +49,7 @@ const refreshToken = async () => {
             showToast(data.detail ? data.detail : JSON.stringify(data, null, 2), 'red');
             removeCookie("access_token");
             // Router.navigate("/auth/login");
-            dispatchEvent("auth-error")
+            dispatchEvent(new CustomEvent( "auth-error"))
             throw new AuthError()
         } else if (res.status === 400) {
             
@@ -76,6 +76,7 @@ const fetchWithAuth = async (url, method=null, body=null, content_type=null) => 
         options = {...options, body}
         headers = {...headers, 'Content-Type' : content_type ? content_type :  "application/json"}
     }
+
     let response = await fetch(finalurl, {
         ...options,
         headers
@@ -203,6 +204,20 @@ const LoadCss = async (href) => {
 }
 
 
+
+const LoadCompCss = async (href) => {
+    const load = ()=> new Promise((resolve) => {
+        const link = document.createElement("link")
+        link.onload = () => resolve({loaded : true, elment : link})
+        link.onerror = () => resolve({loaded : false, elment : link})
+        link.href = href
+        link.rel = "stylesheet"
+        document.head.appendChild(link)
+    })
+    return await load()
+}
+
+
 export default {
 	setCookie,
 	removeCookie,
@@ -213,5 +228,6 @@ export default {
     showToast,
     AuthError,
     ButtonHandler,
-    LoadCss
+    LoadCss,
+    LoadCompCss
 };

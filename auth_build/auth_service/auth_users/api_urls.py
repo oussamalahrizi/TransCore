@@ -9,6 +9,7 @@ from .api_views import (
     GetRelation,
     GetBlockedAPI
 )
+
 api_urlpatterns = [
     path('internal/friends/relation/', GetRelation.as_view(), name='api-friends-relation'),
     path("internal/friends/<str:id>/", GetFriendsAPI.as_view(), name="api-get-friends"),

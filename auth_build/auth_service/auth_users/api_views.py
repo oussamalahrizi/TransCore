@@ -78,11 +78,11 @@ class GetRelation(APIView):
 
     def get_relation(self, user, other):
         try:
-            relation = self.filter(from_user=user, to_user=other).get()
+            relation = Friends.objects.filter(from_user=user, to_user=other).get()
             return relation
         except Friends.DoesNotExist:
             try:
-                relation = self.filter(from_user=other, to_user=user).get()
+                relation = Friends.objects.filter(from_user=other, to_user=user).get()
                 return relation
             except Friends.DoesNotExist:
                 return None
@@ -95,7 +95,7 @@ class GetRelation(APIView):
             other = get_object_or_404(User, username=other)
             relation : Friends = self.get_relation(current, other)
             if not relation or relation.status != "accepted" :
-                return Response(status=status.HTTP_404_NOT_FOUND, 
+                return Response(status=status.HTTP_404_NOT_FOUND,
                                 data={"detail" : "User are not friends."})
             return Response(data={"detail" : "User are friends."})
         except Http404:

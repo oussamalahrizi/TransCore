@@ -4,8 +4,6 @@ export default ({username, icon_url})=> /*html*/`
         ${
             !icon_url ?
                 /*html*/`<img src="/public/assets/icon-placeholder.svg" class="object-cover rounded-full" />`
-            : !icon_url.startsWith("https:") ?
-                /*html*/`<img src="data:image/png;base64,${icon_url}" class="object-cover rounded-full" />`
             :                
                 /*html*/`<img src=${icon_url} class="object-cover rounded-full" />`
         }

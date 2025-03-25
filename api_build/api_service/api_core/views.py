@@ -104,13 +104,12 @@ class GetFriends(APIView):
         friends = auth_data.get('friends')
         if not friends:
             friends = async_to_sync(fetch_friends_auth)(user_id)
-            print("friends from auth")
-            pprint(friends)
             for f in friends:
                 # handle user already exist
                 f_data = self.cache.get_user_data(f["id"])
-                if not f_data:
+                if f_data is None or not f_data.get("auth"):
                     self.cache.set_user_data(f['id'], f, 'auth')
+                    self.cache.append_user_friends(f["id"], user_id)
                 self.cache.append_user_friends(user_id, f['id'])
             data = self.cache.get_user_data(user_id)
             auth_data = data.get("auth")
@@ -118,6 +117,10 @@ class GetFriends(APIView):
         final = []
         for id in friends:
             user : dict = self.cache.get_user_data(id)
+            if user is None or user.get("auth") is None:
+                user = async_to_sync(fetch_user_auth)(id)
+                self.cache.set_user_data(id, user, "auth")
+                user = self.cache.get_user_data(id)
             final.append(user)
         return final
 
@@ -174,8 +177,6 @@ class GetBlocked(APIView):
         blocked = auth_data.get('blocked')
         if not blocked:
             blocked = async_to_sync(fetch_blocked_auth)(user_id)
-            print("blocked from auth")
-            pprint(blocked)
             for f in blocked:
                 f_data = self.cache.get_user_data(f["id"])
                 # handle blocked user already in cache to NOT OVERRIDE IT

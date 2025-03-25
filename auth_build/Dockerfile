@@ -10,11 +10,12 @@ WORKDIR /var/app
 
 COPY build/conf/requirements.txt /var
 
-COPY build/tools/init.sh /var	
 
-RUN chmod +x /var/init.sh
 
 RUN pip install -r /var/requirements.txt
+
+COPY build/tools/init.sh /var	
+RUN chmod +x /var/init.sh
 
 RUN apt-get clean && apt-get update --fix-missing && apt-get install -y netcat
 

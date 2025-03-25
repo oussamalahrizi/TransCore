@@ -1,46 +1,45 @@
 export default /*html*/ `
-    <div id="profile" class="profile-container">
-        <div class="profile-header">
-            <div class="match-history-section">
-                <h3 class="section-title">Recent Matches</h3>
-                <div id="match-history" class="match-history-items">
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
+    <div id="profile" class="pf-profile-container">
+        <div id="pf-profile-header-id" class="pf-profile-header">
+            <div class="pf-match-history-section">
+                <h3 class="pf-section-title">Recent Matches</h3>
+                <div id="match-history" class="pf-match-history-items">
+                    <div class="pf-loading-spinner">
+                        <div class="pf-spinner"></div>
                     </div>
                 </div>
             </div>
             
-            <div class="profile-middle-section">
-                <div class="profile-avatar-container">
-                    <img id="user-avatar" class="profile-avatar" src="/public/assets/dog.png" alt="Profile picture">
+            <div class="pf-profile-middle-section">
+                <div class="pf-profile-avatar-container">
+                    <img id="user-avatar" class="pf-profile-avatar" src="/public/assets/icon-placeholder.svg"
+                     alt="Profile picture">
                 </div>
-                <div class="profile-info">
-                    <h1 id="username" class="profile-username">Loading...</h1>
-                    <div class="status-container">
-                        <div class="online-status online"></div>
-                        <p id="user-status" class="profile-status">Online</p>
-                    </div>
-                    <div class="profile-actions" style="display: flex;">
+                <div class="pf-profile-info">
+                    <h1 id="username" class="pf-profile-username">Loading...</h1>
+                    <div class="pf-status-container">
+                        <div id="status-circle" class="pf-online-status"></div>
+                        <p id="user-status"></p>
                     </div>
                 </div>
             </div>
             
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="games-won">0</div>
-                    <div class="stat-label">Games Won</div>
+            <div class="pf-profile-stats">
+                <div class="pf-stat-item">
+                    <div class="pf-stat-value" id="games-won">0</div>
+                    <div class="pf-stat-label">Games Won</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="games-lost">0</div>
-                    <div class="stat-label">Games Lost</div>
+                <div class="pf-stat-item">
+                    <div class="pf-stat-value" id="games-lost">0</div>
+                    <div class="pf-stat-label">Games Lost</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value win-rate" id="win-rate">0%</div>
-                    <div class="stat-label">Win Rate</div>
+                <div class="pf-stat-item">
+                    <div class="pf-stat-value pf-win-rate" id="win-rate">0%</div>
+                    <div class="pf-stat-label">Win Rate</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="score">0</div>
-                    <div class="stat-label">Score</div>
+                <div class="pf-stat-item">
+                    <div class="pf-stat-value" id="score">0</div>
+                    <div class="pf-stat-label">Score</div>
                 </div>
             </div>
         </div>

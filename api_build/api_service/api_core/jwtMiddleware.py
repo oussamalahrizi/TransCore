@@ -63,21 +63,33 @@ class JWTAuthentication(authentication.BaseAuthentication):
 	async def get_user_data(self, user_id):
 		try:
 			user_data = self.cache.get_user_data(user_id)
-			if user_data and user_data.get("auth"):
+			if not user_data or not user_data.get("auth"):
+				pass
+			elif user_data.get("auth").get("friends"):
 				return user_data["auth"]
 			timeout = httpx.Timeout(5.0, read=5.0)
-			async with httpx.AsyncClient(timeout=timeout) as client:
-				response = await client.get(f"{USER_INFO}{user_id}/")
-				response.raise_for_status()
-				self.cache.set_user_data(user_id, data=response.json(), service="auth")
-				return response.json()
-		except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
+			client = httpx.AsyncClient(timeout=timeout)
+			response = await client.get(f"{USER_INFO}{user_id}/")
+			response.raise_for_status()
+			self.cache.set_user_data(user_id, data=response.json(), service="auth")
+			data = response.json()
+			response = await client.get(f"http://auth-service/api/auth/internal/friends/{user_id}/")
+			response.raise_for_status()
+			friends = response.json()
+			for f in friends:
+				if f is None or not f.get("auth"):
+					self.cache.set_user_data(data=f, user_id=f["id"], service="auth")
+					self.cache.append_user_friends(f["id"], user_id)
+				self.cache.append_user_friends(user_id, f["id"])
+			return data
+		except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError) as e:
+			print(e)
 			raise InvalidToken(detail="Failed to get user data from Auth service",
 					  custom_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		except httpx.HTTPStatusError as e:
 			if e.response.status_code == httpx._status_codes.codes.NOT_FOUND:
 				return None
-			raise InvalidToken("Internal Server Error",
+			raise InvalidToken(f"Internal Server Error {e.response.json()}",
 					  custom_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
 	async def get_session_state(self, user_id):
@@ -110,7 +122,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			if user is None:
 				raise InvalidToken("User Not Found", custom_code=status.HTTP_404_NOT_FOUND)
 			if not user["is_active"]:
-				raise InvalidToken('User is not active.', custom_code=status.HTTP_423_LOCKED)
+				raise InvalidToken('User is not active.', custom_code=status.HTTP_423_LOCKED, clear=True)
 			"""
 				verify if the session id in the token is same in the cache,
 				the only source of truth for session validity is the cache 
@@ -124,7 +136,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
 			if sess_cache is None:
 				raise jwt.ExpiredSignatureError
 			if sess_cache != sess_id:
-				raise InvalidToken("Access token revoked",custom_code=status.HTTP_423_LOCKED)
+				raise InvalidToken("Access token revoked",custom_code=status.HTTP_423_LOCKED, clear=True)
 		except jwt.ExpiredSignatureError:
 			raise InvalidToken('Token expired.', custom_code=status.HTTP_401_UNAUTHORIZED)
 		except jwt.InvalidTokenError:

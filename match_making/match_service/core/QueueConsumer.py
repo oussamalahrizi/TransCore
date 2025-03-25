@@ -6,6 +6,8 @@ from aio_pika import connect, Connection, IncomingMessage
 import asyncio
 import json
 
+from .publishers import notifspub
+
 class AsyncRabbitMQConsumer:
     def __init__(self, host, port, queue_name):
         self.host = host
@@ -65,6 +67,10 @@ class AsyncRabbitMQConsumer:
 
 from matchmaking.utils import Queue
 
+from pprint import pprint
+
+from asgiref.sync import async_to_sync
+
 class QueueConsumer(AsyncRabbitMQConsumer):
 
     actions = {}
@@ -72,14 +78,38 @@ class QueueConsumer(AsyncRabbitMQConsumer):
 
     def __init__(self, host, port, queue_name):
         self.actions = {
-            'remove_pqueue' : self.remove_pqueue
+            'remove_pqueue' : self.remove_pqueue,
+            'game_over' : self.game_over
         }
         super().__init__(host, port, queue_name)
 
-    def remove_pqueue(self, data : dict):
+    async def remove_pqueue(self, data : dict):
         user_id = data.get('user_id')
-        type = data.get('queue_type')
-        self.cache.remove_player(user_id, type)
+        self.cache.remove_player(user_id)
+    
+    async def game_over(self, data : dict):
+        print("received game over :")
+        pprint(data)
+        match_type = data.get("match_type")
+        game_type = data.get("game_type")
+        game_id =  data.get("game_id")
+        if match_type == "tournament":
+            print("HANDLE TOURNAMENT RESULTS")
+        # send status update to both players
+        game_data = self.cache.get_game_info(game_id, game_type)
+        players = game_data.get("players")
+        for p in players:
+            body = {
+                'type' : "update_status",
+                'data' : {
+                    "user_id" : p,
+                    "status" : "online"
+                }
+            }
+            await notifspub.publish(body)
+        ## proceed to delete
+        res = self.cache.redis.delete(f"{game_type}:{game_id}")
+        print("deleted ?", res)
 
     async def on_message(self, message):
         try:
@@ -90,7 +120,7 @@ class QueueConsumer(AsyncRabbitMQConsumer):
                 print("type is not in actions")
                 await message.reject()
                 return
-            self.actions[type](body.get("data"))
+            await self.actions[type](body.get("data"))
             await message.ack()
         except json.JSONDecodeError:
             print(f"{self.queue_name} : invalid json data")

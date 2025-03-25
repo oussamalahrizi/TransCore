@@ -3,12 +3,8 @@ networks:
     name: "TransNetwork"
 
 volumes:
-  images:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "./images"
+  auth_db:
+  insight:
   frontend-volume:
     driver: local
     driver_opts:
@@ -42,7 +38,7 @@ services:
     networks:
       - TransNetwork
     volumes:
-      - /var/lib/postgresql/data
+      - auth_db:/var/lib/postgresql/data
     env_file:
       - "auth_build/build/conf/.env"
 
@@ -62,7 +58,6 @@ services:
       - "auth_build/build/conf/.env"
     volumes:
       - "auth-service-code:/var/app"
-      - "images:/var/images"
 
   chat-redis:
     image: redis:latest
@@ -157,8 +152,6 @@ services:
       - pong-game
     networks:
       - TransNetwork
-    volumes:
-      - "images:/var/images"
 
   adminer:
     image: adminer
@@ -190,7 +183,7 @@ services:
     depends_on:
       - auth-redis
     volumes:
-      - "/data"
+      - insight:/data
 
   frontend:
     container_name: frontend

@@ -34,6 +34,8 @@ addEventListener("websocket", (e) => {
 		return;
 	}
 	if (!app.utils.getCookie("access_token")) return;
+	if (app.websocket && app.websocket.readyState === WebSocket.OPEN)
+		return
 	SetOnline();
 	if (app.websocket.readyState === WebSocket.CLOSED) {
 		console.log("failed");
@@ -72,7 +74,7 @@ addEventListener("play-button", async (e)=> {
 	try
 	{
 		const Play = /*html*/`<button href="/gamemode" class="playnow">Play Now</button>`
-		const inqueue = /*html*/`<button class="inqueue">In Queue</a>`
+		const inqueue = /*html*/`<button class="in-queue">In Queue</a>`
 		const ingame = /*html*/`<button class="playnow">In Game</a>`
 		const token = app.utils.getCookie("access_token")
 		const view = document.getElementById("play-container")
@@ -126,6 +128,8 @@ addEventListener("play-button", async (e)=> {
 import { handleLogout } from "./pages/Settings/Controller.js";
 import { rendergame } from "./pages/game/websockets.js";
 
+
+
 addEventListener("navbar-profile", async (e) => {
 	var token = app.utils.getCookie("access_token");
 	const view = document.getElementById("profile-container");
@@ -137,40 +141,27 @@ addEventListener("navbar-profile", async (e) => {
 						<h1 class="signin-text">Sign In</h1>
 				 </a>
 			`;
+		app.Router.disableReload()
+		dispatchEvent(new CustomEvent("play-button"));
 		return;
 	}
 	try {
+		
 		const { data, error } = await app.utils.fetchWithAuth(
-			"/api/auth/users/me/"
+			"/api/main/user/me/"
 		);
 		if (error) {
 			view.innerHTML = placeholder;
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		const img = data.icon_url
-		console.log("image url : ", img);
-		
-		if (img && img.startsWith("/"))
-		{
-			console.log("fetching image navbar");
-			
-			const res = await app.utils.fetchWithAuth(img);
-			console.log("res", res);
-			
-			if (res.error)
-			{
-				view.innerHTML = placeholder;
-				app.utils.showToast("Failed to get your data");
-				return;
-			}
-			view.innerHTML = NavProfile({
-				username : data.username,
-				icon_url : res.data
-			})	
-		}
-		else
-			view.innerHTML = NavProfile(data);
+		var img = data.auth.icon_url
+		if (!img.startsWith("https"))
+			img += `?nocache=${Date.now()}`
+		console.log("image url navbar: ", img);
+		while(view.firstChild)
+			view.removeChild(view.firstChild)
+		view.innerHTML = NavProfile({icon_url : img, username : data.auth.username});
 
 		const existingModal = document.getElementById("profile-modal");
 		if (existingModal) {
@@ -217,10 +208,8 @@ addEventListener("navbar-profile", async (e) => {
 
 			if (profileModal.style.display === "none") {
 				showModalWithAnimation(profileModal);
-				console.log("Modal shown with animation");
 			} else {
 				hideModalWithAnimation(profileModal);
-				console.log("Modal hidden with animation");
 			}
 		});
 
@@ -237,7 +226,6 @@ addEventListener("navbar-profile", async (e) => {
 				e.target !== button
 			) {
 				hideModalWithAnimation(profileModal);
-				console.log("Modal closed by outside click");
 			}
 		});
 
@@ -246,11 +234,11 @@ addEventListener("navbar-profile", async (e) => {
 			.addEventListener("click", async (e) => {
 				e.preventDefault();
 				hideModalWithAnimation(profileModal);
-
 				await handleLogout()
 				
 			});
 			app.Router.disableReload()
+			dispatchEvent(new CustomEvent("play-button"));
 	} catch (error) {
 		if (error instanceof app.utils.AuthError) {
 			return;

@@ -71,7 +71,7 @@ from .views import UserImageView
 urlpatterns += [
    path('users/', ListUsers.as_view(), name='list-users'),
    path('users/me/', GetMyInfo.as_view(), name='profile-info'),
-   path('users/image/', UserImageView.as_view(), name='profile-image'),
+   path('users/image/', UserImageView.as_view(), name='profile-image-post'),
    path('users/image/<str:id>/', UserImageView.as_view(), name='profile-image'),
    path('users/verify-2fa/', VerifyOTP.as_view(), name='verify-2fa'),
    path('users/enable-2fa/', EnableOTP.as_view(), name='enable-2fa'),

@@ -177,7 +177,6 @@ const openBlocklistModal = async () => {
 }
 
 export default async () => {
-    const view = document.getElementById("acc-security");
     
     try {
         const initialState = await getState(true);
@@ -223,15 +222,8 @@ export default async () => {
         
         logoutBtn.addEventListener("click", handleLogout)
         
-        // set image form
-        const {error, data} = await app.utils.fetchWithAuth("/api/main/user/me/")
-        if (error)
-        {
-            app.utils.showToast(error)
-            setImageUpload("/public/assets/icon-placeholder.svg")
-        }
-        else
-            setImageUpload(data.auth.icon_url)
+        // set image for display
+        await setImageUpload()
         // bind image form to submit
         const imageform = document.getElementById("img-form")
         imageform.addEventListener("submit", async (e)=>{
@@ -253,21 +245,8 @@ export default async () => {
                 imageform.reset()
                 return
             }
-            const data = Object.fromEntries(formdata.entries());
-            console.log("image : ", data["image"]);
-            
-            const bool = await handleUpload({image : data["image"]})
-            if (bool)
-            {
-                const {error, data} = await app.utils.fetchWithAuth("/api/main/user/me/")
-                if (error)
-                {
-                    app.utils.showToast(error)
-                    setImageUpload("/public/assets/icon-placeholder.svg")
-                }
-                else
-                    setImageUpload(data.auth.icon_url)
-            }
+            const data = Object.fromEntries(formdata.entries());            
+            await handleUpload({image : data["image"]})
             imageform.reset()
         })
         // hady dial bind form event to send request to update user info f backend
@@ -278,6 +257,7 @@ export default async () => {
         const form_password = pw_container.querySelector("#update-pass-form")
         form_password.addEventListener("submit", async (e)=> {
             e.preventDefault()
+            e.stopPropagation()
             const formdata = new FormData(form_password)
             const data = Object.fromEntries(formdata.entries())
             console.log("form data",data);
@@ -297,32 +277,24 @@ export default async () => {
         app.utils.showToast("An error occurred loading settings.");
     }
 }
-/**
- * 
- * @param {string} url 
- */
-const setImageUpload = async (url) => {
-    const current = document.getElementById("current")   
-    console.log("url ", url);
-    if (!url)
+
+const setImageUpload = async () => {
+    console.log("setting image");
+    
+    const {error, data} = await app.utils.fetchWithAuth("/api/auth/users/me/")
+    const current = document.getElementById("current")
+    var url = "/public/assets/icon-placeholder.svg"
+    current.className ="object-cover"    
+    if (error)
     {
-        current.src = "/public/assets/icon-placeholder.svg"
+        app.utils.showToast(error)
+        current.src = url
         return
     }
-    if (url.startsWith("/"))
-    {
-        const {data, error} = await app.utils.fetchWithAuth(url)
-        if (error)
-        {
-            app.utils.showToast(error)
-            return
-        }
-        url = "data:image/png;base64," + data
-        current.src = url
-    }
-    else
-        current.src = url
-    current.className ="object-cover"    
+    url = data.icon_url
+    // if (!url.startsWith("https"))
+    //     url += `?nocache=${Date.now()}`
+    current.src = url    
 }
 
 const handleUpload = async ({image}) => {
@@ -337,9 +309,11 @@ const handleUpload = async ({image}) => {
     {
         console.error(error);
         app.utils.showToast(error)
-        return false
+        await setImageUpload()
+        return
     }
-    return true
+    app.utils.showToast(data.detail, "green")
+    await setImageUpload()
 }
 
 /**

@@ -16,9 +16,34 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 django_app = get_asgi_application()
 
+import asyncio
+from .publisher import QueuePublisher, RabbitmqBase
+
+
 from pong_game.wbesocket_urls import websocket_patterns
 from pong_game.Middleware import jwtMiddleware
 
+from .publisher import publishers
+
+async def app(scope, receive, send):
+    if scope['type'] == 'lifespan':
+        tasks = []
+        while True:
+            message = await receive()
+            if message['type'] == 'lifespan.startup':
+                for pub in publishers:
+                    tasks.append({
+                        "publisher" : pub,
+                        'task' : asyncio.create_task(pub.run())
+                        })
+                await send({'type': 'lifespan.startup.complete'})
+            elif message['type'] == 'lifespan.shutdown':
+                if len(tasks):
+                    for task in tasks:
+                        await task["publisher"].stop()
+                        task["task"].cancel()
+                await send({'type': 'lifespan.shutdown.complete'})
+                return
 
 application = ProtocolTypeRouter({
     'http' : django_app,
@@ -26,7 +51,8 @@ application = ProtocolTypeRouter({
         URLRouter(
             websocket_patterns
         )
-    )
+    ),
+    'lifespan' : app
 })
 
 

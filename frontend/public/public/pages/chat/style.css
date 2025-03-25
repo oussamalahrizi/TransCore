@@ -25,6 +25,34 @@ body {
 }
 
 
+/* profile modal */
+.profile-show-modal
+{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow-y: hidden;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+.profile-show-modal.show
+{
+    opacity: 1;
+    visibility: visible;
+}
+/* profile modal end */
+
+
 /* User List Section */
 #chat-user-list {
   width: 25%; 
@@ -56,7 +84,7 @@ body {
 }
 
 .search-icon {
-  background-image: url("searchIcon.png"); 
+  background-image: url("../../assets/searchIcon.png"); 
   background-size: cover; 
   width: 20px; 
   height: 20px; 
@@ -92,9 +120,9 @@ body {
   color: #888;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
-  padding: 8px 12px;
+  padding: 0px 0px;
   border-radius: 8px;
-  background-color: #444;
+  background-color: #333;
 }
 
 .filter-label:hover {
@@ -108,7 +136,7 @@ body {
   -moz-appearance: none;
   width: 20px; 
   height: 20px; 
-  background-image: url("filter.png"); 
+  background-image: url("../../assets/filter.png"); 
   background-size: cover;
   border: none;
   cursor: pointer;
@@ -116,8 +144,10 @@ body {
 }
 
 .filter-checkbox:checked {
-  background-image: url("filter-active.png"); 
+  background-image: url("../../assets/filter.png"); 
   opacity: 0.8; 
+  background-color: #555;
+
 }
 
 .filter-checkbox:hover {
@@ -491,8 +521,8 @@ body {
 }
 
 .profile-header .profile-name {
-  font-size: 22px;
-  color: #029F5B;
+  font-size: 20px;
+  color: #e6e6e6;
   font-weight: 600;
   text-align: center;
   text-transform: uppercase;
@@ -516,7 +546,7 @@ body {
   padding: 12px;
   border: none;
   border-radius: 8px;
-  background-color: #029F5B;;
+  background-color: #282828;;
   color: white;
   cursor: pointer;
   font-size: 14px;
@@ -537,20 +567,16 @@ body {
   background-repeat: no-repeat;
 }
 
-.block-icon {
-  background-image: url("block.png"); 
+.profile-button .block-icon {
+  background-image: url("../../assets/block.svg");
 }
 
-.unblock-icon {
-  background-image: url("block.png"); 
+.profile-button .game-icon {
+  background-image: url("../../assets/game.svg");
 }
 
-.game-icon {
-  background-image: url("game.png");
-}
-
-.profile-icon {
-  background-image: url("profile.png"); 
+.profile-button .profile-icon {
+  background-image: url("../../assets/profile.png");
 }
 .profile-button i {
   font-size: 16px;
@@ -559,7 +585,6 @@ body {
   font-size: 16px;
 }
 
-/* Select User Prompt */
 .select-user-prompt {
   display: flex;
   flex-direction: column; 
@@ -576,7 +601,7 @@ body {
 }
 
 .chat-icon {
-  background-image: url("chat.png");
+  background-image: url("../../assets/chat.png");
   background-size: cover; 
   width: 50px; 
   height: 50px; 
@@ -639,12 +664,10 @@ body {
   display: none;
 }
 
-/* When profile section is visible, shrink the chat box */
 #profile-section.hidden {
   display: none; 
 }
 
-/* Chat Box Resizing */
 #chat-box {
   transition: width 0.3s ease;
   width: 75%;
@@ -658,9 +681,6 @@ body {
 #profile-section.hidden {
   display: none; 
 }
-
-
-
 
 
 @keyframes slideIn {
@@ -733,5 +753,60 @@ body {
   }
 }
 
+/* Status Base Styles */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #A9A9A9; /* Default offline color */
+    transition: background-color 0.3s ease;
+}
 
+.status-text {
+    color: #A9A9A9; /* Default offline color */
+    transition: color 0.3s ease;
+}
 
+/* Online Status */
+.online .status-indicator,
+.status-indicator.online {
+    background-color: #029F5B;
+}
+
+.online .status-text,
+.status-text.online {
+    color: #029F5B;
+}
+
+/* In Queue Status */
+.inqueue .status-indicator,
+.status-indicator.inqueue {
+    background-color: #FF9F1C;
+}
+
+.inqueue .status-text,
+.status-text.inqueue {
+    color: #FF9F1C;
+}
+
+/* In Game Status */
+.ingame .status-indicator,
+.status-indicator.ingame {
+    background-color: #2EC4B6;
+}
+
+.ingame .status-text,
+.status-text.ingame {
+    color: #2EC4B6;
+}
+
+/* Offline Status */
+.offline .status-indicator,
+.status-indicator.offline {
+    background-color: #A9A9A9;
+}
+
+.offline .status-text,
+.status-text.offline {
+    color: #A9A9A9;
+}
