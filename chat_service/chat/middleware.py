@@ -10,7 +10,6 @@ from pprint import pprint
 # URLs
 JWK_URL = "http://auth-service/api/auth/jwk/"
 USERINFO_URL = "http://auth-service/api/auth/internal/userid/"
-RELATION = "http://auth-service/api/auth/internal/friends/relation/"
 
 
 class JWTMiddleware(BaseMiddleware):

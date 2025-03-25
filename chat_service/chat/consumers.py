@@ -11,8 +11,8 @@ from pprint import pprint
 logger = logging.getLogger(__name__)
 
 USER_BY_USERNAME_URL = "http://auth-service/api/auth/internal/username/"
-FRIENDS_CHECK_URL = "http://auth-service/api/auth/internal/friends/"
 BLOCKED_CHECK_URL = "http://auth-service/api/auth/internal/blocked/"
+FRIENDS_CHECK_RELATION_URL = "http://auth-service/api/auth/internal/friends/relation/"
 
 async def fetch_user_by_username(username: str):
     try:
@@ -53,14 +53,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     return
                 
                 self.other = await fetch_user_by_username(other)
-                pprint(other)
+                logger.debug(f"Fetched other user: {self.other}")
                 
-                are_friends = await self.check_friendship(self.user["id"], self.other["id"])
+                are_friends = await self.check_friendship(
+                    self.user['username'],
+                    self.other['username']
+                )
                 if not are_friends:
                     await self.close(code=4003, reason="You can only message friends.")
                     return
                     
-                is_blocked = await self.check_blocked(self.user["id"], self.other["id"])
+                is_blocked = await self.check_blocked(
+                    self.user["id"],
+                    self.other["id"]
+                )
                 if is_blocked:
                     await self.close(code=4003, reason="You cannot message this user.")
                     return
@@ -108,8 +114,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         try:
-            are_friends = await self.check_friendship(self.user["id"], self.chat_with_user_id)
-            is_blocked = await self.check_blocked(self.user["id"], self.chat_with_user_id)
+            are_friends = await self.check_friendship(
+                self.user['username'],
+                self.other['username']
+            )
+            is_blocked = await self.check_blocked(
+                self.user["id"],
+                self.chat_with_user_id
+            )
             
             if not are_friends:
                 await self.send(json.dumps({
@@ -144,9 +156,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 timestamp
             )
             
-            recipient_blocked = await self.check_blocked(self.chat_with_user_id, self.user["id"])
+            recipient_blocked = await self.check_blocked(
+                self.chat_with_user_id,
+                self.user["id"]
+            )
             if not recipient_blocked:
-                await self.publish_notification(self.user["id"], self.chat_with_user_id, message)
+                await self.publish_notification(
+                    self.user["id"],
+                    self.chat_with_user_id,
+                    message
+                )
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -205,33 +224,48 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error saving message: {e}")
             raise
 
-    @database_sync_to_async
-    def check_friendship(self, user_id, friend_id):
-        """Check if two users are friends"""
+    async def check_friendship(self, username1, username2):
+        """Check if two users are friends by their usernames"""
         try:
+            if not username1 or not username2:
+                logger.warning("Empty username provided for friendship check")
+                return False
+
+            url = FRIENDS_CHECK_RELATION_URL
+            params = {"user1": username1, "user2": username2}
+                
+            logger.debug(f"Checking friendship between {username1} and {username2}")
+
             timeout = httpx.Timeout(5.0, read=5.0)
-            with httpx.Client(timeout=timeout) as client:
-                response = client.get(f"{FRIENDS_CHECK_URL}{user_id}/")
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.get(url, params=params)
+                
+            try:
                 response.raise_for_status()
-                friends = response.json()
-                return any(str(friend.get('id')) == str(friend_id) for friend in friends)
+                pprint(response.json())
+                return response.status_code == httpx.codes.OK
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == httpx.codes.NOT_FOUND:
+                    logger.debug(f"Users are not friends: {username1} and {username2}")
+                    return False
+                logger.error(f"HTTP error checking friendship: {e}")
+                return False
         except Exception as e:
             logger.error(f"Error checking friendship: {e}")
             return False
-
-    @database_sync_to_async
-    def check_blocked(self, user_id, blocked_id):
+                
+    async def check_blocked(self, user_id, blocked_id):
         """Check if user_id has blocked blocked_id"""
         try:
             timeout = httpx.Timeout(5.0, read=5.0)
-            with httpx.Client(timeout=timeout) as client:
-                response = client.get(f"{BLOCKED_CHECK_URL}{user_id}/")
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.get(f"{BLOCKED_CHECK_URL}{user_id}/")
                 response.raise_for_status()
                 blocked_users = response.json()
                 return any(str(blocked.get('id')) == str(blocked_id) for blocked in blocked_users)
         except Exception as e:
             logger.error(f"Error checking blocked status: {e}")
-            return True 
+            return True  
 
     async def disconnect(self, close_code):
         if self.room_group_name:
