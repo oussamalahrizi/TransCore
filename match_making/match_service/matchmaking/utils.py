@@ -33,20 +33,12 @@ class Cache:
     def invite_player(self, user_id : str, other : str, type : str):
         already = self.redis.get(f"invite:{type}:{user_id}")
         if already == other:
-            return "Already sent"
+            return "Already sent", False
         already_other = self.redis.get(f"invite:{type}:{other}")
         if already_other == user_id:
-            return "User Already sent you an invite"
-        type = "tic" if type == "pong" else type = "pong"
-        # check tic game as well
-        already = self.redis.get(f"invite:{type}:{user_id}")
-        if already == other:
-            return "Already sent"
-        already_other = self.redis.get(f"invite:{type}:{other}")
-        if already_other == user_id:
-            return "User Already sent you an invite"
+            return "User Already sent you an invite", False
         self.redis.setex(f"invite:{type}:{user_id}", value=other, time=30)
-        return "Invite Sent!"
+        return "Invite Sent!", True
         
 
     def store_player(self, user_id : str, game : str):
