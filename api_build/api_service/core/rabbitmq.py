@@ -97,6 +97,9 @@ class APIConsumer(AsyncRabbitMQConsumer):
         user_id = data.get('user_id')
         old_status = self.cache.get_user_status(user_id)
         old_group_count = self.cache.get_group_count(user_id)
+        auth = self.cache.get_user_data(user_id).get("auth")
+        if auth:
+            friends = auth.get("friends")
         self.cache.remove_user_data(user_id)
         new_data = {
             'status' : old_status,
@@ -108,6 +111,10 @@ class APIConsumer(AsyncRabbitMQConsumer):
         await layer.group_send(group_name, {
             'type' : "update_info"
         })
+        if friends:
+            for f in friends:
+                group_name = f"notification_{f}"
+                await layer.group_send(group_name, {"type" : "refresh_friends"})
 
     async def on_message(self, message : IncomingMessage):
         try:
