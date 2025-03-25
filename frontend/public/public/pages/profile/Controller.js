@@ -1,12 +1,14 @@
+import { sleep } from "../game/websockets.js";
+
 const MOCK_USER_DATA = {
     username: "GamerPro42",
     status: "online",
     avatar: "/public/assets/dog.png",
-    stats: {
+    game1state: {
         gamesWon: 28,
-        gamesLost: 12,
+        gamesLost: 16,
         score: 1250
-    }
+    },
 };
 
 const MOCK_MATCH_HISTORY = [
@@ -23,61 +25,96 @@ const MOCK_MATCH_HISTORY = [
 ];
 
 const createMatchHistoryItem = (match) => {
-    const resultClass = match.result === 'win' ? 'match-win' : 'match-loss';
+    const resultClass = match.result === 'win' ? 'pf-match-win' : 'pf-match-loss';
     const resultIcon = match.result === 'win' ? '🏆' : '❌';
     
     return `
-        <div class="match-item ${resultClass}">
-            <div class="match-result-icon">${resultIcon}</div>
-            <div class="match-details">
-                <div>vs ${match.opponent}</div>
-                <div class="match-score">${match.score}</div>
+        <div class="pf-match-item ${resultClass}">
+            <div class="pf-match-result-icon">${resultIcon}</div>
+            <div class="pf-match-details">
+                <p class="pf-match-score">vs ${match.opponent}</p>
+                <div class="pf-match-score">${match.score}</div>
             </div>
-            <div class="match-time">${match.date}</div>
+            <div class="pf-match-time">${match.date}</div>
         </div>
     `;
 };
 
 const MOCK_CURRENT_USER = {
     id: "current123",
-    username: "CurrentUser"
+    username: "CurrentUser",
+    status: "online",
+    game1state: {
+        gamesWon: 28,
+        gamesLost: 29,
+        score: 1250
+    },
+}
+
+const fetchUserData = async (user) => {
+    var url = "/api/main/user/me/"
+    if (user)
+        url = "/api/main/user/" + user.id
+    const { data, error } = await app.utils.fetchWithAuth(
+        url
+    );
+    if (error) {
+        app.utils.showToast('Error loading profile data. Please try again later.');
+        return;
+    }
+    console.log(data, "data")
+    MOCK_CURRENT_USER.username = data.auth.username
+    // const temp = {
+    //     "inqueue" : "in Queue",
+    //     "ingame" : "in Game",
+    //     "online" : "Online",
+    //     "offline" : "Offline",
+    // }
+    MOCK_CURRENT_USER.status = data.status
+    MOCK_CURRENT_USER.avatar = data.auth.icon_url
+    return MOCK_CURRENT_USER
 };
 
-const fetchUserData = async (userId) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return MOCK_USER_DATA;
-};
-
-const fetchMatchHistory = async (userId) => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
+const fetchMatchHistory = async () => {
     return MOCK_MATCH_HISTORY;
 };
 
-export default async () => {
+export default async (user) => {
     try {
-        const params = new URLSearchParams(window.location.search);
-        const userId = params.get('id'); // If null, we'll use a dummy ID to show buttons
-        const userData = await fetchUserData(userId || 'some-user-id');
-        document.getElementById('username').textContent = userData.username;
-        document.getElementById('user-status').textContent = userData.status;
-        document.getElementById('user-avatar').src = userData.avatar;
-        const { gamesWon, gamesLost, score } = userData.stats;
-        document.getElementById('games-won').textContent = gamesWon;
-        document.getElementById('games-lost').textContent = gamesLost;
-        document.getElementById('score').textContent = score;
-        const totalGames = gamesWon + gamesLost;
-        const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
-        document.getElementById('win-rate').textContent = `${winRate}%`;
-        const matchHistory = await fetchMatchHistory(userId || 'some-user-id');
-        const matchHistoryContainer = document.getElementById('match-history');
-        
-        if (matchHistory.length > 0) {
-            const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
-            matchHistoryContainer.innerHTML = matchHistoryHTML;
-        } else {
-            matchHistoryContainer.innerHTML = '<p class="no-matches">No recent matches</p>';
+        setTimeout(async () => {
+            const userData = await fetchUserData(user);
+            console.log("profile fetch");
+            
+            document.getElementById('username').textContent = userData.username;
+            var statustext = document.getElementById('user-status');
+            const temp = {
+                "inqueue" : "in Queue",
+                "ingame" : "in Game",
+                "online" : "Online",
+                "offline" : "Offline",
         }
+            statustext.textContent = temp[userData.status];
+            statustext.className = "pf-profile-" + userData.status + "-status";
+            document.getElementById('status-circle').className = "pf-" + userData.status + "-status";
+            document.getElementById('user-avatar').src = userData.avatar ? userData.avatar : "/public/assets/icon-placeholder.svg";
+            const { gamesWon, gamesLost, score } = userData.game1state;
+            document.getElementById('games-won').textContent = gamesWon;
+            document.getElementById('games-lost').textContent = gamesLost;
+            document.getElementById('score').textContent = score;
+            const totalGames = gamesWon + gamesLost;
+            const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+            document.getElementById('win-rate').textContent = `${winRate}%`;
+            document.getElementById('win-rate').className = "pf-win-rate-" + (winRate > 50 ? "positive" : "negative");
+            const matchHistory = await fetchMatchHistory();
+            const matchHistoryContainer = document.getElementById('match-history');
+            
+            if (matchHistory.length > 0) {
+                const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
+                matchHistoryContainer.innerHTML = matchHistoryHTML;
+            } else {
+                matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
+            }
+        }, 100);
         
     } catch (error) {
         console.error('Error loading profile:', error);

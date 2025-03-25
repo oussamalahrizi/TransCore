@@ -49,30 +49,27 @@ class Cache:
     def set_user_online(self, user_id: str):
         user_data = self.get_user_data(user_id)
         if user_data:
-            user_data["status"] = "online"
+            if user_data["status"] == "offline":
+                user_data["status"] = "online"
             if user_data.get("group_count"):
                 user_data["group_count"] += 1
             else:
                 user_data["group_count"] = 1
             self.redis.set(user_id, json.dumps(user_data))
     
-    def set_user_game(self, user_id: str):
+    def set_user_status(self, user_id : str, status : str):
         user_data = self.get_user_data(user_id)
         if user_data:
-            user_data["status"] = "ingame"
+            user_data["status"] = status
             self.redis.set(user_id, json.dumps(user_data))
-    
-    def set_user_queue(self, user_id: str):
-        user_data = self.get_user_data(user_id)
-        if user_data:
-            user_data["status"] = "inqueue"
-            self.redis.set(user_id, json.dumps(user_data))
+            print("updated status")
+            pprint(user_data)
     
     def set_user_offline(self, user_id: str):
         user_data : dict = self.get_user_data(user_id)
         if user_data:
             user_data["group_count"] -= 1
-            if user_data["group_count"] <= 0 and user_data["status"] == 'online':
+            if user_data["group_count"] <= 0:
                 user_data["status"] = "offline"
                 user_data.pop('group_count')
             if user_data.get("auth"):
@@ -127,10 +124,8 @@ class Cache:
         user_data = self.get_user_data(user_id)
         auth_data = user_data.get('auth')
         if not auth_data.get('friends'):
-            print("creating friend to user : ", auth_data["username"], friend_id)
             auth_data['friends'] = [friend_id]
         else:
-            print("appending friend to user : ", auth_data["username"], friend_id)
             if friend_id not in auth_data['friends']:
                 auth_data['friends'].append(friend_id)
         self.set_user_data(user_id, auth_data, "auth")
@@ -139,10 +134,8 @@ class Cache:
         user_data = self.get_user_data(user_id)
         auth_data = user_data.get('auth')
         if not auth_data.get('blocked'):
-            print("creating blocked to user : ", auth_data["username"], blocked_id)
             auth_data['blocked'] = [blocked_id]
         else:
-            print("appending blocked to user : ", auth_data["username"], blocked_id)
             auth_data['blocked'].append(blocked_id)
         friends : list = auth_data.get("friends")
         # remove blocked user from friend list
@@ -150,8 +143,6 @@ class Cache:
             if blocked_id in friends:
                 friends.remove(blocked_id)
             auth_data["friends"] = friends
-            print("user new friends after append")
-            pprint(friends)
         self.set_user_data(user_id, auth_data, "auth")
         
 

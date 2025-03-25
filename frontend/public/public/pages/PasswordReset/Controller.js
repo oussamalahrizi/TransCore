@@ -61,7 +61,6 @@ const handleVerify = async (view, email) => {
 
 export default async () => {
     try {
-        await app.utils.LoadCss("/public/styles/forgotpass.css")
         const view = document.getElementById("reset-pw-view")
         const form = view.querySelector("#reset-form")
         const reset = view.querySelector("#reset-btn")

@@ -20,7 +20,6 @@ export default /*html*/ `
             <!-- User List Container -->
             <div id="user-list-container" class="user-list-container"></div>
         </div>
-
         <!-- Chat Box Section -->
         <div id="chat-box" class="w-3/4 relative">
             <!-- Chat Header with Menu Button -->
@@ -28,21 +27,24 @@ export default /*html*/ `
                 <!-- Chat User Info (Left Side) -->
                 <div class="chat-header-info flex items-center">
                     <img id="chat-user-image" src="default-profile.png" alt="User Profile" class="profile-image">
-                    <h3 class="chat-with-user ml-2"><span id="chat-with-user">User Name</span></h3>
+                    <div class="ml-2">
+                        <h3 class="chat-with-user"><span id="chat-with-user">User Name</span></h3>
+                        <div id="chat-user-status" class="text-sm flex items-center">
+                            <span class="status-indicator"></span>
+                            <span class="status-text ml-1">Offline</span> <!-- Default status -->
+                        </div>
+                    </div>
                 </div>
-                <!-- Menu Button (Right Side) -->
+                <!-- Menu Button -->
                 <button id="menu-button" class="text-gray-400 hover:text-white transition-colors text-2xl" aria-label="Open menu">⋮</button>
             </div>
-
             <!-- Scrollable Messages Container -->
             <div id="messages" class="messages-container"></div>
-
             <!-- Input Area -->
             <div id="input-area" class="input-area">
                 <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." aria-label="Type a message">
                 <button id="send-button" class="send-button" aria-label="Send message">Send</button>
             </div>
-
             <!-- User Selection Prompt -->
             <div id="select-user-prompt" class="select-user-prompt">
                 <div class="chat-icon"></div> <!-- Use a div for the background image -->
@@ -50,8 +52,7 @@ export default /*html*/ `
                 <p>Select a user to start chatting</p>
             </div>
         </div>
-
-        <!-- Profile Section (Hidden by Default) -->
+        <!-- Profile Section  -->
         <div id="profile-section" class="w-1/4 hidden"> <!-- Width: 25% -->
             <div class="profile-header">
                 <img src="default-profile.png" alt="Profile Image" class="profile-image">
@@ -59,16 +60,16 @@ export default /*html*/ `
             </div>
                 <div class="profile-buttons">
                 <button id="block-button" class="profile-button" aria-label="Block user">
-                    <span class="icon block-icon"></span> Block
+                    <span class="icon block-icon"></span> Block User
                 </button>
                 <button id="unblock-button" class="profile-button" aria-label="Unblock user" style="display: none;">
-                    <span class="icon unblock-icon"></span> Unblock
+                    <span class="icon unblock-icon"></span> Unblock User
+                </button>
+                <button id="view-profile-button" class="profile-button" aria-label="View profile">
+                <span class="icon profile-icon"></span> View Profile
                 </button>
                 <button id="invite-to-game-button" class="profile-button" aria-label="Invite to game">
                     <span class="icon game-icon"></span> Invite to Game
-                </button>
-                <button id="view-profile-button" class="profile-button" aria-label="View profile">
-                    <span class="icon profile-icon"></span> View Profile
                 </button>
                 </div>
         </div>

@@ -49,7 +49,8 @@ class jwtMiddleware(BaseMiddleware):
             user_id = payload.get("user_id")
 
             user_info = await self.fetch_user_info(user_id)
-            # await self.check_game_id(game_id, user_id)
+            game_info = await self.check_game_id(game_id, user_id)
+            scope["game_info"] = game_info["game_info"]
             scope["user"] = user_info
             scope['game_id'] = game_id
         
@@ -94,7 +95,6 @@ class jwtMiddleware(BaseMiddleware):
         except:
             raise DenyConnection("Internal Server Error")
 
-
     async def check_game_id(self, game_id: str, user_id: str):
         try:
             async with httpx.AsyncClient() as client:
@@ -105,13 +105,13 @@ class jwtMiddleware(BaseMiddleware):
                 }
                 response = await client.post(CHECK_GAME_URL, json=post_data)
                 response.raise_for_status()
-                await response.json()
+                return response.json()
         except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
             raise DenyConnection("Failed to get Game info From Match Making Service")
         except httpx.HTTPStatusError as e:
             if e.response.status_code in range(400, 500):
-                error = await e.response.json()
-                raise DenyConnection(error)
+                error = e.response.json()
+                raise DenyConnection("Internal Server Error", error)
             raise DenyConnection("Internal Server Error")
         except:
             raise DenyConnection("Internal Server Error")

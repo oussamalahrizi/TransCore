@@ -581,7 +581,11 @@ export default async () => {
     updateFPS();
     animationId = requestAnimationFrame(animate);
   }
-  animate();
+  gameContainer.addEventListener("start", animate)
+  gameContainer.addEventListener("end", () => {
+
+    app.Router.navigate("/");
+  })
   // Handle window resize
   window.addEventListener("resize", () => {
     if (gameInfo.camera && gameInfo.renderer) {
@@ -601,8 +605,6 @@ export default async () => {
       gameInfo.ws.close();
     }
     cancelAnimationFrame(animationId);
-    animationId = null;
-    console.log("merge");
-    
+    animationId = null;    
   };
 };

@@ -37,10 +37,11 @@ class Vector3:
 
 class GameState:
 
-    def __init__(self, players : list[str], game_id : str):
+    def __init__(self, players : list[str], game_id : str, match_type="regular"):
         self.init_game_state()
         self.players = players
         self.game_id = game_id
+        self.match_type = match_type
 
     def init_game_state(self):
         self.ball_position = Vector3(0, 0, 0)
@@ -96,6 +97,8 @@ class GameState:
             'singleplayer' : self.singleplayer,
             'multiplayer' : self.multiplayer,
             'tournament' : self.Tournament,
+            "match_type" : self.match_type
+
         }
 
     def updateBall(self):
@@ -179,7 +182,7 @@ class GameState:
     def updateBot(self):
         paddle = self.paddle2_position
         ball = self.ball_position
-        if ball.z > 0 and paddle.z <= ball.z and paddle.z + 1.25 < self.wall_bounds['top']:
-            paddle.z += self.speed * 0.016
-        elif ball.z < 0 and paddle.z >= ball.z and paddle.z - 1.25 > self.wall_bounds['bottom']:
+        if ball.z < 0 and paddle.z >= ball.z and paddle.z - 1.3 > self.wall_bounds['bottom']:
             paddle.z -= self.speed * 0.016
+        elif ball.z > 0 and paddle.z <= ball.z and paddle.z + 1.3 < self.wall_bounds['top']:
+            paddle.z += self.speed * 0.016

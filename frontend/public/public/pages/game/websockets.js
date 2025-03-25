@@ -42,9 +42,17 @@ export const setupWebSocket = (url) => {
     console.log("Connected to game server");
   };
 
-  ws.onclose = (event) => {
+  ws.onclose = async (event) => {
     console.log("Disconnected from game server:", event.reason);
-    if (window.location.pathname === "/game") app.utils.showToast(event.reason);
+    if (event.code !== 4001 && event.code !== 4003)
+      app.utils.showToast(event.reason, "green");
+    else
+      app.utils.showToast(event.reason);
+    if (location.pathname === "/game")
+    {
+      await sleep(2);
+      app.Router.navigate("/")
+    }
   };
 
   ws.onerror = (error) => {
@@ -112,7 +120,7 @@ async function handleGameEnd(winner) {
   gameContainer.appendChild(view);
   await sleep(2);
   view.remove();
-  app.Router.navigate("/");
+  gameContainer.dispatchEvent(new CustomEvent("end"))
 }
 
 function updateScoreDisplay() {
@@ -153,6 +161,8 @@ function updateScoreDisplay() {
   }
 }
 
+let gameContainer = null
+
 const startGame = () => {
   app.gameInfo.ws.send(
     JSON.stringify({
@@ -176,7 +186,7 @@ export const onmessage = (event) => {
   switch (type) {
     case "waiting":
       const view = document.createElement("div");
-      const gameContainer = document.getElementById("game");
+      gameContainer = document.getElementById("game");
       view.id = "waiting";
       view.className =
         "absolute w-full min-h-screen top-0 left-0 z-50 flex justify-center items-center text-white text-2xl bg-black/40";
@@ -195,6 +205,8 @@ export const onmessage = (event) => {
       console.log("game has started");
       document.getElementById("waiting")?.remove();
       console.log("popup msg removed");
+      gameContainer = document.getElementById("game")
+      gameContainer.dispatchEvent(new CustomEvent("start"))
       break;
 
     case "gameState":
@@ -202,7 +214,7 @@ export const onmessage = (event) => {
       break;
 
     case "gameEnd":
-      handleGameEnd(winner);
+      handleGameEnd(winner);     
       break;
 
     case "send_init_data":

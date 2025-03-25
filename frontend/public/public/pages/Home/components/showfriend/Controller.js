@@ -1,5 +1,6 @@
 import View from "./View.js";
 import { showModalWithAnimation, hideModalWithAnimation } from "../../../../modalAnimations.js";
+import profile from "../../../profile/index.js";
 
 /**
  * 
@@ -69,6 +70,27 @@ const handleblock = async (id, container) => {
     friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
 }
 
+const handleInvite = async (id) => {
+    try {
+        if (!id)
+        {
+            app.utils.showToast("Missing ID")
+            return
+        }
+        const  {data, error} = await app.utils.fetchWithAuth(`/api/match/invite/${id}/`)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        app.utils.showToast(data.detail, "green")
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+            return
+        console.error("error in invite fetch", error);
+    }
+}
+
 /**
  * 
  * @param {HTMLElement} container 
@@ -76,22 +98,13 @@ const handleblock = async (id, container) => {
  */
 const handlers = (container, friend) => {
     const invite = container.querySelector(`#invite-game-${friend.id}`)
-    invite.addEventListener('click', (e) => {
-        try {
-            e.preventDefault();
-            app.utils.showToast(`Invited ${friend.username} to a game`, "green");
-            hideModalWithAnimation(container);
-        } catch (error) {
-            if (error instanceof app.utils.AuthError)
-                return
-            console.log("error in invite friend", error);
-        }
-        });
+    invite.addEventListener('click', () => handleInvite(friend.id));
     const unfriend = container.querySelector(`#unfriend-${friend.id}`)
     unfriend.addEventListener('click', async () => {
         try {
             await handleUnfriend(friend.id, container)
-            hideModalWithAnimation(container);    
+            hideModalWithAnimation(container);   
+            container.remove()
         } catch (error) {
             if (error instanceof app.utils.AuthError)
                 return
@@ -104,12 +117,41 @@ const handlers = (container, friend) => {
         {
             await handleblock(friend.id, container)
             hideModalWithAnimation(container);
+            container.remove()
         } catch (error) {
             if (error instanceof app.utils.AuthError)
                 return
             console.log("error in block friend", error);
         }
     });
+
+    const viewProfile = container.querySelector(`#view-profile-${friend.id}`)
+    viewProfile.addEventListener('click', async (e) => {
+        container.remove()
+        const view = profile.View
+        var modal = document.getElementById("profile-view-modal")
+        if (modal)
+            modal.remove()
+        modal = document.createElement("div")
+        modal.id = "profile-view-modal"
+        modal.className = "profile-show-modal"
+        // Remove first and last line of the view HTML
+        const viewLines = view.trim().split('\n');
+        const trimmedView = viewLines.slice(1, -1).join('\n');
+        modal.innerHTML = trimmedView;
+        document.body.appendChild(modal)
+        void modal.offsetWidth;
+        modal.classList.add("show")
+        await profile.Controller(friend)
+            modal.addEventListener("click", (e) => {
+                if (e.target !== modal)
+                    return
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            });
+        })
 }
 
 
@@ -146,6 +188,7 @@ export default async (friend, target) => {
                 !friendModal.contains(e.target) && 
                 !target.contains(e.target)) {
                 hideModalWithAnimation(friendModal);
+                friendModal.remove()
                 document.removeEventListener("click", closeModal);
             }
         });

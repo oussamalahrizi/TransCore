@@ -12,6 +12,7 @@ import Game from "./pages/game/index.js";
 import Chat from "./pages/chat/index.js";
 import Profile from "./pages/profile/index.js";
 import gamemode from "./pages/Gamemode/index.js";
+import Tournament from "./pages/tournament/index.js";
 
 export default {
   "/auth/verify-2fa": {
@@ -43,6 +44,12 @@ export default {
     controller: Profile.Controller,
     auth_guard: true,
     style: "/public/pages/profile/profile.css",
+  },
+  "/tournament": {
+    view: Tournament.View,
+    controller: Tournament.Controller,
+    auth_guard: true,
+    style: "/public/pages/tournament/tournament.css",
   },
   "/auth/google_callback": {
     view: AuthGoogle.View,

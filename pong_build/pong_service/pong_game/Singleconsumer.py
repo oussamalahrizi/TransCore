@@ -8,7 +8,6 @@ from .utils import game_task, Game
 import time
 from channels.layers import get_channel_layer
 from .services import GameService
-from .game_service import save_game_result
 
 layer = get_channel_layer()
 
@@ -21,14 +20,11 @@ def record_single_match_async(player_id, is_win, player_score, cpu_score):
 async def broadcastSingle(instance: GameState):
     try:
         lasttime = time.time()
-        print("gameover ? :", instance.gameover)
         while not instance.gameover:
             current = time.time()
             delta = current - lasttime
-            # if bdelta >= 1:
-                # bdelta = current - lasttime
-            instance.updateBall()
             instance.updateBot()
+            instance.updateBall()
             await layer.group_send(instance.game_id, {
                 'type' : 'gameState',
                 'state' : json.dumps(instance.to_dict())
@@ -170,19 +166,6 @@ class SingleConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(self.game_id, {
             'type' : 'close_user'
         })
-
-        if Game.get(self.game_id):
-            game_state = Game.get(self.game_id)
-
-            game_data = {
-                "match_type": "singleplayer",
-                "player_id": self.user_id,
-                "player_score": game_state.p1_score,
-                "cpu_score": game_state.p2_score,
-                "winner": "WIN" if self.user_id == winner_id else "LOSS"
-            }
-        
-        save_game_result(game_data)
         
 
     async def gameState(self, event):

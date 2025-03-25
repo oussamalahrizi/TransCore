@@ -1,3 +1,5 @@
+import { sleep } from "./pages/game/websockets.js";
+
 export const checkAccessToken = () => {
 	const token = app.utils.getCookie("access_token");
 	return !!token;
@@ -42,6 +44,18 @@ const handleAuthGuard = async (content, route) => {
 };
 
 
+const refresh_init = async () => {
+	try {
+		const response = await fetch("/api/auth/refresh/", {credentials : "include"})
+		const data = await response.json()
+		if (response.ok)
+			return data
+		return null
+	} catch (error) {
+		return null
+	}
+}
+
 const Router = {
 	init: async () => {
 		// listen for url changes in history events
@@ -53,8 +67,14 @@ const Router = {
 		// start fresh
 		app.utils.removeCookie("access_token");
 		await Router.navigate(location.href);
+		if (!app.utils.getCookie("access_token"))
+		{
+			const res = await refresh_init()
+			console.log("refreshed token router");
+			if (res)
+				app.utils.setCookie("access_token", res.access_token)
+		}
 		dispatchEvent(new CustomEvent("navbar-profile"));
-		dispatchEvent(new CustomEvent("play-button"));
 		dispatchEvent(new CustomEvent("websocket", { detail: { type: "open" } }));
 	},
 	navigate: async (url, useHistory = true) => {
@@ -118,12 +138,12 @@ const Router = {
 		const navbar = document.getElementById("nav-bar-outer");
 		if (render === "/game") navbar.hidden = true;
 		else navbar.hidden = false;
-		Router.disableReload();
 		if (content.controller)
-		{
-			const clean = await content.controller()
-			app.cleanup.push(clean)
-		}
+			{
+				const clean = await content.controller()
+				app.cleanup.push(clean)
+			}
+		Router.disableReload();
 	},
 	disableReload: () => {
 		const a = document.querySelectorAll("a");

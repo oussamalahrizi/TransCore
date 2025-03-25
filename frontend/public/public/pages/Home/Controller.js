@@ -2,8 +2,6 @@ import { showModalWithAnimation, hideModalWithAnimation } from '../../modalAnima
 import receivedComp from "./components/Received/index.js"
 import showfriend from "./components/showfriend/index.js"
 import AddFriendModal from "./components/AddFriendModal/index.js"
-import ProfileModal from "./components/Profile/View.js"
-
 
 /**
  * 
@@ -30,27 +28,33 @@ const renderFriendsList = async (container) => {
 		});
 		const friendList = container.querySelector('#friend-list-items');
 		friendList.innerHTML = ''
-		
+		console.log("cleared friend list");
+		const temp = {
+			"online" : "Online",
+			"inqueue" : "In Queue",
+			"ingame" : "In Game",
+			"offline" : "Offline",
+		}
 		friendsData.forEach(friend => {
 			const friendItem = document.createElement('li');
 			friendItem.className = 'friend-item';
 			friendItem.dataset.friendId = friend.auth.id;
-			if (!friend.auth.icon_url)
-				friend.auth.icon_url = "/public/assets/dog.png"
+			var img = friend.auth.icon_url
+			if (!img.startsWith("https"))
+				img += `?nocache=${Date.now()}`
 			friendItem.innerHTML = `
-				<img class="profile-photo" src="${friend.auth.icon_url}">
+				<img class="profile-photo" src="${friend.auth.icon_url ? friend.auth.icon_url
+					 : "/public/assets/icon-placeholder.svg"}">
 				<div class="friend-info">
 					<span class="friend-name">${friend.auth.username}</span>
 					<span class="friend-status ${friend.status}">
-						<span class="status-circle"></span> ${friend.status.replace('-', ' ').charAt(0).toUpperCase() + friend.status.replace('-', ' ').slice(1)}
+						<span class="status-circle"></span> ${temp[friend.status]}
 					</span>
 				</div>
 			`;
 			
 			friendItem.addEventListener('click', (e) => {
 				e.preventDefault();
-				console.log("friend click data" , friend);
-				
 				showfriend.Controller(friend.auth, e.currentTarget)
 			});
 			
@@ -118,11 +122,11 @@ const RightSide = (container) => {
 	
 	receivedRequestsBtn.addEventListener("click", receivedComp.Controller);
 	const friendsContainer = container.querySelector("#friend-list-items")
-	friendsContainer.addEventListener("refresh", () => renderFriendsList(container))
+	friendsContainer.addEventListener("refresh", async ()=> await renderFriendsList(container))
 	friendsContainer.dispatchEvent(new CustomEvent("refresh"))
 }
 
-export default () => {
+export default async () => {
 	try {
 		// Add event listener for add friend button
 		console.log("home controller");

@@ -36,8 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'rest_framework',
-    'chat',  
-    'channels',  
+    'chat',
+    'channels',
 ]
 
 ASGI_APPLICATION = 'django_chat.asgi.application'

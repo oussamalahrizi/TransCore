@@ -7,6 +7,7 @@
     width: 100%;
     justify-content: center;
     align-items: center;
+    padding-bottom: 1rem;
 }
 
 .inner-container
@@ -260,6 +261,8 @@
     border-radius: 50%;
     margin-right: 0.75rem;
     margin-left: 0.5rem;
+    object-fit: cover;
+
 }
 
 .friend-info
@@ -285,7 +288,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    margin-right: 2px;
+    margin-right: 0.3rem;
 }
 
 .friend-status.online .status-circle
@@ -293,12 +296,12 @@
     background-color: #4CAF50;
 }
     
-.friend-status.in-queue .status-circle
+.friend-status.inqueue .status-circle
 {
     background-color: #ff9800;
 }
 
-.friend-status.in-game .status-circle
+.friend-status.ingame .status-circle
 {
     background-color: #2196F3;
 }
@@ -313,12 +316,12 @@
     color: #4CAF50;
 }
 
-.friend-status.in-queue
+.friend-status.inqueue
 {
     color: #ff9800;
 }
 
-.friend-status.in-game
+.friend-status.ingame
 {
     color: #2196F3;
 }
@@ -491,8 +494,8 @@
     border: none;
 }
 
-/* Profile Modal Styles - Based exactly on the photo */
-.profile-view-modal {
+.profile-show-modal
+{
     position: fixed;
     top: 0;
     left: 0;
@@ -507,271 +510,10 @@
     visibility: hidden;
     transition: opacity 0.3s, visibility 0.3s;
 }
-
-.profile-view-modal.show {
+.profile-show-modal.show
+{
     opacity: 1;
     visibility: visible;
-}
-
-.profile-modal-content {
-    position: relative;
-    width: 95%;
-    max-width: 1100px;
-    background-color: #1D1D1D;
-    border-radius: 8px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-}
-
-.close-profile-modal {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    color: #aaa;
-    font-size: 24px;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
-}
-
-.close-profile-modal:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-.profile-card {
-    display: flex;
-    padding: 30px;
-}
-
-/* Matches section */
-.profile-matches {
-    flex: 1;
-    border-right: 1px solid #333;
-    padding-right: 30px;
-}
-
-.profile-matches h3 {
-    color: white;
-    font-size: 18px;
-    margin-top: 0;
-    margin-bottom: 20px;
-}
-
-.matches-list {
-    max-height: 370px;
-    overflow-y: auto;
-    padding-right: 10px;
-    scrollbar-width: none;
-}
-
-.matches-list::-webkit-scrollbar {
-    display: none;
-}
-
-.match-row {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
-    position: relative;
-    margin-bottom: 10px;
-}
-
-.match-indicator {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    border-radius: 2px;
-}
-
-.match-row.win .match-indicator {
-    background-color: #4CAF50;
-}
-
-.match-row.loss .match-indicator {
-    background-color: #F44336;
-}
-
-.match-info {
-    display: flex;
-    flex-direction: column;
-    margin-left: 10px;
-    flex: 1;
-}
-
-.match-player {
-    color: white;
-    display: flex;
-    align-items: center;
-}
-
-.match-icon {
-    margin-right: 5px;
-    opacity: 0.9;
-}
-
-.match-score {
-    color: #94979C;
-    font-size: 14px;
-}
-
-.match-time {
-    color: #666;
-    font-size: 12px;
-    text-align: right;
-    min-width: 70px;
-}
-
-/* Profile info section */
-.profile-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0 30px;
-}
-
-.avatar-container {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-bottom: 15px;
-    border: 3px solid white;
-}
-
-.avatar {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.username {
-    font-size: 2.4rem;
-    font-weight: bold;
-    margin: 0 0 0.5rem 0;
-    color: #f3f4f6;
-    text-align: center;
-}
-
-.status {
-    display: flex;
-    align-items: center;
-    margin: 5px 0 20px;
-}
-
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #4CAF50;
-    margin-right: 5px;
-}
-
-.status-text {
-    color: #94979C;
-    font-size: 14px;
-}
-
-.profile-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.action-btn {
-    margin-top: 2rem;
-    padding: 0.6rem 1.2rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    background-color: #029F5B;
-    color: white;
-    min-width: 120px;
-}
-
-.add-friend, .message {
-    background-color: #029F5B;
-}
-
-.add-friend:hover, .message:hover {
-    background-color: #017d47;
-}
-
-.block {
-    background-color: #E22626;
-}
-
-.block:hover {
-    background-color: #bf1f1f;
-}
-
-/* Stats section - with centered alignment */
-.profile-stats {
-    flex: 1;
-    padding-left: 30px;
-    border-left: 1px solid #333;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.stat {
-    margin-bottom: 25px;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.stat-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-    color: #f3f4f6;
-}
-
-.win-rate {
-    color: #029F5B;
-}
-
-.stat-label {
-    color: #94979C;
-    font-size: 14px;
-}
-
-@media (max-width: 992px) {
-    .profile-card {
-        flex-direction: column;
-    }
-    
-    .profile-matches,
-    .profile-info,
-    .profile-stats {
-        width: 100%;
-        border: none;
-        padding: 20px 0;
-    }
-    
-    .profile-info {
-        order: -1;
-    }
-    
-    .profile-matches {
-        border-top: 1px solid #333;
-        border-bottom: 1px solid #333;
-    }
 }
 
 /* Add Friend Modal Styles */

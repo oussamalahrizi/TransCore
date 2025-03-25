@@ -11,11 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
-import os, datetime
-from dotenv import load_dotenv
-
-load_dotenv('.env')
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,13 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2sf*-7c@&yy!$l$vb&^dp^x=%5yo2(l65k0gbq#zwd-bsiyi-n'
+SECRET_KEY = 'django-insecure-&(x86hvce7rzp4fv4!_4enr4!&&@#yg2=5!2$o$k@qbkngo02_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["auth-service", '*']
-
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -82,7 +77,6 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'
 
@@ -101,6 +95,7 @@ DATABASES = {
         'PORT': os.getenv("DB_PORT", ''),
     }
 }
+
 
 
 # Password validation
@@ -141,12 +136,10 @@ STATIC_URL = '/api/auth/static/'
 MEDIA_URL = '/api/auth/media/'
 MEDIA_ROOT = "media"
 
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 # set user model
 AUTH_USER_MODEL = "auth_users.User"
@@ -159,6 +152,8 @@ CORS_ALLOW_ALL_ORIGINS =  True
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', '')
 JWT_PRIVATE_KEY = os.getenv('JWT_PRIVATE_KEY', '').replace('\\n', '\n')
 JWT_PUBLIC_KEY = os.getenv('JWT_PUBLIC_KEY', '').replace('\\n', '\n')
+
+import datetime
 
 JWT_ACCESS_TOKEN_LIFETIME = datetime.timedelta(minutes=15)
 JWT_REFRESH_TOKEN_LIFETIME = datetime.timedelta(days=1)

@@ -1,38 +1,36 @@
-body {
-    background: linear-gradient(to top, #057343, #1D1D1D);
-    color: #f3f4f6;
-}
-
-.profile-container {
+.pf-profile-container {
+    justify-content: center;
+    align-items: center;
     display: flex;
     gap: 2rem;
     flex-direction: column;
-    width: 80%;
-    max-width: 1200px;
-    margin: 2rem auto;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
     padding: 2rem;
     border-radius: 0.75rem;
     position: relative;
     z-index: 1;
 }
 
-.profile-header {
+.pf-profile-header {
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
     gap: 1.2rem;
     padding: 1.8rem;
+    width: 70%;
     background-color: #1D1D1D;
     border-radius: 0.9rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.match-history-section {
+.pf-match-history-section {
     padding-right: 1rem;
     border-right: 1px solid #333;
     max-width: 300px;
 }
 
-.section-title {
+.pf-section-title {
     font-size: 1rem;
     font-weight: 600;
     color: #f3f4f6;
@@ -40,7 +38,7 @@ body {
     text-align: center;
 }
 
-.match-history-items {
+.pf-match-history-items {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -50,11 +48,11 @@ body {
     -ms-overflow-style: none;
 }
 
-.match-history-items::-webkit-scrollbar {
+.pf-match-history-items::-webkit-scrollbar {
     display: none;
 }
 
-.match-item {
+.pf-match-item {
     display: flex;
     align-items: center;
     padding: 0.5rem;
@@ -64,39 +62,40 @@ body {
     min-height: 40px;
 }
 
-.match-win {
+.pf-match-win {
     border-left: 3px solid #029F5B;
 }
 
-.match-loss {
+.pf-match-loss {
     border-left: 3px solid #E22626;
 }
 
-.match-result-icon {
+.pf-match-result-icon {
     margin-right: 0.5rem;
 }
 
-.match-details {
+.pf-match-details {
     flex: 1;
 }
 
-.match-score {
+.pf-match-score {
     font-size: 0.75rem;
+    align-self: center;
     color: #9ca3af;
 }
 
-.match-time {
+.pf-match-time {
     font-size: 0.7rem;
     color: #6b7280;
 }
 
-.loading-spinner {
+.pf-loading-spinner {
     display: flex;
     justify-content: center;
     padding: 1rem 0;
 }
 
-.spinner {
+.pf-spinner {
     border: 3px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     border-top: 3px solid #029F5B;
@@ -110,14 +109,14 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-.no-matches {
+.pf-no-matches {
     text-align: center;
     color: #9ca3af;
     font-size: 0.875rem;
     padding: 1rem 0;
 }
 
-.profile-middle-section {
+.pf-profile-middle-section {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -126,14 +125,14 @@ body {
     padding: 0 1.5rem;
 }
 
-.profile-avatar-container {
+.pf-profile-avatar-container {
     position: relative;
     margin-bottom: 1.5rem;
     display: flex;
     justify-content: center;
 }
 
-.profile-avatar {
+.pf-profile-avatar {
     width: 154px;
     height: 154px;
     border-radius: 50%;
@@ -141,7 +140,7 @@ body {
     border: 5px solid #CECFD2;
 }
 
-.status-container {
+.pf-status-container {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -149,31 +148,54 @@ body {
     margin-bottom: 1.5rem;
 }
 
-.online-status {
+.pf-online-status {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 2px solid #1f2937;
+    border: 1px solid #1f2937;
     display: inline-block;
     position: static;
-}
-
-.online {
     background-color: #10b981;
 }
 
-.offline {
+.pf-offline-status {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #1f2937;
+    display: inline-block;
+    position: static;
     background-color: #6b7280;
 }
 
-.profile-info {
+.pf-inqueue-status {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #1f2937;
+    display: inline-block;
+    position: static;
+    background-color: #e2aa00;
+}
+
+.pf-ingame-status {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #1f2937;
+    display: inline-block;
+    position: static;
+    background-color: #0041c3;
+}
+
+.pf-profile-info {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.profile-username {
+.pf-profile-username {
     font-size: 2.4rem;
     font-weight: bold;
     margin: 0 0 0.5rem 0;
@@ -181,48 +203,39 @@ body {
     text-align: center;
 }
 
-.profile-status {
+.pf-profile-online-status {
     font-size: 1.05rem;
-    color: #9ca3af;
+    color: #10b981;
     margin: 0;
     display: inline;
     text-transform: capitalize;
 }
 
-.profile-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 0.5rem;
-    justify-content: center;
-    width: 100%;
-}
-
-.action-button {
-    padding: 0.6rem 1.2rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
+.pf-profile-offline-status {
     font-size: 1.05rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    background-color: #029F5B;
-    color: white;
-    min-width: 120px;
+    color: #6b7280;
+    margin: 0;
+    display: inline;
+    text-transform: capitalize;
 }
 
-.action-button:hover {
-    background-color: #017d47;
+.pf-profile-inqueue-status {
+    font-size: 1.05rem;
+    color: #e2aa00;
+    margin: 0;
+    display: inline;
+    text-transform: capitalize;
 }
 
-.action-button.danger {
-    background-color: #E22626;
+.pf-profile-ingame-status {
+    font-size: 1.05rem;
+    color: #0041c3;
+    margin: 0;
+    display: inline;
+    text-transform: capitalize;
 }
 
-.action-button.danger:hover {
-    background-color: #bf1f1f;
-}
-
-.profile-stats {
+.pf-profile-stats {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -230,46 +243,56 @@ body {
     border-left: 1px solid #333;
 }
 
-.stat-item {
+.pf-stat-item {
     text-align: center;
     min-width: 80px;
 }
 
-.stat-value {
+.pf-stat-value {
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 0.25rem;
     color: #f3f4f6;
 }
 
-.win-rate {
+.pf-win-rate-positive {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
     color: #029F5B;
 }
 
-.stat-label {
+.pf-win-rate-negative {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #E22626;
+}
+
+.pf-stat-label {
     font-size: 0.9rem;
     color: #9ca3af;
 }
 
 @media (max-width: 1200px) {
-    .profile-container {
+    .pf-profile-container {
         width: 90%;
         padding: 1.5rem;
     }
 }
 
 @media (max-width: 992px) {
-    .profile-header {
+    .pf-profile-header {
         grid-template-columns: 1fr;
         gap: 2.4rem;
     }
     
-    .profile-container {
+    .pf-profile-container {
         width: 95%;
         padding: 1rem;
     }
     
-    .match-history-section {
+    .pf-match-history-section {
         border-right: none;
         border-bottom: 1px solid #333;
         padding-right: 0;
@@ -277,7 +300,7 @@ body {
         max-width: none;
     }
     
-    .profile-stats {
+    .pf-profile-stats {
         border-left: none;
         border-top: 1px solid #333;
         padding-left: 0;
@@ -286,13 +309,13 @@ body {
         justify-content: space-around;
     }
     
-    .profile-middle-section {
+    .pf-profile-middle-section {
         order: -1;
     }
 }
 
 @media (max-width: 768px) {
-    .profile-actions {
+    .pf-profile-actions {
         flex-direction: column;
         align-items: center;
         gap: 0.5rem;
