@@ -567,20 +567,16 @@ body {
   background-repeat: no-repeat;
 }
 
-.block-icon {
-  background-image: url("../../assets/block2.png"); 
+.profile-button .block-icon {
+  background-image: url("../../assets/block.svg");
 }
 
-.unblock-icon {
-  background-image: url("../../assets/block2.png"); 
+.profile-button .game-icon {
+  background-image: url("../../assets/game.svg");
 }
 
-.game-icon {
-  background-image: url("../../assets/game2.png");
-}
-
-.profile-icon {
-  background-image: url("../../assets/profile.png"); 
+.profile-button .profile-icon {
+  background-image: url("../../assets/profile.png");
 }
 .profile-button i {
   font-size: 16px;
@@ -589,7 +585,6 @@ body {
   font-size: 16px;
 }
 
-/* Select User Prompt */
 .select-user-prompt {
   display: flex;
   flex-direction: column; 
@@ -758,21 +753,60 @@ body {
   }
 }
 
+/* Status Base Styles */
 .status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: grey;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #A9A9A9; /* Default offline color */
+    transition: background-color 0.3s ease;
 }
 
 .status-text {
-  color: grey;
+    color: #A9A9A9; /* Default offline color */
+    transition: color 0.3s ease;
 }
 
-.online .status-indicator {
-  background-color: #029F5B; 
+/* Online Status */
+.online .status-indicator,
+.status-indicator.online {
+    background-color: #029F5B;
 }
 
-.online .status-text {
-  color: #029F5B; 
+.online .status-text,
+.status-text.online {
+    color: #029F5B;
+}
+
+/* In Queue Status */
+.inqueue .status-indicator,
+.status-indicator.inqueue {
+    background-color: #FF9F1C;
+}
+
+.inqueue .status-text,
+.status-text.inqueue {
+    color: #FF9F1C;
+}
+
+/* In Game Status */
+.ingame .status-indicator,
+.status-indicator.ingame {
+    background-color: #2EC4B6;
+}
+
+.ingame .status-text,
+.status-text.ingame {
+    color: #2EC4B6;
+}
+
+/* Offline Status */
+.offline .status-indicator,
+.status-indicator.offline {
+    background-color: #A9A9A9;
+}
+
+.offline .status-text,
+.status-text.offline {
+    color: #A9A9A9;
 }

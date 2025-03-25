@@ -258,15 +258,24 @@ export default async () => {
         }
 
         function createUserItem(user) {
+            const statusColors = {
+                'online': { indicator: '#029F5B', text: '#029F5B' },
+                'inqueue': { indicator: '#FF9F1C', text: '#FF9F1C' },
+                'ingame': { indicator: '#2EC4B6', text: '#2EC4B6' },
+                'offline': { indicator: '#A9A9A9', text: '#A9A9A9' }
+            };
+        
             const isBlocked = blockedUsers.has(user.auth.username);
             const userItem = document.createElement('div');
-            userItem.className = `user-item ${isBlocked ? 'blocked' : ''}`;
-        
+            userItem.className = `user-item ${isBlocked ? 'blocked' : ''} ${user.status}`;
+            
             const unreadCount = unreadMessages[user.auth.username] || 0;
-            const lastMessage =  lastMessages[user.auth.username]?.message || "";
-            const lastMessageTimestamp =  lastMessages[user.auth.username]?.timestamp || "";
-                
-            const statusColor = user.status === "online" ? "green" : "grey";
+            const lastMessage = lastMessages[user.auth.username]?.message || "";
+            const lastMessageTimestamp = lastMessages[user.auth.username]?.timestamp || "";
+            
+            const status = user.status.toLowerCase();
+            const { indicator: statusColor, text: textColor } = statusColors[status] || statusColors.offline;
+        
             const chatUserImage = document.getElementById('chat-user-image');
             if (chatUserImage) {
                 chatUserImage.src = user.auth.icon_url || 'default-profile.png';
@@ -281,28 +290,24 @@ export default async () => {
             if (chatWithUser) {
                 chatWithUser.textContent = user.auth.username;
             }
+            updateElement('profile-user-name', el => el.textContent = user.auth.username);
+            
             const chatUserStatus = document.getElementById('chat-user-status');
-
             if (chatUserStatus) {
                 const statusIndicator = chatUserStatus.querySelector('.status-indicator');
                 const statusText = chatUserStatus.querySelector('.status-text');
-
-                if (user.status === "online") {
-                    chatUserStatus.classList.add('online');
-                    statusText.textContent = "Online";
-                } else {
-                    chatUserStatus.classList.remove('online');
-                    statusText.textContent = "Offline";
+                if (statusIndicator) statusIndicator.style.backgroundColor = statusColor;
+                if (statusText) {
+                    statusText.textContent = user.status;
+                    statusText.style.color = textColor;
                 }
-            }
-            const profileUserName = document.getElementById('profile-user-name');
-            if (profileUserName) {
-                profileUserName.textContent = user.auth.username;
             }
         
             userItem.innerHTML = `
                 <div class="user-avatar-container">
-                    <img src="${user.auth.icon_url || 'default-profile.png'}" alt="${user.auth.username}" class="user-avatar">
+                    <img src="${user.auth.icon_url || 'default-profile.png'}" 
+                         alt="${user.auth.username}" 
+                         class="user-avatar">
                     <span class="active-status" style="background-color: ${statusColor};"></span>
                 </div>
                 <div class="user-info">
@@ -319,13 +324,20 @@ export default async () => {
                 startChat(user.auth.username, user.auth.id);
                 userItem.classList.add('active');
                 toggleProfileSection();
-        
                 unreadMessages[user.auth.username] = 0;
                 updateUserList(friends);
             };
         
             return userItem;
         }
+        
+        function updateElement(selector, callback) {
+            const element = document.querySelector(selector);
+            if (element) callback(element);
+        }
+
+
+
         async function fetchInitialMessages() {
             if (!roomName) {
                 console.error("Room name is not available.");
