@@ -7,6 +7,9 @@ import MatchFound from "./Components/matchfound/Controller.js"
 import MatchFoundView from "./Components/matchfound/matchfound.js"
 import { hideModalWithAnimation } from './modalAnimations.js';
 
+let matchCallback = null
+let modalContainer = null
+
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
     
@@ -15,7 +18,7 @@ export const SetOnline = () => {
         console.log("websocket connected");
     }
     ws.onclose = (e) => {
-        console.log("connection closed :", e.reason);
+        console.log("connection closed :", e.reason, e);
         if (e.code === 4242)
         {
             app.utils.showToast(e.reason)
@@ -70,11 +73,18 @@ export const SetOnline = () => {
             case 'status_update':
                 console.log("received update status event");
                 dispatchEvent(new CustomEvent("play-button"))
+                modalContainer = document.getElementById("match-found-modal")
+                if (modalContainer)
+                {
+                    hideModalWithAnimation(modalContainer)
+                    modalContainer.remove()
+                }
                 break
             case 'invite':
                 app.utils.showToast("wslatk invite")
                 break
             case 'update_info':
+                friendsContainer = document.getElementById("friend-list-items")    
                 if (friendsContainer)
                     friendsContainer.dispatchEvent(new CustomEvent('refresh'))
                 dispatchEvent(new CustomEvent("navbar-profile"))
@@ -82,15 +92,17 @@ export const SetOnline = () => {
                 break
             case 'match_found':
                 const game_id = data.game_id
-                await MatchFound(game_id)
+                matchCallback = await MatchFound(game_id)
                 break
             case 'cancel_game':
-                const modalContainer = document.getElementById("match-found-modal")
+                modalContainer = document.getElementById("match-found-modal")
                 if (modalContainer)
                 {
                     hideModalWithAnimation(modalContainer)
                     modalContainer.remove()
                 }
+                if (typeof matchCallback === "function")
+                    matchCallback()
                 if (location.pathname === "/game")
                     app.Router.navigate("/")
                 break
