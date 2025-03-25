@@ -1,4 +1,4 @@
-import { showToast } from "./Components/toast.js";
+import { showToast, showConfirmToast } from "./Components/toast.js";
 
 const removeCookie = (name) =>  {
 	if (getCookie(name))
@@ -217,7 +217,6 @@ const LoadCompCss = async (href) => {
     return await load()
 }
 
-
 export default {
 	setCookie,
 	removeCookie,
@@ -226,6 +225,7 @@ export default {
 	fetchWithAuth,
     fetchWithout,
     showToast,
+    showConfirmToast,
     AuthError,
     ButtonHandler,
     LoadCss,

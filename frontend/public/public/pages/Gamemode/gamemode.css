@@ -6,54 +6,30 @@
 
 .container-gamemode {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle, rgb(8, 75, 46) 0%, rgba(29,29,29,1) 100%);
+  gap: 150px;
+  background: linear-gradient(to top, #057343, #1D1D1D);
   min-height: 100vh;
   width: 100%;
-}
-
-.pang-container
-{
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row;
-  gap: 10rem;
-  align-items: center;
-}
-
-.xo-container
-{
-  display: flex;
-  flex-direction: row;
-  gap: 9rem;
-  margin-bottom: 5rem;
-  align-items: center;
 }
 
 .card {
   position: relative;
   width: 210px;
   height: 284px;
-  background-image: url("../../assets/cardbackground.svg");
+  background-image: url("../../assets/singleplayer2.png");
   background-size: cover;
-  background-color: linear-gradient(45deg, rgba(29,29,29,1) 0%, rgba(3,120,60,1) 100%);
   background-position: center;
-  /* background-color: #6eae57; */
+  background-color: #6eae57;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: end;
   padding: 12px;
   gap: 12px;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow:  0 0 10px rgba(1, 72, 41, 0.8), 
-  0 0 20px rgba(1, 72, 41, 0.7), 
-  0 0 40px rgba(1, 72, 41, 0.6), 
-  0 0 80px rgba(1, 72, 41, 0.5);
-  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .card::before {
@@ -65,6 +41,7 @@
   width: 220px;
   height: 294px;
   border-radius: 12px;
+  background-image: url("../../assets/singleplayer2.png");
   background-size: cover;
   background-position: center;
   z-index: -10;
@@ -77,6 +54,7 @@
   z-index: -1;
   position: absolute;
   inset: 0;
+  background-image: url("../../assets/singleplayer2.png");
   background-size: cover;
   background-position: center;
   background-color: #6eae57;
@@ -88,25 +66,7 @@
   font-size: 20px;
   text-transform: capitalize;
   font-weight: 700;
-  color: rgb(12, 143, 88);
-  text-shadow: 0 0 5px rgb(54, 69, 63), 
-  0 0 5px rgba(41, 74, 60, 0.7), 
-  0 0 5px rgba(46, 84, 68, 0.5), 
-  0 0 5px rgba(65, 149, 113, 0.3);
-}
-
-.title
-{
-  align-self: flex-end;
-  justify-self: flex-start;
-  font-size: 20px;
-  text-transform: capitalize;
-  font-weight: 700;
-  color: rgb(12, 143, 88);
-  text-shadow: 0 0 5px rgb(54, 69, 63), 
-  0 0 5px rgba(41, 74, 60, 0.7), 
-  0 0 5px rgba(46, 84, 68, 0.5), 
-  0 0 5px rgba(65, 149, 113, 0.3);
+  color: white;
 }
 
 .card:hover::after {
@@ -137,51 +97,15 @@
 /* Add IDs for specific card styling if needed */
 #singleplayer-card::before,
 #singleplayer-card::after {
-  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
+  background: linear-gradient(-45deg, #f7ff00 0%, #05f239 100%);
 }
 
 #multiplayer-card::before,
 #multiplayer-card::after {
-  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
+  background: linear-gradient(-45deg, #65dbff 0%, #0080ff 100%);
 }
 
-#singleplayer-card-xo::before,
-#singleplayer-card-xo::after {
-  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
-}
-
-#multiplayer-card-xo::before,
-#multiplayer-card-xo::after {
-  background: linear-gradient(-45deg, rgb(1, 60, 23) 0%, rgb(2, 244, 143) 100%);
-}
-
-.game-title {
-  font-size: 3rem;
-  font-weight: bold;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  text-transform: uppercase;
-  font-family: Arial, sans-serif; /* Uses a system font */
-  text-align: center;
-  color: rgb(1, 70, 29);
-  text-shadow: 0 0 10px rgba(2, 159, 91, 0.8);
-  animation: pulse 3s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    color: rgb(1, 65, 29);
-    text-shadow: 5 5 5px rgb(1, 60, 23);
-  }
-  50% {
-    transform: scale(1.05); /* 10% larger at the midpoint */
-    color: rgb(1, 60, 23);
-    text-shadow: 30 30 30px rgb(1, 70, 29);
-  }
-  100% {
-    transform: scale(1); /* Back to original size */
-    color: rgb(1, 65, 29);
-    text-shadow: 5 5 10px rgb(1, 60, 23);
-  }
+#tournament-card::before,
+#tournament-card::after {
+  background: linear-gradient(-45deg, #ff00cc 0%, #333399 100%);
 }
