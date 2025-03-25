@@ -7,5 +7,6 @@ urlpatterns = [
     path("cancel_queue/", CancelQueue.as_view(), name="cancel-queue"),
     path("check_game/", CheckGame.as_view(), name='check-game'),
     path("accept/pong/", AcceptMatchPong.as_view(), name='accept-pong'),
-    path("invite/<str:id>/", InviteGame.as_view(), name='invite-pong')
+    path("invite/<str:id>/", InviteGame.as_view(), name='invite-pong'),
+    path("invite/change/<str:id>", InviteGame.as_view(), name='accept-invite-pong'),
 ]

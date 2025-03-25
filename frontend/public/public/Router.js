@@ -145,19 +145,25 @@ const Router = {
 			}
 		Router.disableReload();
 	},
+	Anchor : (e, tag) => {
+		const external = /^(http|https|mailto|ftp):/.test(
+			tag.getAttribute("href")
+		);
+		if (!external) {
+			e.preventDefault();
+			Router.navigate(tag.getAttribute("href"));
+		}
+	},
 	disableReload: () => {
-		const a = document.querySelectorAll("a");
+		var a = document.querySelectorAll("a");
 		if (!a.length) return;
 		a.forEach((tag) => {
-			tag.addEventListener("click", (e) => {
-				const external = /^(http|https|mailto|ftp):/.test(
-					tag.getAttribute("href")
-				);
-				if (!external) {
-					e.preventDefault();
-					Router.navigate(tag.getAttribute("href"));
-				}
-			});
+			const cloneTag = tag.cloneNode(true);
+			const parent = tag.parentNode;
+			if (parent) {
+				parent.replaceChild(cloneTag, tag);
+				cloneTag.addEventListener("click", (e) => Router.Anchor(e, cloneTag));
+			}
 		});
 	},
 };

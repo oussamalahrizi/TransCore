@@ -25,10 +25,7 @@ export const SetOnline = () => {
             app.utils.showToast(e.reason)
             app.utils.removeCookie("access_token")
             if (location.pathname !== "/game")
-            {
-                await sleep(2)
                 app.Router.navigate("/auth/login")
-            }
             app.websocket = null
             return
         }
@@ -88,7 +85,9 @@ export const SetOnline = () => {
                 break
             case 'invite':
                 const from = data.from
-                app.utils.showToast(`You received an invite from : ${from}`, "green")
+                const acceptBtnId = "accept-invite-" + from
+                const declineBtnId = "decline-invite-" + from
+                app.utils.showConfirmToast(`You received an invite from : ${from}`, "green", acceptBtnId, declineBtnId)
                 break
             case 'update_info':
                 friendsContainer = document.getElementById("friend-list-items")    

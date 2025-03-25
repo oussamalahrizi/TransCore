@@ -39,7 +39,10 @@ class Cache:
             return "User Already sent you an invite", False
         self.redis.setex(f"invite:{type}:{user_id}", value=other, time=30)
         return "Invite Sent!", True
-        
+    
+    def check_invite(self, user_id, other, type : str):
+        other = self.redis.get(f"invite:{type}:{user_id}")
+        return other != None
 
     def store_player(self, user_id : str, game : str):
         """
