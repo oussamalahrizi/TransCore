@@ -81,7 +81,8 @@ export const SetOnline = () => {
                 }
                 break
             case 'invite':
-                app.utils.showToast("wslatk invite")
+                const from = data.from
+                app.utils.showToast(`You received an invite from : ${from}`, "green")
                 break
             case 'update_info':
                 friendsContainer = document.getElementById("friend-list-items")    

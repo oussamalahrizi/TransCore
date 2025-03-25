@@ -149,7 +149,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
             'update_status' : self.update_status,
             'match_found' : self.match_found,
             'cancel_queue' : self.cancel_queue,
-            'cancel_game' : self.cancel_game
+            'cancel_game' : self.cancel_game,
+            'invite' : self.invite
         }
         super().__init__(host, port, queue_name)
 
@@ -174,6 +175,15 @@ class NotifConsumer(AsyncRabbitMQConsumer):
                 {data.get('reason') if data.get('reason') else ""}."""
         })
     
+    async def invite(self, data : dict):
+        user_id = data.get("user_id")
+        layer = get_channel_layer()
+        group_name = f"notification_{user_id}"
+        await layer.group_send(group_name, {
+            "type" : "invite",
+            "from" : data.get("from")
+        })
+
     async def update_status(self, data : dict):
         group_name = f"notification_{data.get('user_id')}"
         status = data.get("status")

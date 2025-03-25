@@ -70,6 +70,27 @@ const handleblock = async (id, container) => {
     friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
 }
 
+const handleInvite = async (id) => {
+    try {
+        if (!id)
+        {
+            app.utils.showToast("Missing ID")
+            return
+        }
+        const  {data, error} = await app.utils.fetchWithAuth(`/api/match/invite/${id}/`)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        app.utils.showToast(data.detail, "green")
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+            return
+        console.error("error in invite fetch", error);
+    }
+}
+
 /**
  * 
  * @param {HTMLElement} container 
@@ -77,18 +98,7 @@ const handleblock = async (id, container) => {
  */
 const handlers = (container, friend) => {
     const invite = container.querySelector(`#invite-game-${friend.id}`)
-    invite.addEventListener('click', (e) => {
-        try {
-            e.preventDefault();
-            app.utils.showToast(`Invited ${friend.username} to a game`, "green");
-            hideModalWithAnimation(container);
-            container.remove()
-        } catch (error) {
-            if (error instanceof app.utils.AuthError)
-                return
-            console.log("error in invite friend", error);
-        }
-        });
+    invite.addEventListener('click', () => handleInvite(friend.id));
     const unfriend = container.querySelector(`#unfriend-${friend.id}`)
     unfriend.addEventListener('click', async () => {
         try {

@@ -108,3 +108,10 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 			await self.channel_layer.group_send(group_name, {
 				'type': 'refresh_friends'
 			})
+
+	async def invite(self, event):
+		from_user = event["from"]
+		await self.send(json.dumps({
+			"type" : "invite",
+			"from" : from_user
+		}))

@@ -35,14 +35,15 @@ class FindMatchPong(APIView):
                 data = response.json()
                 return data
         except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
-            raise APIException(code=500, detail="Failed to reach API Service")
+            raise APIException(code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                               detail="Failed to reach API Service")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
                 return None
-            detail = await response.json()
+            detail = e.response.json()
             raise APIException(code=e.response.status_code, detail=detail)
         except Exception as e:
-            raise APIException(detail='Internal Server Error')
+            raise APIException(detail='Internal Server Error', code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get(self, request : Request, *args, **kwargs):
         current_user = {'id' : request.user.id}
@@ -169,3 +170,56 @@ class AcceptMatchPong(APIView):
     TODO :
         generate game for single player
 """
+
+
+class InviteGame(APIView):
+    permission_classes = [IsAuthenticated]
+
+    cache = Queue
+
+    async def get_other_data(self, other):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"http://api-service/api/main/user/{other}/")
+                response.raise_for_status()
+                return response.json()
+        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
+            raise APIException(code=500, detail="Failed to reach API Service")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return None
+            detail = e.response.json()
+            raise APIException(code=e.response.status_code, detail=detail)
+        except Exception as e:
+            raise APIException(detail='Internal Server Error')
+
+    def get(self, request : Request, *args, **kwargs):
+        current : ProxyUser = request.user
+        id = current.to_dict()["id"]
+        current = current.to_dict()
+        other = kwargs.get("id")
+        if not other:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "Missing User to invite"})
+        try:
+            other_data = async_to_sync(self.get_other_data)(other)
+            if other_data["status"] != "online":
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : "User is not online"})
+            res, state = self.cache.invite_player(id, other, "pong")
+            if not state:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : res})
+            notif = publishers[1]
+            data=  {
+                "type" :"invite",
+                'data' : {
+                    "user_id" : other,
+                    'from' : current["username"]
+                } 
+            }
+            async_to_sync(notif.publish)(data)
+            return Response(data={"detail" : res})
+        except APIException as e:
+            return Response(status=e.code, data={"detail" : e.detail})
+        
