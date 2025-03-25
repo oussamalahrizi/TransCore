@@ -128,7 +128,6 @@ addEventListener("play-button", async (e)=> {
 import { handleLogout } from "./pages/Settings/Controller.js";
 import { rendergame } from "./pages/game/websockets.js";
 
-let count = 1
 
 
 addEventListener("navbar-profile", async (e) => {
@@ -156,9 +155,10 @@ addEventListener("navbar-profile", async (e) => {
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		const img = data.auth.icon_url + `?nocache=${Date.now()}`
-		console.log("image url navbar: ", img, count);
-		count +=1
+		var img = data.auth.icon_url
+		if (!img.startsWith("https"))
+			img += `?nocache=${Date.now()}`
+		console.log("image url navbar: ", img);
 		while(view.firstChild)
 			view.removeChild(view.firstChild)
 		view.innerHTML = NavProfile({icon_url : img, username : data.auth.username});
