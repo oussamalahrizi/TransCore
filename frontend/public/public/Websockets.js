@@ -6,6 +6,7 @@ import { isChatActive, selectedChatUser } from './pages/chat/Controller.js';
 import MatchFound from "./Components/matchfound/Controller.js"
 import MatchFoundView from "./Components/matchfound/matchfound.js"
 import { hideModalWithAnimation } from './modalAnimations.js';
+import { sleep } from './pages/game/websockets.js';
 
 let matchCallback = null
 let modalContainer = null
@@ -17,13 +18,18 @@ export const SetOnline = () => {
     ws.onopen = (e) => {
         console.log("websocket connected");
     }
-    ws.onclose = (e) => {
-        console.log("connection closed :", e.reason, e);
+    ws.onclose = async (e) => {
+        console.log("connection closed :", e.reason);
         if (e.code === 4242)
         {
             app.utils.showToast(e.reason)
             app.utils.removeCookie("access_token")
-            app.Router.navigate("/auth/login")
+            if (location.pathname !== "/game")
+            {
+                await sleep(2)
+                app.Router.navigate("/auth/login")
+            }
+            app.websocket = null
             return
         }
         dispatchEvent(new CustomEvent("navbar-profile"))

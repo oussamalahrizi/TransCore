@@ -46,8 +46,8 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 
 	async def disconnect_user(self, event):
 		print("disconnect user consumer", event)
-		if self.cache.get_user_status(self.user["id"]) == "online":
-			await sync_to_async(self.cache.set_user_offline)(self.user['id'])
+		# if self.cache.get_user_status(self.user["id"]) == "online":
+		# 	await sync_to_async(self.cache.set_user_offline)(self.user['id'])
 		await self.close(code=event.get('code'), reason=event.get("message"))
 
 	async def send_notification(self, event):

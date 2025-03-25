@@ -68,10 +68,12 @@ class Cache:
     def set_user_offline(self, user_id: str):
         user_data : dict = self.get_user_data(user_id)
         if user_data:
-            user_data["group_count"] -= 1
-            if user_data["group_count"] <= 0:
-                user_data["status"] = "offline"
-                user_data.pop('group_count')
+            group_count = user_data.get("group_count")
+            if group_count:
+                user_data["group_count"] -= 1
+                if user_data["group_count"] <= 0:
+                    user_data["status"] = "offline"
+                    user_data.pop('group_count')
             if user_data.get("auth"):
                 self.redis.set(user_id, json.dumps(user_data))
             else:
