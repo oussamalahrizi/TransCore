@@ -9,7 +9,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle, rgba(5,115,67,1) 0%, rgba(29,29,29,1) 100%);
+  background: radial-gradient(circle, rgb(8, 75, 46) 0%, rgba(29,29,29,1) 100%);
   min-height: 100vh;
   width: 100%;
 }
@@ -39,6 +39,7 @@
   height: 284px;
   background-image: url("../../assets/cardbackground.svg");
   background-size: cover;
+  background-color: linear-gradient(45deg, rgba(29,29,29,1) 0%, rgba(3,120,60,1) 100%);
   background-position: center;
   /* background-color: #6eae57; */
   display: flex;
@@ -87,11 +88,11 @@
   font-size: 20px;
   text-transform: capitalize;
   font-weight: 700;
-  color: rgb(1, 53, 31);
-  text-shadow: 0 0 5px rgb(1, 160, 94), 
-  0 0 5px rgba(105, 187, 151, 0.7), 
-  0 0 5px rgba(105, 187, 151, 0.5), 
-  0 0 5px rgba(105, 187, 151, 0.3);
+  color: rgb(12, 143, 88);
+  text-shadow: 0 0 5px rgb(54, 69, 63), 
+  0 0 5px rgba(41, 74, 60, 0.7), 
+  0 0 5px rgba(46, 84, 68, 0.5), 
+  0 0 5px rgba(65, 149, 113, 0.3);
 }
 
 .title
@@ -101,12 +102,11 @@
   font-size: 20px;
   text-transform: capitalize;
   font-weight: 700;
-  color: rgb(1, 53, 31);;
-  color: rgb(1, 53, 31);;
-  text-shadow: 0 0 5px rgb(1, 160, 94), 
-  0 0 5px rgba(105, 187, 151, 0.7), 
-  0 0 5px rgba(105, 187, 151, 0.5), 
-  0 0 5px rgba(105, 187, 151, 0.3);
+  color: rgb(12, 143, 88);
+  text-shadow: 0 0 5px rgb(54, 69, 63), 
+  0 0 5px rgba(41, 74, 60, 0.7), 
+  0 0 5px rgba(46, 84, 68, 0.5), 
+  0 0 5px rgba(65, 149, 113, 0.3);
 }
 
 .card:hover::after {
@@ -156,17 +156,32 @@
 }
 
 .game-title {
-  font-size: 4rem;
+  font-size: 3rem;
   font-weight: bold;
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   text-transform: uppercase;
   font-family: Arial, sans-serif; /* Uses a system font */
   text-align: center;
-  color: rgb(1, 53, 31);
-  text-shadow: 0 0 10px rgba(2, 159, 91, 0.8), 
-               0 0 20px rgba(2, 159, 91, 0.7), 
-               0 0 40px rgba(2, 159, 91, 0.6), 
-               0 0 80px rgba(2, 159, 91, 0.5);
-  animation: glow 1.5s infinite alternate ease-in-out;
+  color: rgb(1, 70, 29);
+  text-shadow: 0 0 10px rgba(2, 159, 91, 0.8);
+  animation: pulse 3s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    color: rgb(1, 65, 29);
+    text-shadow: 5 5 5px rgb(1, 60, 23);
+  }
+  50% {
+    transform: scale(1.05); /* 10% larger at the midpoint */
+    color: rgb(1, 60, 23);
+    text-shadow: 30 30 30px rgb(1, 70, 29);
+  }
+  100% {
+    transform: scale(1); /* Back to original size */
+    color: rgb(1, 65, 29);
+    text-shadow: 5 5 10px rgb(1, 60, 23);
+  }
 }

@@ -5,49 +5,57 @@
   min-height: 100vh;
   margin-left: auto;
   margin-right: auto;
-  background-color: #1d1d1d;
+  background: linear-gradient(to top, #057343, #1D1D1D);
 }
 
 .sign-in-link {
   display: flex;
-  color: rgba(107, 114, 128, 1);
+  /* color: rgba(107, 114, 128, 1); */
   font-size: 1.125rem;
   font-weight: 600;
   margin-left: 0.5rem;
   margin-right: 0.5rem;
-  text-decoration: none;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  /* text-decoration: none; */
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
   border-radius: 250rem;
-  border: 1px solid rgba(107, 114, 128, 1);
+  border: 1px solid rgb(115, 121, 134);
   justify-content: center;
   align-items: center;
   transition: 0.3s;
 }
 
 .sign-in-link:hover {
-  background-color: rgba(55, 65, 81, 1);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.415);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.415);
+  background-color: rgb(74, 79, 90);
+  transform: scale(1.05);
+  color: rgb(26, 26, 26);
 }
 
-.sign-in-link:hover .signin-icon {
+
+
+.sign-in-link:hover .signin-text{
+  filter: brightness(1.5);
+}
+.sign-in-link:hover .signin-icon{
   filter: brightness(1.5);
 }
 
 .signin-text {
   font-size: 1.125rem;
   font-weight: 600;
-  color: rgba(107, 114, 128, 1);
+  color: rgb(166, 171, 182);
   margin: 0;
   line-height: 1;
 }
 
+
 .signin-icon {
   width: 1.25rem;
   height: 1.25rem;
-  margin-right: 0.75rem;
+  margin-right: 1rem;
   transition: filter 0.2s;
 }
 

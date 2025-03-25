@@ -2,7 +2,7 @@
 export default /*html*/ `
     <div class="tournament-body">
         <div class="tournament-container">
-                <h1 class="tournament-title">PING PANG<br><span class="tournament-title">TOURNAMENT</span></h1>
+                <h1 class="tournament-title">Ultimate Ping Pang Worlds 2025<br><span class="tournament-title">TOURNAMENT</span></h1>
                 
                 <div class="tournament-bracket">
                     <!-- Round 1 - Semifinals -->

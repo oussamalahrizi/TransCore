@@ -29,6 +29,7 @@
     text-shadow: 0 0 15px rgba(2, 159, 91, 0.7);
     letter-spacing: 2px;
     font-weight: 800;
+    animation: slide-in 3s;
 }
 
 /* Tournament bracket layout */
@@ -56,6 +57,7 @@
     color: #04c06e;
     text-transform: uppercase;
     letter-spacing: 1px;
+    animation: pulse-opacity 3s infinite ease-in-out;
 }
 
 /* Match styling */
