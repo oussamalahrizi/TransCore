@@ -669,12 +669,10 @@ body {
   display: none;
 }
 
-/* When profile section is visible, shrink the chat box */
 #profile-section.hidden {
   display: none; 
 }
 
-/* Chat Box Resizing */
 #chat-box {
   transition: width 0.3s ease;
   width: 75%;
@@ -688,9 +686,6 @@ body {
 #profile-section.hidden {
   display: none; 
 }
-
-
-
 
 
 @keyframes slideIn {
@@ -762,7 +757,6 @@ body {
     margin-top: 10px;
   }
 }
-
 
 .status-indicator {
   width: 8px;

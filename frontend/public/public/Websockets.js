@@ -110,5 +110,4 @@ const Notification = (message, color) => {
 function saveStateToLocalStorage() {
     localStorage.setItem('unreadMessages', JSON.stringify(unreadMessages));
     localStorage.setItem('lastMessages', JSON.stringify(lastMessages));
-    console.log("State saved to localStorage");
 }
