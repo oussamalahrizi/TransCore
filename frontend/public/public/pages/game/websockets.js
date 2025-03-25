@@ -42,9 +42,17 @@ export const setupWebSocket = (url) => {
     console.log("Connected to game server");
   };
 
-  ws.onclose = (event) => {
+  ws.onclose = async (event) => {
     console.log("Disconnected from game server:", event.reason);
-    if (window.location.pathname === "/game") app.utils.showToast(event.reason);
+    if (event.code !== 4001 && event.code !== 4003)
+      app.utils.showToast(event.reason, "green");
+    else
+      app.utils.showToast(event.reason);
+    if (location.pathname === "/game")
+    {
+      await sleep(2);
+      app.Router.navigate("/")
+    }
   };
 
   ws.onerror = (error) => {
@@ -112,6 +120,7 @@ async function handleGameEnd(winner) {
   gameContainer.appendChild(view);
   await sleep(2);
   view.remove();
+  gameContainer.dispatchEvent(new CustomEvent("end"))
 }
 
 function updateScoreDisplay() {
@@ -205,9 +214,7 @@ export const onmessage = (event) => {
       break;
 
     case "gameEnd":
-      handleGameEnd(winner);
-      gameContainer = document.getElementById("game")
-      gameContainer.dispatchEvent(new CustomEvent("end"))
+      handleGameEnd(winner);     
       break;
 
     case "send_init_data":

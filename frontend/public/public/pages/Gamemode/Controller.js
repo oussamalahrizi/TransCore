@@ -11,6 +11,7 @@ const findmatch = async () => {
     }
     console.log("data find match : ", data);
     app.utils.showToast(data.detail, "green")
+    
   
   } catch (error) {
     if (error instanceof app.utils.AuthError)
@@ -69,8 +70,14 @@ export default () => {
         console.log("Singleplayer mode selected");
         break;
       case 2:
+        const selected = document.querySelector("#multiplayer-card")
+        selected.classList.add("selected")
         app.gameInfo.Multiplayer = true;
-        findmatch()
+        await findmatch()
+        // Add transition delay when removing selected class
+        setTimeout(() => {
+          selected.classList.remove("selected");
+        }, 50);
         break;
       case 3:
         app.gameInfo.Tournament = true;
@@ -79,11 +86,6 @@ export default () => {
         break;
     }
 
-    // Add 'selected' class to the clicked card
-    const selectedCard = document.querySelector(
-      `.card:nth-child(${cardNumber})`
-    );
-    selectedCard.classList.add("selected");
     // Add visual feedback before redirecting
     // app.Router.navigate(redirectURL);
   }

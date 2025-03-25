@@ -76,9 +76,10 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		data = {
 			"type" : "status_update",
 		}
+		print("received status update from queue for user : ", self.user["username"])
+		print(event["status"])
 		self.cache.set_user_status(self.user["id"], event["status"])
 		await self.send(json.dumps(data))
-		print("sending friends")
 		await self.send_friends()
 
 	async def refresh_friends(self, event):
@@ -90,10 +91,10 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data=json.dumps({
 			'type' : "update_info"
 		}))
-		await self.send_friends()
 
 
 	async def send_friends(self):
+		
 		user_id = self.user["id"]
 		user_data = self.cache.get_user_data(user_id)
 		friends = user_data["auth"].get("friends")

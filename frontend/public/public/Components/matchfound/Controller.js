@@ -61,8 +61,7 @@ export default async  (game_id, timeoutSeconds = 15) => {
         if (remainingTime <= 0) {
             clearInterval(countdownInterval);
             await handleDecline(game_id);
-            hideModalWithAnimation(modalContainer)
-            modalContainer.remove()
+            hideModalWithAnimation(modalContainer, ()=> modalContainer.remove())
         }
         
         // Change color to red when time is running out (last 5 seconds)
@@ -78,6 +77,9 @@ export default async  (game_id, timeoutSeconds = 15) => {
     
     acceptBtn.addEventListener('click', ()=> handleAccept(game_id));
     declineBtn.addEventListener('click', () => handleDecline(game_id));
+    return () => {
+        clearInterval(countdownInterval)
+    }
     
 };
 
@@ -101,10 +103,7 @@ const handleDecline = async (game_id) => {
         app.utils.showToast(data.detail)
         const modalContainer = document.getElementById("match-found-modal")
         if (modalContainer)
-        {
-            hideModalWithAnimation(modalContainer)
-            modalContainer.remove()
-        }
+            hideModalWithAnimation(modalContainer, ()=> modalContainer.remove())
         clearInterval(countdownInterval)
     } catch (error) {
         if (error instanceof app.utils.AuthError)
@@ -132,8 +131,11 @@ const handleAccept = async (game_id) => {
         }
         app.utils.showToast(data.detail)
         const modalContainer = document.getElementById("match-found-modal")
-        hideModalWithAnimation(modalContainer)
-        modalContainer.remove()
+        if (modalContainer)
+        {
+            hideModalWithAnimation(modalContainer)
+            modalContainer.remove()
+        }
         app.Router.navigate(`/game?game_id=${game_id}`)
         clearInterval(countdownInterval)
     } catch (error) {

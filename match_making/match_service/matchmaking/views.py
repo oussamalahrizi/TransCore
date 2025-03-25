@@ -97,7 +97,10 @@ class CheckGame(APIView):
             if user_id not in players:
                 return Response(status=status.HTTP_400_BAD_REQUEST,
                                 data={'detail' : 'User Not in this game'})
-            return Response(status=status.HTTP_200_OK, data={"detail" : "OK"})
+            return Response(status=status.HTTP_200_OK, data={
+                "detail" : "OK",
+                'game_info' : game_info
+                })
         except serializers.ValidationError:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
 
@@ -153,8 +156,10 @@ class AcceptMatchPong(APIView):
         notif = publishers[1]
         body = {
             'type' : "update_status",
-            'user_id' : id,
-            'status' : "ingame"
+            "data": {
+                'user_id' : id,
+                'status' : "ingame"
+            }
         }
         async_to_sync(notif.publish)(body)
         return Response(data={'detail' : "Redirecting to the game"})

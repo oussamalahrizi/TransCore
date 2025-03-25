@@ -62,6 +62,12 @@ const fetchUserData = async (user) => {
     }
     console.log(data, "data")
     MOCK_CURRENT_USER.username = data.auth.username
+    // const temp = {
+    //     "inqueue" : "in Queue",
+    //     "ingame" : "in Game",
+    //     "online" : "Online",
+    //     "offline" : "Offline",
+    // }
     MOCK_CURRENT_USER.status = data.status
     MOCK_CURRENT_USER.avatar = data.auth.icon_url
     return MOCK_CURRENT_USER
@@ -77,10 +83,16 @@ export default async (user) => {
         const userData = await fetchUserData(user);
         document.getElementById('username').textContent = userData.username;
         var statustext = document.getElementById('user-status');
-        statustext.textContent = userData.status;
+        const temp = {
+            "inqueue" : "in Queue",
+            "ingame" : "in Game",
+            "online" : "Online",
+            "offline" : "Offline",
+       }
+        statustext.textContent = temp[userData.status];
         statustext.className = "pf-profile-" + userData.status + "-status";
         document.getElementById('status-circle').className = "pf-" + userData.status + "-status";
-        document.getElementById('user-avatar').src = userData.avatar;
+        document.getElementById('user-avatar').src = userData.avatar ? userData.avatar : "/public/assets/icon-placeholder.svg";
         const { gamesWon, gamesLost, score } = userData.game1state;
         document.getElementById('games-won').textContent = gamesWon;
         document.getElementById('games-lost').textContent = gamesLost;

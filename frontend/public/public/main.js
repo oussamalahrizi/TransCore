@@ -156,9 +156,11 @@ addEventListener("navbar-profile", async (e) => {
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		const img = data.auth.icon_url
-		console.log("image url : ", img, count);
+		const img = data.auth.icon_url + `?nocache=${Date.now()}`
+		console.log("image url navbar: ", img, count);
 		count +=1
+		while(view.firstChild)
+			view.removeChild(view.firstChild)
 		view.innerHTML = NavProfile({icon_url : img, username : data.auth.username});
 
 		const existingModal = document.getElementById("profile-modal");
