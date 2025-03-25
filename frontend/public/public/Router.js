@@ -138,12 +138,12 @@ const Router = {
 		const navbar = document.getElementById("nav-bar-outer");
 		if (render === "/game") navbar.hidden = true;
 		else navbar.hidden = false;
-		Router.disableReload();
 		if (content.controller)
-		{
-			const clean = await content.controller()
-			app.cleanup.push(clean)
-		}
+			{
+				const clean = await content.controller()
+				app.cleanup.push(clean)
+			}
+		Router.disableReload();
 	},
 	disableReload: () => {
 		const a = document.querySelectorAll("a");

@@ -37,6 +37,14 @@ class Cache:
         already_other = self.redis.get(f"invite:{type}:{other}")
         if already_other == user_id:
             return "User Already sent you an invite"
+        type = "tic" if type == "pong" else type = "pong"
+        # check tic game as well
+        already = self.redis.get(f"invite:{type}:{user_id}")
+        if already == other:
+            return "Already sent"
+        already_other = self.redis.get(f"invite:{type}:{other}")
+        if already_other == user_id:
+            return "User Already sent you an invite"
         self.redis.setex(f"invite:{type}:{user_id}", value=other, time=30)
         return "Invite Sent!"
         
