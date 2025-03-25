@@ -6,13 +6,30 @@
 
 .container-gamemode {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 150px;
   background: linear-gradient(to top, #057343, #1D1D1D);
   min-height: 100vh;
   width: 100%;
+}
+
+.pang-container
+{
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  gap: 10rem;
+  align-items: center;
+}
+
+.xo-container
+{
+  display: flex;
+  flex-direction: row;
+  gap: 9rem;
+  margin-bottom: 5rem;
+  align-items: center;
 }
 
 .card {
@@ -105,7 +122,43 @@
   background: linear-gradient(-45deg, #65dbff 0%, #0080ff 100%);
 }
 
-#tournament-card::before,
-#tournament-card::after {
-  background: linear-gradient(-45deg, #ff00cc 0%, #333399 100%);
+#singleplayer-card-xo::before,
+#singleplayer-card-xo::after {
+  background: linear-gradient(-45deg, #8100f1 0%, #c30c52 100%);
+}
+
+#multiplayer-card-xo::before,
+#multiplayer-card-xo::after {
+  background: linear-gradient(-45deg, #cf04f3 0%, #7c07d0 100%);
+}
+
+.game-title {
+  font-size: 4rem;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  font-family: Arial, sans-serif; /* Uses a system font */
+  text-align: center;
+  color: rgb(2, 159, 91);
+  text-shadow: 0 0 10px rgba(2, 159, 91, 0.8), 
+               0 0 20px rgba(2, 159, 91, 0.7), 
+               0 0 40px rgba(2, 159, 91, 0.6), 
+               0 0 80px rgba(2, 159, 91, 0.5);
+  animation: glow 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes glow {
+  0% {
+      text-shadow: 0 0 10px rgba(2, 159, 91, 0.8), 
+                   0 0 20px rgba(2, 159, 91, 0.7), 
+                   0 0 40px rgba(2, 159, 91, 0.6), 
+                   0 0 80px rgba(2, 159, 91, 0.5);
+  }
+  100% {
+      text-shadow: 0 0 20px rgba(2, 159, 91, 1), 
+                   0 0 40px rgba(2, 159, 91, 0.9), 
+                   0 0 60px rgba(2, 159, 91, 0.8), 
+                   0 0 100px rgba(2, 159, 91, 0.7);
+  }
 }
