@@ -291,10 +291,10 @@ const setImageUpload = async () => {
         current.src = url
         return
     }
-    url = data.icon_url + `?nocache=${Date.now()}`
-    console.log("new image : ", url);
-    current.src = url
-    
+    url = data.icon_url
+    // if (!url.startsWith("https"))
+    //     url += `?nocache=${Date.now()}`
+    current.src = url    
 }
 
 const handleUpload = async ({image}) => {

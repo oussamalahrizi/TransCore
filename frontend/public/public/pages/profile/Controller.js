@@ -1,3 +1,5 @@
+import { sleep } from "../game/websockets.js";
+
 const MOCK_USER_DATA = {
     username: "GamerPro42",
     status: "online",
@@ -79,37 +81,40 @@ const fetchMatchHistory = async () => {
 
 export default async (user) => {
     try {
-        const params = new URLSearchParams(window.location.search);
-        const userData = await fetchUserData(user);
-        document.getElementById('username').textContent = userData.username;
-        var statustext = document.getElementById('user-status');
-        const temp = {
-            "inqueue" : "in Queue",
-            "ingame" : "in Game",
-            "online" : "Online",
-            "offline" : "Offline",
-       }
-        statustext.textContent = temp[userData.status];
-        statustext.className = "pf-profile-" + userData.status + "-status";
-        document.getElementById('status-circle').className = "pf-" + userData.status + "-status";
-        document.getElementById('user-avatar').src = userData.avatar ? userData.avatar : "/public/assets/icon-placeholder.svg";
-        const { gamesWon, gamesLost, score } = userData.game1state;
-        document.getElementById('games-won').textContent = gamesWon;
-        document.getElementById('games-lost').textContent = gamesLost;
-        document.getElementById('score').textContent = score;
-        const totalGames = gamesWon + gamesLost;
-        const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
-        document.getElementById('win-rate').textContent = `${winRate}%`;
-        document.getElementById('win-rate').className = "pf-win-rate-" + (winRate > 50 ? "positive" : "negative");
-        const matchHistory = await fetchMatchHistory();
-        const matchHistoryContainer = document.getElementById('match-history');
-        
-        if (matchHistory.length > 0) {
-            const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
-            matchHistoryContainer.innerHTML = matchHistoryHTML;
-        } else {
-            matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
+        setTimeout(async () => {
+            const userData = await fetchUserData(user);
+            console.log("profile fetch");
+            
+            document.getElementById('username').textContent = userData.username;
+            var statustext = document.getElementById('user-status');
+            const temp = {
+                "inqueue" : "in Queue",
+                "ingame" : "in Game",
+                "online" : "Online",
+                "offline" : "Offline",
         }
+            statustext.textContent = temp[userData.status];
+            statustext.className = "pf-profile-" + userData.status + "-status";
+            document.getElementById('status-circle').className = "pf-" + userData.status + "-status";
+            document.getElementById('user-avatar').src = userData.avatar ? userData.avatar : "/public/assets/icon-placeholder.svg";
+            const { gamesWon, gamesLost, score } = userData.game1state;
+            document.getElementById('games-won').textContent = gamesWon;
+            document.getElementById('games-lost').textContent = gamesLost;
+            document.getElementById('score').textContent = score;
+            const totalGames = gamesWon + gamesLost;
+            const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+            document.getElementById('win-rate').textContent = `${winRate}%`;
+            document.getElementById('win-rate').className = "pf-win-rate-" + (winRate > 50 ? "positive" : "negative");
+            const matchHistory = await fetchMatchHistory();
+            const matchHistoryContainer = document.getElementById('match-history');
+            
+            if (matchHistory.length > 0) {
+                const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
+                matchHistoryContainer.innerHTML = matchHistoryHTML;
+            } else {
+                matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
+            }
+        }, 100);
         
     } catch (error) {
         console.error('Error loading profile:', error);
