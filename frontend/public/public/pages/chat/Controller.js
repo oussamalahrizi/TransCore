@@ -279,6 +279,7 @@ export default async () => {
             const chatUserImage = document.getElementById('chat-user-image');
             if (chatUserImage) {
                 chatUserImage.src = user.auth.icon_url || 'default-profile.png';
+                chatUserImage.style = "object-fit : cover;"
             }
 
             const profileImage = document.querySelector('#profile-section .profile-header img');
