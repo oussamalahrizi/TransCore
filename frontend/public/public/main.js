@@ -3,6 +3,7 @@ import utils from "./utils.js";
 import routes from "./routes.js";
 import { SetOnline } from "./Websockets.js";
 import NavProfile, { placeholder } from "./Components/NavProfile.js";
+import TicCustomComponents from "./pages/TictacGame/components/defineComponents.js"
 import {
 	showModalWithAnimation,
 	hideModalWithAnimation,
@@ -23,6 +24,7 @@ app.cleanup = []
 */
 
 addEventListener("DOMContentLoaded", () => {
+	TicCustomComponents()
 	app.Router.init();
 });
 

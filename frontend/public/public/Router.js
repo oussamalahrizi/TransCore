@@ -139,10 +139,10 @@ const Router = {
 		if (render === "/game") navbar.hidden = true;
 		else navbar.hidden = false;
 		if (content.controller)
-			{
-				const clean = await content.controller()
-				app.cleanup.push(clean)
-			}
+		{
+			const clean = await content.controller()
+			app.cleanup.push(clean)
+		}
 		Router.disableReload();
 	},
 	disableReload: () => {

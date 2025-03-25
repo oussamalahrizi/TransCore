@@ -260,3 +260,33 @@ services:
       - /var/lib/postgresql/data
     env_file:
       - "pong_build/build/conf/.env"
+  xo-game:
+    build: "xo_build/."
+    container_name: xo_game
+    image: xo_game:latest
+    pull_policy: build
+    networks:
+      - TransNetwork
+    volumes:
+      - "./xo_build/xo_service:/var/app"
+    depends_on:
+      - xo-redis
+      - xo-db
+    env_file:
+      - "xo_build/build/conf/.env"
+  
+  xo-redis:
+    image: redis:latest
+    container_name: xo_redis
+    networks:
+      - TransNetwork
+    
+  xo-db:
+    image: postgres:17
+    container_name: xo_db
+    networks:
+      - TransNetwork
+    volumes:
+      - /var/lib/postgresql/data
+    env_file:
+      - "xo_build/build/conf/.env"

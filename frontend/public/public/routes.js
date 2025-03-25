@@ -13,6 +13,7 @@ import Chat from "./pages/chat/index.js";
 import Profile from "./pages/profile/index.js";
 import gamemode from "./pages/Gamemode/index.js";
 import Tournament from "./pages/tournament/index.js";
+import TicTac from "./pages/TictacGame/index.js"
 
 export default {
   "/auth/verify-2fa": {
@@ -107,4 +108,17 @@ export default {
     auth_guard: true,
     style: "/public/pages/Gamemode/gamemode.css",
   },
+  '/tictac/local' : {
+    view : TicTac.local.View,
+    controller : null,
+    auth_guard: true,
+    style : "/public/pages/TictacGame/assets/css/main.css"
+  },
+  '/tictac/remote' : {
+    view : TicTac.remote.View,
+    controller : null,
+    auth_guard: true,
+    style : "/public/pages/TictacGame/assets/css/main.css"
+  }
+
 };
