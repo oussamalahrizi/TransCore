@@ -182,6 +182,12 @@ addEventListener("navbar-profile", async (e) => {
 						</div>
 						<div class="menu-item">
 							 <div class="icon-container">
+									<img src="/public/assets/chat.svg" alt="Chat icon" class="menu-icon">
+							 </div>
+							 <a href="/chat" id="chat-link">Open chat</a>
+						</div>
+						<div class="menu-item">
+							 <div class="icon-container">
 									<img src="/public/assets/settings.svg" alt="Settings icon" class="menu-icon">
 							 </div>
 							 <a href="/settings" id="settings-link">Settings</a>
@@ -193,6 +199,7 @@ addEventListener("navbar-profile", async (e) => {
 							 </div>
 							 <button id="logout-link">Sign out</button>
 						</div>
+						
 				 </div>
 			`;
 		document.body.appendChild(profileModal);
@@ -217,6 +224,16 @@ addEventListener("navbar-profile", async (e) => {
 			e.preventDefault();
 			hideModalWithAnimation(profileModal);
 			app.Router.navigate("/settings");
+		});
+		document.getElementById("chat-link").addEventListener("click", (e) => {
+			e.preventDefault();
+			hideModalWithAnimation(profileModal);
+			app.Router.navigate("/chat");
+		});
+		document.getElementById("profile-link").addEventListener("click", (e) => {
+			e.preventDefault();
+			hideModalWithAnimation(profileModal);
+			app.Router.navigate("/profile");
 		});
 
 		document.addEventListener("click", (e) => {

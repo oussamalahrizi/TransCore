@@ -1,5 +1,5 @@
 export default /*html*/ `
-<div id="chat-view" class="w-full min-h-screen text-white flex flex-col justify-center items-center">
+<div id="chat-view" class="w-full min-h-screen text-white flex flex-col justify-center items-center" style="background: linear-gradient(to top, #057343, #1D1D1D);">
     <div id="chat-container" class="flex">
         <!-- User List Section -->
         <div id="chat-user-list" class="w-1/4">
