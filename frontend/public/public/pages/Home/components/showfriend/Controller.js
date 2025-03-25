@@ -70,20 +70,24 @@ const handleblock = async (id, container) => {
     friendscontainer.dispatchEvent(new CustomEvent("refresh")) 
 }
 
-const handleInvite = async (id) => {
+const handleInvite = async (id, container) => {
     try {
         if (!id)
         {
             app.utils.showToast("Missing ID")
+            hideModalWithAnimation(container, () => container.remove());   
+            container.remove()
             return
         }
         const  {data, error} = await app.utils.fetchWithAuth(`/api/match/invite/${id}/`)
         if (error)
         {
             app.utils.showToast(error)
+            hideModalWithAnimation(container, () => container.remove());   
             return
         }
         app.utils.showToast(data.detail, "green")
+        hideModalWithAnimation(container, () => container.remove());   
     } catch (error) {
         if (error instanceof app.utils.AuthError)
             return
@@ -98,7 +102,7 @@ const handleInvite = async (id) => {
  */
 const handlers = (container, friend) => {
     const invite = container.querySelector(`#invite-game-${friend.id}`)
-    invite.addEventListener('click', () => handleInvite(friend.id));
+    invite.addEventListener('click', () => handleInvite(friend.id, container));
     const unfriend = container.querySelector(`#unfriend-${friend.id}`)
     unfriend.addEventListener('click', async () => {
         try {
