@@ -215,11 +215,40 @@ class InviteGame(APIView):
                 "type" :"invite",
                 'data' : {
                     "user_id" : other,
-                    'from' : current["username"]
+                    'from' : current["username"],
+                    'from_id' : id
                 } 
             }
             async_to_sync(notif.publish)(data)
             return Response(data={"detail" : res})
         except APIException as e:
             return Response(status=e.code, data={"detail" : e.detail})
+
+
+class AcceptInvite(APIView):
+    permission_classes = [IsAuthenticated]
+    cache = Queue
+
+    class AcceptSerializer(serializers.Serializer):
+        user_id = serializers.CharField(required=True)
+        desicion = serializers.CharField(required=True)
         
+        def validate_desicion(self, value):
+            if value not in ["accept", "decline"]:
+                raise serializers.ValidationError("desicion is not valid")
+            return value
+
+        def validate_user_id(self, value):
+            try:
+                    
+            except http
+
+    def post(self, request : Request, *args, **kwargs):
+        id = kwargs.get("id")
+        if not id:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail": "Missing invite id"})
+        current :ProxyUser = request.user
+        current = current.to_dict()
+        current_id = current["id"]
+        self.cache.check_invite(id, current, )
