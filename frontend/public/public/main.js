@@ -229,7 +229,7 @@ addEventListener("navbar-profile", async (e) => {
 		});
 		document.getElementById("chat-link").addEventListener("click", (e) => {
 			e.preventDefault();
-			hideModalWithAnimation(profileModal);
+			hideModalWithAnimation(profileModal);			console.log("chat link clicked");
 			app.Router.navigate("/chat");
 		});
 		document.getElementById("profile-link").addEventListener("click", (e) => {
