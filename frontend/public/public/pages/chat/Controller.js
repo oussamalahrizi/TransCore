@@ -115,6 +115,8 @@ export default async () => {
 
 
         function updateUserList(friends = []) {
+            console.log("update user list called");
+            
             try {
                 const userListContainer = document.getElementById('user-list-container');
                 if (!userListContainer) {
@@ -181,13 +183,15 @@ export default async () => {
             saveStateToLocalStorage();
         
             messagesContainer.innerHTML = "";
+            console.log("chat with :", chatWith);
+            
             chatWithUserElement.textContent = chatWith;
             chatHeader.classList.add("active");
             inputArea.style.display = "flex";
             selectUserPrompt.style.display = "none";
         
             const userItems = document.querySelectorAll('.user-item');
-            userItems.forEach(item => {
+            userItems.forEach(item => {                
                 item.classList.remove('active');
                 const usernameElement = item.querySelector('.username');
                 if (usernameElement && usernameElement.textContent === chatWith) {
@@ -225,7 +229,10 @@ export default async () => {
             selectedChatUserId = null;
             isChatActive = false;
         
-            if (socket) {
+            if (    socket
+                    && socket.readyState !== WebSocket.CLOSED
+                    && socket.readyState !== WebSocket.CLOSING
+                ) {
                 socket.close();
                 socket = null;
                 var str = "Failed to connect to Chat Server"
@@ -255,6 +262,8 @@ export default async () => {
         }
 
         function createUserItem(user) {
+            console.log("create user item called");
+            
             const statusColors = {
                 'online': { indicator: '#029F5B', text: '#029F5B' },
                 'inqueue': { indicator: '#FF9F1C', text: '#FF9F1C' },
@@ -287,9 +296,12 @@ export default async () => {
                 if (user.icon_url && !user.icon_url.startsWith("https"))
                     profileImage.src += `?nocache=${Date.now()}` 
             }
-
+            console.log("user chat override ");
+            
             const chatWithUser = document.getElementById('chat-with-user');
             if (chatWithUser) {
+                console.log("override with :", user.username);
+                
                 chatWithUser.textContent = user.username;
             }
             updateElement('profile-user-name', el => el.textContent = user.username);
@@ -323,11 +335,13 @@ export default async () => {
             `;
         
             userItem.onclick = () => {
+                console.log("staring with user :", user.username);
+                
                 startChat(user.username, user.id);
                 userItem.classList.add('active');
                 toggleProfileSection();
                 unreadMessages[user.username] = 0;
-                updateUserList(friends);
+                // updateUserList(friends);
             };
         
             return userItem;
@@ -366,10 +380,6 @@ export default async () => {
 
             const token = app.utils.getCookie("access_token");
             socket = new WebSocket(`ws://localhost:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
-            setTimeout(() => {
-                if (socket.readyState === WebSocket.CONNECTING)
-                    socket.close()
-            }, 2000);
             
             socket.onopen = () => {
                 scrollToBottom();
@@ -421,7 +431,9 @@ export default async () => {
             if (selectedChatUser) {
                 lastMessages[selectedChatUser] = { message, timestamp: formattedTime };
             }
-            updateUserList(friends);
+            console.log("render messsage");
+            
+            // updateUserList(friends);
             saveStateToLocalStorage();
             const formattedDate = formatDate(new Date(timestamp));
 
