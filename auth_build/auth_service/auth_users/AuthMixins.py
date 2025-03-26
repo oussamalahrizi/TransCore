@@ -56,7 +56,7 @@ class LoginMixin:
 
 	@async_to_sync
 	async def disconnect_user(self, user_id):
-		notif_queue = publishers[1]
+		notif_queue = publishers[0]
 		data = {
 			'type' : "disconnect_user",
 			'data' : {

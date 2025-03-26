@@ -63,18 +63,18 @@ const MOCK_BLOCKED_USERS = [
 
 const createBlockedUserItem = (user) => {
     return `
-        <div class="blocked-user-item" data-user-id="${user.auth.id}">
+        <div class="blocked-user-item" data-user-id="${user.id}">
             <div class="blocked-user-info">
-                <img src="${user.auth.icon_url || '/public/assets/dog.png'}" class="blocked-user-avatar">
-                <span class="blocked-user-name">${user.auth.username}</span>
+                <img src="${user.icon_url || '/public/assets/dog.png'}" class="blocked-user-avatar">
+                <span class="blocked-user-name">${user.username}</span>
             </div>
-            <button class="unblock-btn" data-user-id="${user.auth.id}">Unblock</button>
+            <button class="unblock-btn" data-user-id="${user.id}">Unblock</button>
         </div>
     `;
 };
 
 const fetchBlocklist = async () => {
-    const {data, error} = await app.utils.fetchWithAuth("/api/main/blocked/")
+    const {data, error} = await app.utils.fetchWithAuth("/api/auth/friends/blocked/")
     if (error)
     {
         app.utils.showToast(error)

@@ -532,11 +532,13 @@ export default async () => {
     //   gameInfo.useComposer = !gameInfo.useComposer;
     // }
     keystate[event.code] = true;
+    console.log("Pressed")
   });
 
   gameInfo.renderer.domElement.addEventListener("keyup", (event) => {
     // Send paddle movement commands
     keystate[event.code] = false;
+    
   });
 
   // Animation loop
@@ -575,6 +577,8 @@ export default async () => {
   }
   let animationId = null;
   function animate() {
+    console.log(keystate["KeyW"])
+    console.log(keystate["KeyS"])
     if (keystate["KeyW"]) send("KeyW");
     else if (keystate["KeyS"]) send("KeyS");
     rendergame(gameInfo);

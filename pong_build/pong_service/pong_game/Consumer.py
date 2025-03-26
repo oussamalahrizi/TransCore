@@ -89,8 +89,8 @@ class Consumer(AsyncWebsocketConsumer):
             return
         
         self.user = self.scope['user']
-        self.user_id = self.user['auth']['id']
-        self.username = self.user['auth']['username']
+        self.user_id = self.user['id']
+        self.username = self.user['username']
         self.game_id = self.scope['game_id']
         # check if both users connected to init fresh game state
         
@@ -156,6 +156,7 @@ class Consumer(AsyncWebsocketConsumer):
             }
         '''
         body = json.loads(text_data)
+        pprint(body)
         type = body.get('type')
         await self.channel_layer.group_send(self.game_id, {
             'type' : type,

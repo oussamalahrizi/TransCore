@@ -65,14 +65,18 @@ export const showConfirmToast = (color = 'green', event_data) => {
     acceptButton.id = "accept-invite-" + event_data.from_id;
     acceptButton.className = `px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors`;
     acceptButton.textContent = "Accept";
-    acceptButton.addEventListener("click", () => handleAccept(toast, remove))
+    acceptButton.addEventListener("click", () => handleAccept(toast, event_data.from_id, timeout))
     
     // Create decline button
     const declineButton = document.createElement('button');
     declineButton.id = "decline-invite-" + event_data.from_id;
     declineButton.className = `px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors`;
     declineButton.textContent = 'Decline';
-    declineButton.addEventListener("click", () => handleDecline(toast, remove))
+    declineButton.addEventListener("click", () => {
+        handleDecline(event_data.from_id, toast)
+        clearTimeout(timeout)
+    }
+)
 
     
     // Add buttons to the button container
@@ -83,26 +87,40 @@ export const showConfirmToast = (color = 'green', event_data) => {
     content.appendChild(messageDiv);
     content.appendChild(buttonsDiv);
     toast.appendChild(content);
-    const remove = () => {
+
+    const timeout = setTimeout(async () => {
         if (toast)
+        {
+            await handleDecline(event_data.from_id)
             toast.remove()
+        }
+
         if (toastContainer.children.length == 0)
             toastContainer.remove()
         clearTimeout(timeout)
-    }
-    const timeout = setTimeout(async () => {
-        if (toast)
-            await handleDecline(toast, timeout)
-        if (toastContainer.children.length == 0)
-            toastContainer.remove()
     }, 10000);
     toastContainer.insertBefore(toast, toastContainer.firstChild);    
 };
 
 
-const handleAccept = async () => {
+const handleAccept = async (toast, from_id, timeout) => {
     try {
-        
+        const body = {
+            user_id : from_id,
+            decision : "accept"
+        }
+        clearTimeout(timeout)
+        if (toast)
+            toast.remove()
+
+        const {data, error} = await app.utils.fetchWithAuth("/api/match/invite/change/", "POST", JSON.stringify(body))
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        const game_id = data.game_id
+        app.Router.navigate(`/game?game_id=${game_id}`)
     } catch (error) {
         if (error instanceof app.utils.AuthError)
             return
@@ -116,12 +134,20 @@ const handleAccept = async () => {
  * @param {HTMLElement} toast 
  * @returns 
  */
-const handleDecline = async (toast) => {
+const handleDecline = async (from_id, toast=null) => {
     try {
         if (toast)
             toast.remove()
-
-
+    const body = {
+        user_id : from_id,
+        decision : "decline"
+    }
+    const {data, error} = await app.utils.fetchWithAuth("/api/match/invite/change/", "POST", JSON.stringify(body))
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
     } catch (error) {
         if (error instanceof app.utils.AuthError)
             return

@@ -37,7 +37,7 @@ class Cache:
         already_other = self.redis.get(f"invite:{type}:{other}")
         if already_other == user_id:
             return "User Already sent you an invite", False
-        self.redis.setex(f"invite:{type}:{user_id}", value=other, time=30)
+        self.redis.setex(f"invite:{type}:{user_id}", value=other, time=12)
         return "Invite Sent!", True
     
     def check_invite(self, user_id, other, type : str):

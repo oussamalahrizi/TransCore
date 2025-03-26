@@ -167,11 +167,11 @@ export default class RoomGame extends HTMLElement {
       }
     
       console.log("User data:", data);
-      this.meImg.src = data.auth.icon_url || "/public/assets/icon-placeholder.svg";
+      this.meImg.src = data.icon_url || "/public/assets/icon-placeholder.svg";
       if (!this.meImg.src.startsWith('https'))
         this.meImg.src += `?nocache=${Date.now()}`
-      this.meImg.alt = data.auth.username || "Me";
-      this.meImg.title = data.auth.username || "Me";
+      this.meImg.alt = data.username || "Me";
+      this.meImg.title = data.username || "Me";
     }
     catch (error) {
       if (error instanceof app.utils.AuthError) {
@@ -191,11 +191,11 @@ export default class RoomGame extends HTMLElement {
         return;
       }
     
-      this.oppImg.src = data.auth.icon_url || "/public/assets/icon-placeholder.svg";
+      this.oppImg.src = data.icon_url || "/public/assets/icon-placeholder.svg";
       if (!this.meImg.src.startsWith('https'))
         this.meImg.src += `?nocache=${Date.now()}`
-      this.oppImg.alt = data.auth.username || "Opponent";
-      this.oppImg.title = data.auth.username || "Opponent";
+      this.oppImg.alt = data.username || "Opponent";
+      this.oppImg.title = data.username || "Opponent";
     }
     catch (error) {
       if (error instanceof app.utils.AuthError) {

@@ -63,7 +63,7 @@ const fetchUserData = async (user) => {
         return;
     }
     console.log(data, "data")
-    MOCK_CURRENT_USER.username = data.auth.username
+    MOCK_CURRENT_USER.username = data.username
     // const temp = {
     //     "inqueue" : "in Queue",
     //     "ingame" : "in Game",
@@ -71,7 +71,7 @@ const fetchUserData = async (user) => {
     //     "offline" : "Offline",
     // }
     MOCK_CURRENT_USER.status = data.status
-    MOCK_CURRENT_USER.avatar = data.auth.icon_url
+    MOCK_CURRENT_USER.avatar = data.icon_url
     return MOCK_CURRENT_USER
 };
 
