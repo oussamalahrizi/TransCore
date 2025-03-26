@@ -62,78 +62,6 @@ class AsyncRabbitMQConsumer:
 
 from pprint import pprint
 
-class APIConsumer(AsyncRabbitMQConsumer):
-
-    cache = _Cache
-
-    def __init__(self, host, port, queue_name):
-        self.actions = {
-            "clear_cache" : self.clear_cache,
-            "refresh_friends" : self.refresh_friends,
-        }
-        super().__init__(host, port, queue_name)
-
-    async def refresh_friends(self, data : dict):
-        user_id = data.get("user_id")
-        # get user data to delete his friends attrs
-        user_data : dict = self.cache.get_user_data(user_id)
-        print("refresh user data")
-        pprint(user_data)
-        # auth_data = user_data.get("auth")
-        # if auth_data.get("friends"):
-        #     print("AAAAAAAAAAAA", auth_data["username"], "ba7")
-        #     auth_data.pop("friends")
-        # if auth_data.get("blocked"):
-        #     auth_data.pop("blocked")
-        # user_data["auth"] = auth_data
-        # self.cache.redis.set(user_id, json.dumps(user_data))
-        layer = get_channel_layer()
-        group_name = f"notification_{user_id}"
-        await layer.group_send(group_name, {
-            "type" : "refresh_friends"
-        })
-
-    async def clear_cache(self, data : dict):
-        user_id = data.get('user_id')
-        old_status = self.cache.get_user_status(user_id)
-        old_group_count = self.cache.get_group_count(user_id)
-        auth = self.cache.get_user_data(user_id).get("auth")
-        if auth:
-            friends = auth.get("friends")
-        self.cache.remove_user_data(user_id)
-        new_data = {
-            'status' : old_status,
-            'group_count' : old_group_count
-        }
-        self.cache.redis.set(user_id, json.dumps(new_data))
-        layer = get_channel_layer()
-        group_name = f"notification_{user_id}"
-        await layer.group_send(group_name, {
-            'type' : "update_info"
-        })
-        if friends:
-            for f in friends:
-                group_name = f"notification_{f}"
-                await layer.group_send(group_name, {"type" : "refresh_friends"})
-
-    async def on_message(self, message : IncomingMessage):
-        try:
-            body = json.loads(message.body.decode())
-            print("received message :")
-            pprint(body)
-            type = body.get("type")
-            if type not in self.actions:
-                await message.ack()
-                return
-            await self.actions[type](body.get('data'))
-            await message.ack()
-        except json.JSONDecodeError:
-            print("invalid json data")
-            await message.reject()
-        except Exception as e:
-            print(f"Error processing the message : {e}")
-            await message.reject()
-
 
 from channels.layers import get_channel_layer
 
@@ -150,9 +78,40 @@ class NotifConsumer(AsyncRabbitMQConsumer):
             'match_found' : self.match_found,
             'cancel_queue' : self.cancel_queue,
             'cancel_game' : self.cancel_game,
-            'invite' : self.invite
+            'invite' : self.invite,
+            'update_info' : self.update_info,
+            'refresh_friends' : self.refresh_friends,
+            'invite_accepted' : self.invite_accepted
         }
         super().__init__(host, port, queue_name)
+
+
+
+    async def invite_accepted(self, data : dict):
+        user_id = data["user_id"]
+        game_id = data["game_id"]
+
+        layer = get_channel_layer()
+        group = f"notification_{user_id}"
+        await layer.group_send(group, {
+            "type" : "invite_accepted",
+            "game_id" : game_id
+        })
+    async def refresh_friends(self, data : dict):
+        user_id = data["user_id"]
+        layer = get_channel_layer()
+        group = f"notification_{user_id}"
+        await layer.group_send(group, {
+            "type" : "refresh_friends"
+        })
+
+    async def update_info(self, data : dict):
+        user_id = data.get("user_id")
+        layer = get_channel_layer()
+        group = f"notification_{user_id}"
+        await layer.group_send(group, {
+            "type" : "update_info"
+        })
 
     async def send_notification(self, data : dict):
         group_name = f"notification_{data.get('user_id')}"

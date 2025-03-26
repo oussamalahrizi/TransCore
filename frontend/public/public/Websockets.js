@@ -90,6 +90,9 @@ export const SetOnline = () => {
                 }
                 app.utils.showConfirmToast("green", event_data)
                 break
+            case 'invite_accepted':
+                app.Router.navigate(`/game?game_id=${data.game_id}`)
+                break
             case 'update_info':
                 friendsContainer = document.getElementById("friend-list-items")    
                 if (friendsContainer)

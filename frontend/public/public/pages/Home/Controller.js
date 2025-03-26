@@ -38,14 +38,14 @@ const renderFriendsList = async (container) => {
 		friendsData.forEach(friend => {
 			const friendItem = document.createElement('li');
 			friendItem.className = 'friend-item';
-			friendItem.dataset.friendId = friend.auth.id;
-			var img = friend.auth.icon_url || "/public/assets/icon-placeholder.svg"
+			friendItem.dataset.friendId = friend.id;
+			var img = friend.icon_url || "/public/assets/icon-placeholder.svg"
 			if (!img.startsWith("https"))
 				img += `?nocache=${Date.now()}`
 			friendItem.innerHTML = `
 				<img class="profile-photo" src="${img}">
 				<div class="friend-info">
-					<span class="friend-name">${friend.auth.username}</span>
+					<span class="friend-name">${friend.username}</span>
 					<span class="friend-status ${friend.status}">
 						<span class="status-circle"></span> ${temp[friend.status]}
 					</span>
@@ -54,7 +54,7 @@ const renderFriendsList = async (container) => {
 			
 			friendItem.addEventListener('click', (e) => {
 				e.preventDefault();
-				showfriend.Controller(friend.auth, e.currentTarget)
+				showfriend.Controller(friend, e.currentTarget)
 			});
 			
 			friendList.appendChild(friendItem);

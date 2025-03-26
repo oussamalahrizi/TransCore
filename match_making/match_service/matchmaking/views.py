@@ -232,11 +232,11 @@ class AcceptInvite(APIView):
 
     class AcceptSerializer(serializers.Serializer):
         user_id = serializers.CharField(required=True)
-        desicion = serializers.CharField(required=True)
+        decision = serializers.CharField(required=True)
         
-        def validate_desicion(self, value):
+        def validate_decision(self, value):
             if value not in ["accept", "decline"]:
-                raise serializers.ValidationError("desicion is not valid")
+                raise serializers.ValidationError("decision is not valid")
             return value
 
         async def fetch_user_data(self, user_id):
@@ -258,11 +258,13 @@ class AcceptInvite(APIView):
         def validate_user_id(self, value):
             try:
                 data = async_to_sync(self.fetch_user_data)(value)
+                if data["status"] != "online":
+                    raise serializers.ValidationError("User is not online.")
                 return value
             except APIException as e:
                 raise serializers.ValidationError(e.detail)
 
-    def generate_game(self, players : list):
+    def generate_game(self, players : list, user_id : str):
         id = uuid.uuid4()
         data = {
             'players' : players,
@@ -274,32 +276,39 @@ class AcceptInvite(APIView):
             body = {
                 'type' : "update_status",
                 "data": {
-                    'user_id' : id,
+                    'user_id' : str(id),
                     'status' : "ingame"
                 }
             }
             async_to_sync(notif.publish)(body)
+        body = {
+            'type' : "invite_accepted",
+            "data": {
+                'game_id' : str(id),
+                'user_id' : user_id
+            }  
+        }
+        async_to_sync(notif.publish)(body)
         return str(id)
 
     def post(self, request : Request, *args, **kwargs):
-        try:
-            # current is the one who will accept
-            # data["user_id"] is the one who sent the invite
-            current :ProxyUser = request.user
-            current : dict = current.to_dict()
-            current_id = current["id"]
-            ser = self.AcceptSerializer(data=request.data)
-            ser.is_valid(raise_exception=True)
-            data = ser.validated_data
-            check = self.cache.check_invite(data["user_id"] ,current_id, "pong")
-            if not check:
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : "Invalid Invite"})
-            game_id = self.generate_game([current_id, data["user_id"]])
-            return Response(data={
-                "detail" : "Redirecting",
-                "game_id" : game_id
-                })
-        except serializers.ValidationError as e:
+        # current is the one who will accept
+        # data["user_id"] is the one who sent the invite
+        current :ProxyUser = request.user
+        current : dict = current.to_dict()
+        current_id = current["id"]
+        ser = self.AcceptSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = ser.validated_data
+        check = self.cache.check_invite(data["user_id"] ,current_id, "pong")
+        if not check:
             return Response(status=status.HTTP_400_BAD_REQUEST,
-                            data={"detail" : ser.error_messages})
+                            data={"detail" : "Invalid Invite"})
+        if data["decision"] == "decline":
+            self.cache.redis.delete(f"invite:pong:{data["user_id"]}")
+            return Response(data={"detail" : "declined"})
+        game_id = self.generate_game([current_id, data["user_id"]], data["user_id"])
+        return Response(data={
+            "detail" : "Redirecting",
+            "game_id" : game_id
+            })  

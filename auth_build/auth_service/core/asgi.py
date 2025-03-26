@@ -10,14 +10,13 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 import os, asyncio
 from channels.routing import  ProtocolTypeRouter
 from django.core.asgi import get_asgi_application
-from .rabbitmq_publisher import APIPub, NotificationPub, RabbitmqBase
+from .rabbitmq_publisher import NotificationPub, RabbitmqBase
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
-apipub = APIPub(host='rabbitmq', port=5672, queue_name="api")
 notifspub = NotificationPub(host='rabbitmq', port=5672, queue_name="notifications")
 
-publishers : list[RabbitmqBase] = [apipub, notifspub]
+publishers : list[RabbitmqBase] = [notifspub]
 
 auth_app = get_asgi_application()
 

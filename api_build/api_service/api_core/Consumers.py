@@ -4,6 +4,7 @@ from .utils import _Cache
 from asgiref.sync import sync_to_async
 from core.asgi import queue_publisher
 from channels.layers import get_channel_layer
+import httpx
 
 from pprint import pprint
 
@@ -19,6 +20,7 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 			return
 		self.user = self.scope["user"]
 		self.group_name = f"notification_{self.user["id"]}"
+		self.cache.redis.set(self.user["id"], json.dumps({"status" : "offline"}))
 		await sync_to_async(self.cache.set_user_online)(self.user["id"])
 		await self.channel_layer.group_add(self.group_name, self.channel_name)
 		print(f"{self.user['username']} connected")
@@ -59,6 +61,14 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 			data["color"] = event["color"]
 		await self.send(text_data=json.dumps(data))
 
+
+	async def invite_accepted(self, event):
+		game_id = event["game_id"]
+		await self.send(json.dumps({
+			"type" : "invite_accepted",
+			"game_id" : game_id
+		}))
+		
 	async def match_found(self, event):
 		data =  {
 			"type" : "match_found",
@@ -91,23 +101,44 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await self.send(text_data=json.dumps({
 			'type' : "update_info"
 		}))
-
+		await self.send_friends()
 
 	async def send_friends(self):
-		
-		user_id = self.user["id"]
-		user_data = self.cache.get_user_data(user_id)
-		friends = user_data["auth"].get("friends")
-		if not friends:
-			return
-		for f in friends:
-			data = self.cache.get_user_status(f)
-			if data == "offline":
-				continue
-			group_name = f"notification_{f}"
-			await self.channel_layer.group_send(group_name, {
-				'type': 'refresh_friends'
-			})
+		try:
+			timeout = httpx.Timeout(5.0, read=5.0)
+			async with httpx.AsyncClient(timeout=timeout) as client:
+				response = await client.get(
+					f"{"http://auth-service/api/auth/internal/friends/"}{self.user["id"]}/"
+					)
+				response.raise_for_status()
+				friends = response.json()
+				for f in friends:
+					status = self.cache.get_user_status(f["id"])
+					if status == "offline":
+						continue
+					group = f"notification_{f["id"]}"
+					await self.channel_layer.group_send(group, {
+						"type" : "refresh_friends"
+					})
+		except(httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPError):
+			raise Exception("Failed to fetch user friends")
+		except httpx.HTTPStatusError as e:
+			if e.response.status_code == httpx.codes.NOT_FOUND:
+				raise Exception("User Not found")
+			raise Exception("Internal server error")
+		except Exception as e:
+			await self.send(json.dumps({
+				"type" :  "notification",
+				'message' : "Error fetching friends"
+			}))
+		# for f in friends:
+		# 	data = self.cache.get_user_status(f)
+		# 	if data == "offline":
+		# 		continue
+		# 	group_name = f"notification_{f}"
+		# 	await self.channel_layer.group_send(group_name, {
+		# 		'type': 'refresh_friends'
+		# 	})
 
 	async def invite(self, event):
 		from_user = event["from"]

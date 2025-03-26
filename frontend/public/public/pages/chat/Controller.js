@@ -16,7 +16,7 @@ async function fetchUsers() {
         const updatedFriends = await Promise.all(
             friends.map(async (friend) => {
                 try {
-                    const { data, error } = await app.utils.fetchWithAuth(`/api/main/user/${friend.auth.id}`);
+                    const { data, error } = await app.utils.fetchWithAuth(`/api/main/user/${friend.id}`);
                     if (error) {
                         app.utils.showToast(error);
                         return friend;
@@ -70,11 +70,11 @@ export default async () => {
 
             const searchQuery = searchInput.value.toLowerCase();
             if (searchQuery) {
-                filteredUsers = filteredUsers.filter(user => user.auth.username.toLowerCase().includes(searchQuery));
+                filteredUsers = filteredUsers.filter(user => user.username.toLowerCase().includes(searchQuery));
             }
 
             if (filterUnreadCheckbox.checked) {
-                filteredUsers = filteredUsers.filter(user => (unreadMessages[user.auth.username] || 0) > 0);
+                filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
             }
 
             return filteredUsers;
@@ -128,8 +128,8 @@ export default async () => {
         
                 if (selectedChatUser) {
                     const userStillExists = filteredUsers.some(user => 
-                        user?.auth?.username === selectedChatUser && 
-                        !blockedUsers.has(user.auth.username)
+                        user.username === selectedChatUser && 
+                        !blockedUsers.has(user.username)
                     );
         
                     if (!userStillExists) {
@@ -265,37 +265,37 @@ export default async () => {
                 'offline': { indicator: '#A9A9A9', text: '#A9A9A9' }
             };
         
-            const isBlocked = blockedUsers.has(user.auth.username);
+            const isBlocked = blockedUsers.has(user.username);
             const userItem = document.createElement('div');
             userItem.className = `user-item ${isBlocked ? 'blocked' : ''} ${user.status}`;
             
-            const unreadCount = unreadMessages[user.auth.username] || 0;
-            const lastMessage = lastMessages[user.auth.username]?.message || "";
-            const lastMessageTimestamp = lastMessages[user.auth.username]?.timestamp || "";
+            const unreadCount = unreadMessages[user.username] || 0;
+            const lastMessage = lastMessages[user.username]?.message || "";
+            const lastMessageTimestamp = lastMessages[user.username]?.timestamp || "";
             
             const status = user.status.toLowerCase();
             const { indicator: statusColor, text: textColor } = statusColors[status] || statusColors.offline;
         
             const chatUserImage = document.getElementById('chat-user-image');
             if (chatUserImage) {
-                chatUserImage.src = user.auth.icon_url || '/public/assets/icon-placeholder.svg';
-                if (user.auth.icon_url && !user.auth.icon_url.startsWith("https"))
+                chatUserImage.src = user.icon_url || '/public/assets/icon-placeholder.svg';
+                if (user.icon_url && !user.icon_url.startsWith("https"))
                     chatUserImage.src += `?nocache=${Date.now()}` 
                 chatUserImage.style = "object-fit : cover;"
             }
 
             const profileImage = document.querySelector('#profile-section .profile-header img');
             if (profileImage) {
-                profileImage.src = user.auth.icon_url || '/public/assets/icon-placeholder.svg';
-                if (user.auth.icon_url && !user.auth.icon_url.startsWith("https"))
+                profileImage.src = user.icon_url || '/public/assets/icon-placeholder.svg';
+                if (user.icon_url && !user.icon_url.startsWith("https"))
                     profileImage.src += `?nocache=${Date.now()}` 
             }
 
             const chatWithUser = document.getElementById('chat-with-user');
             if (chatWithUser) {
-                chatWithUser.textContent = user.auth.username;
+                chatWithUser.textContent = user.username;
             }
-            updateElement('profile-user-name', el => el.textContent = user.auth.username);
+            updateElement('profile-user-name', el => el.textContent = user.username);
             
             const chatUserStatus = document.getElementById('chat-user-status');
             if (chatUserStatus) {
@@ -310,13 +310,13 @@ export default async () => {
         
             userItem.innerHTML = `
                 <div class="user-avatar-container">
-                    <img src="${user.auth.icon_url || 'default-profile.png'}" 
-                         alt="${user.auth.username}" 
+                    <img src="${user.icon_url || 'default-profile.png'}" 
+                         alt="${user.username}" 
                          class="user-avatar">
                     <span class="active-status" style="background-color: ${statusColor};"></span>
                 </div>
                 <div class="user-info">
-                    <div class="username">${user.auth.username}</div>
+                    <div class="username">${user.username}</div>
                     ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
                 </div>
                 <div class="user-meta">
@@ -326,10 +326,10 @@ export default async () => {
             `;
         
             userItem.onclick = () => {
-                startChat(user.auth.username, user.auth.id);
+                startChat(user.username, user.id);
                 userItem.classList.add('active');
                 toggleProfileSection();
-                unreadMessages[user.auth.username] = 0;
+                unreadMessages[user.username] = 0;
                 updateUserList(friends);
             };
         
