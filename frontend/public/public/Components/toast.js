@@ -65,7 +65,12 @@ export const showConfirmToast = (color = 'green', event_data) => {
     acceptButton.id = "accept-invite-" + event_data.from_id;
     acceptButton.className = `px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors`;
     acceptButton.textContent = "Accept";
-    acceptButton.addEventListener("click", () => handleAccept(toast, event_data.from_id, timeout))
+    acceptButton.addEventListener("click", () => {
+        handleAccept(toast, event_data.from_id, timeout)
+        if (toastContainer.children.length == 0)
+            toastContainer.remove()
+
+    })
     
     // Create decline button
     const declineButton = document.createElement('button');
@@ -75,6 +80,8 @@ export const showConfirmToast = (color = 'green', event_data) => {
     declineButton.addEventListener("click", () => {
         handleDecline(event_data.from_id, toast)
         clearTimeout(timeout)
+        if (toastContainer.children.length == 0)
+            toastContainer.remove()
     }
 )
 

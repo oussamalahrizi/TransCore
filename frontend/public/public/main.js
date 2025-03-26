@@ -128,7 +128,6 @@ addEventListener("play-button", async (e)=> {
 })
 
 import { handleLogout } from "./pages/Settings/Controller.js";
-import { rendergame } from "./pages/game/websockets.js";
 
 
 
@@ -136,6 +135,7 @@ addEventListener("navbar-profile", async (e) => {
 	var token = app.utils.getCookie("access_token");
 	const view = document.getElementById("profile-container");
 	if (!token) {
+		
 		while (view.firstChild) view.removeChild(view.firstChild);
 		view.innerHTML = /*html*/ `
 				 <a href="/" class="sign-in-link">
@@ -148,7 +148,6 @@ addEventListener("navbar-profile", async (e) => {
 		return;
 	}
 	try {
-		
 		const { data, error } = await app.utils.fetchWithAuth(
 			"/api/main/user/me/"
 		);
@@ -157,13 +156,15 @@ addEventListener("navbar-profile", async (e) => {
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		var img = data.auth.icon_url || "/public/assets/icon-placeholder.svg"
+		console.log(data);
+		
+		var img = data.icon_url || "/public/assets/icon-placeholder.svg"
 		if (!img.startsWith("https"))
 			img += `?nocache=${Date.now()}`
 		console.log("image url navbar: ", img);
 		while(view.firstChild)
 			view.removeChild(view.firstChild)
-		view.innerHTML = NavProfile({icon_url : img, username : data.auth.username});
+		view.innerHTML = NavProfile({icon_url : img, username : data.username});
 
 		const existingModal = document.getElementById("profile-modal");
 		if (existingModal) {

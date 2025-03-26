@@ -95,6 +95,7 @@ class QueueConsumer(AsyncRabbitMQConsumer):
         game_id =  data.get("game_id")
         if match_type == "tournament":
             print("HANDLE TOURNAMENT RESULTS")
+            print(data)
         # send status update to both players
         game_data = self.cache.get_game_info(game_id, game_type)
         players = game_data.get("players")

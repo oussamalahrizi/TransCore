@@ -141,8 +141,7 @@ class SingleConsumer(AsyncWebsocketConsumer):
             'type' : type,
             'data' : body.get('data')
         })
-        
-    
+
     async def move_paddle(self, event):
         data = event['data']
         key = data.get('key')

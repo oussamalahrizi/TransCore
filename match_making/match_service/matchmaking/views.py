@@ -312,3 +312,18 @@ class AcceptInvite(APIView):
             "detail" : "Redirecting",
             "game_id" : game_id
             })  
+
+from .utils import tournament
+
+class Tournament(APIView):
+    permission_classes = [IsAuthenticated]
+    cache = tournament
+
+    def get(self, request : Request, *args, **kwargs):
+        current : ProxyUser = request.user
+        current_id = current.to_dict()["id"]
+        res = self.cache.store_player(current_id)
+        if isinstance(res, str):
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : res})
+        return Response(data=[])

@@ -62,7 +62,8 @@ async def broadcast(Game : GameState):
                 'data' : {
                     'game_id' : Game.game_id,
                     'match_type' :Game.match_type,
-                    'game_type' : "pong"
+                    'game_type' : "pong",
+                    'winner' : Game.winner
                 }
             }
         await publishQueue(body)
@@ -156,21 +157,15 @@ class Consumer(AsyncWebsocketConsumer):
             }
         '''
         body = json.loads(text_data)
-        pprint(body)
-        type = body.get('type')
-        await self.channel_layer.group_send(self.game_id, {
-            'type' : type,
-            'data' : body.get('data')
-        })
+        data = body.get("data")
+        await self.move_paddle(data)
         
     
-    async def move_paddle(self, event):
-        data = event['data']
+    async def move_paddle(self, data):
         key = data.get('key')
         player_id = data.get('player_id')
         instance =  Game.get(self.game_id)
         instance.update_player_move(player_id, key)
-    
 
     
     async def game_end(self, event):
