@@ -222,29 +222,18 @@ addEventListener("navbar-profile", async (e) => {
 			}
 		});
 
-		document.getElementById("settings-link").addEventListener("click", (e) => {
-			e.preventDefault();
-			hideModalWithAnimation(profileModal);
-			app.Router.navigate("/settings");
-		});
-		document.getElementById("chat-link").addEventListener("click", (e) => {
-			e.preventDefault();
-			hideModalWithAnimation(profileModal);			console.log("chat link clicked");
-			app.Router.navigate("/chat");
-		});
-		document.getElementById("profile-link").addEventListener("click", (e) => {
-			e.preventDefault();
-			hideModalWithAnimation(profileModal);
-			app.Router.navigate("/profile");
-		});
+		profileModal.addEventListener("click", (e) => {
+				hideModalWithAnimation(profileModal);
+		})
 
 		document.addEventListener("click", (e) => {
 			if (
 				profileModal.classList.contains("show") &&
 				!profileModal.contains(e.target) &&
-				e.target !== button
+				(e.target !== button)
 			) {
 				hideModalWithAnimation(profileModal);
+				console.log("clicked outside");
 			}
 		});
 
