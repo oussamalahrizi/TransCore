@@ -415,10 +415,6 @@ const SetupScene = (gameContainer, gameInfo) => {
     powerPreference: "high-performance",
   });
   gameContainer.appendChild(gameInfo.renderer.domElement);
-  if (app.gameInfo.Singleplayer === false) {
-    gameInfo.renderer.domElement.setAttribute("tabindex", "0");
-    gameInfo.renderer.domElement.focus();
-  }
   gameInfo.renderer.setSize(window.innerWidth, window.innerHeight);
   gameInfo.renderer.setPixelRatio(window.devicePixelRatio); // Matches screen resolution
   gameInfo.renderer.shadowMap.enabled = true;
@@ -532,7 +528,6 @@ export default async () => {
     //   gameInfo.useComposer = !gameInfo.useComposer;
     // }
     keystate[event.code] = true;
-    console.log("Pressed")
   });
 
   gameInfo.renderer.domElement.addEventListener("keyup", (event) => {
@@ -577,17 +572,19 @@ export default async () => {
   }
   let animationId = null;
   function animate() {
-    console.log(keystate["KeyW"])
-    console.log(keystate["KeyS"])
     if (keystate["KeyW"]) send("KeyW");
     else if (keystate["KeyS"]) send("KeyS");
     rendergame(gameInfo);
     updateFPS();
     animationId = requestAnimationFrame(animate);
   }
-  gameContainer.addEventListener("start", animate)
+  gameContainer.addEventListener("start", () => {
+    gameInfo.renderer.domElement.setAttribute("tabindex", "0");
+    gameInfo.renderer.domElement.focus();
+    animate()
+  })
   gameContainer.addEventListener("end", () => {
-
+    cancelAnimationFrame(animationId);
     app.Router.navigate("/");
   })
   // Handle window resize
@@ -604,7 +601,8 @@ export default async () => {
 
   // Cleanup on unmount
   return function () {
-    if (gameInfo.ws.readyState === WebSocket.OPEN) {
+    if (gameInfo.ws.readyState !== WebSocket.CLOSED
+      || gameInfo.ws.readyState !== WebSocket.CLOSING) {
       console.log("closing websocket game");
       gameInfo.ws.close();
     }

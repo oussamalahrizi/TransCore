@@ -10,7 +10,7 @@ export default /*html*/ `
 					<h1 class="tournament-title">Ultimate Ping Pang Worlds 2025<h1>
 					<p class="notes" >Ping pong tournament made to make you experience an intense gameplay with a lot of rewards, dont miss it!<p>
 					<div class="button-div">
-						<button id="join-tournament-btn" class="join">Join now<button>
+						<a href='/tournament' id="join-tournament-btn" class="join">Join now</a>
 					</div>
 				</div>
 			</div>

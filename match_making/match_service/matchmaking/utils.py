@@ -140,18 +140,19 @@ class Cache:
 Queue = Cache()
 
 
+
 class Tournament:
     
     def __init__(self):
         self.redis = Redis(host="redis-queue", decode_responses=True, retry_on_timeout=True)
 
-    def generate_game(self, players : list[str], match_type : str, game : str):
+    def generate_game(self, players : list[str]):
         id = uuid.uuid4()
         data = {
             'players' : players,
             'match_type' : "tournament"
         }
-        self.redis.set(f"{game}:{id}", json.dumps(data))
+        self.redis.set(f"pong:{id}", json.dumps(data))
         for p in players:
             body = {
                 'type' : "match_found",
@@ -161,3 +162,45 @@ class Tournament:
                 }
             }
             async_to_sync(notif.publish)(body)
+    
+
+    def store_player(self, user_id : str):
+        tr = self.set_tournament(user_id)
+        players : list[str] = tr.get("players")
+        if user_id in players:
+            return "You are already in this tournament"
+        players.append(user_id)
+        self.redis.set("tournament", json.dumps(players))
+        # update user status in notification
+        # care to update playe button as well
+        if len(players) == 4:
+            self.match()
+            return None
+        else:
+            return players
+
+    def match(self):
+        tr = self.redis.get("tournament")
+        if not tr:
+            return
+        tr = json.loads(tr)
+        players = tr.get("players")
+        # Split players into two groups for tournament matches
+        half1 = players[:len(players)//2]
+        half2 = players[len(players)//2:]
+        
+        # Create tournament matches with each half
+        self.generate_game(half1)
+        self.generate_game(half2)
+        self.redis.delete('tournament')
+
+    def set_tournament(self, user_id):
+        tr = self.redis.get("tournament")
+        if not tr:
+           self.redis.set("tournament", json.dumps({
+               "players" : [user_id]
+           })) 
+        return json.loads(tr)
+
+
+tournament = Tournament()
