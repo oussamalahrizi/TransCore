@@ -11,17 +11,8 @@ const getPending = async () => {
     data.forEach(async user => {
         if (user.icon_url && !user.icon_url.startsWith("/"))
             return
-        console.log("received url : ", user);
         
-        const res = await app.utils.fetchWithAuth(user.icon_url)
-        if (res.error)
-            app.utils.showToast(error, "red");
-        else
-        {
-            console.log("before : ", user.icon_url);
-            user.icon_url = res.data
-            console.log("after : ", user.icon_url);
-        }
+        user.icon_url += `?nocache=${Date.now()}`
     })
     return data
 }

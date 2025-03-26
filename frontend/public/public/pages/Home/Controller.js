@@ -39,12 +39,11 @@ const renderFriendsList = async (container) => {
 			const friendItem = document.createElement('li');
 			friendItem.className = 'friend-item';
 			friendItem.dataset.friendId = friend.auth.id;
-			var img = friend.auth.icon_url
+			var img = friend.auth.icon_url || "/public/assets/icon-placeholder.svg"
 			if (!img.startsWith("https"))
 				img += `?nocache=${Date.now()}`
 			friendItem.innerHTML = `
-				<img class="profile-photo" src="${friend.auth.icon_url ? friend.auth.icon_url
-					 : "/public/assets/icon-placeholder.svg"}">
+				<img class="profile-photo" src="${img}">
 				<div class="friend-info">
 					<span class="friend-name">${friend.auth.username}</span>
 					<span class="friend-status ${friend.status}">

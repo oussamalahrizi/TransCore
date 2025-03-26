@@ -300,11 +300,11 @@ class ChangeFriend(APIView):
             serializer.is_valid(raise_exception=True)
             change = serializer.data["change"]
             res = self.actions[change](user, other)
-            print(f"publishing for user id {user.id} type : refresh")
-            print(f"publishing for other id {other.id} type : refresh")
-            if change not in ["reject", "cancel"]:              
-                async_to_sync(NotifyApi)(user.id, "refresh_friends")
-                async_to_sync(NotifyApi)(other.id, "refresh_friends")
+            print(f"publishing for user id {user.id} type : clear")
+            print(f"publishing for other id {other.id} type : clear")
+            if change not in ["reject", "cancel"]:
+                async_to_sync(NotifyApi)(user.id, "clear_cache")
+                async_to_sync(NotifyApi)(other.id, "clear_cache")
             return Response(status=status.HTTP_201_CREATED, data={"detail" : res})
         except Http404:
             return Response(status=status.HTTP_404_NOT_FOUND,

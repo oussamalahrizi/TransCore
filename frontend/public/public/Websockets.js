@@ -84,10 +84,11 @@ export const SetOnline = () => {
                 }
                 break
             case 'invite':
-                const from = data.from
-                const acceptBtnId = "accept-invite-" + from
-                const declineBtnId = "decline-invite-" + from
-                app.utils.showConfirmToast(`You received an invite from : ${from}`, "green", acceptBtnId, declineBtnId)
+                const event_data = {
+                    from : data.from,
+                    from_id : data.from_id,
+                }
+                app.utils.showConfirmToast("green", event_data)
                 break
             case 'update_info':
                 friendsContainer = document.getElementById("friend-list-items")    
