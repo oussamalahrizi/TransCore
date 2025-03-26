@@ -135,14 +135,7 @@ export default async () => {
                     if (!userStillExists) {
                         const previousUser = selectedChatUser;
                         resetChatBox();
-                        
-                        setTimeout(() => {
-                            const chatBox = document.getElementById("chat-box");
-                            if (chatBox) {
-                                chatBox.classList.remove("w-1/2", "w-3/4");
-                                chatBox.classList.add("w-full");
-                            }
-                        }, 50);
+
                     }
                 }
         
@@ -235,7 +228,11 @@ export default async () => {
             if (socket) {
                 socket.close();
                 socket = null;
+                var str = "Failed to connect to Chat Server"
+                e.reason ?? str + e.reason
+                app.utils.showToast(str);
             }
+
         
             if (profileSection) {
                 profileSection.classList.add("hidden");
@@ -396,13 +393,8 @@ export default async () => {
             };
 
             socket.onclose = (e) => {
-                resetChatBox()
-                var str = "Failed to connect to Chat Server"
-                e.reason ?? str + e.reason
-                app.utils.showToast(str);
                 localStorage.removeItem('unreadMessages');
                 localStorage.removeItem('lastMessages');
-                
             };
 
             socket.onerror = (error) => {
