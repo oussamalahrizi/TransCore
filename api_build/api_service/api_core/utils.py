@@ -127,8 +127,10 @@ class Cache:
         auth_data = user_data.get('auth')
         if not auth_data.get('friends'):
             auth_data['friends'] = [friend_id]
+            print("creating friends for", user_id)
         else:
             if friend_id not in auth_data['friends']:
+                print("adding ", friend_id , "to", user_id)
                 auth_data['friends'].append(friend_id)
         self.set_user_data(user_id, auth_data, "auth")
     

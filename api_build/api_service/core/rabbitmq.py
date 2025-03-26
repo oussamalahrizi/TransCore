@@ -79,14 +79,14 @@ class APIConsumer(AsyncRabbitMQConsumer):
         user_data : dict = self.cache.get_user_data(user_id)
         print("refresh user data")
         pprint(user_data)
-        auth_data = user_data.get("auth")
-        if auth_data.get("friends"):
-            print("AAAAAAAAAAAA", auth_data["username"], "ba7")
-            auth_data.pop("friends")
-        if auth_data.get("blocked"):
-            auth_data.pop("blocked")
-        user_data["auth"] = auth_data
-        self.cache.redis.set(user_id, json.dumps(user_data))
+        # auth_data = user_data.get("auth")
+        # if auth_data.get("friends"):
+        #     print("AAAAAAAAAAAA", auth_data["username"], "ba7")
+        #     auth_data.pop("friends")
+        # if auth_data.get("blocked"):
+        #     auth_data.pop("blocked")
+        # user_data["auth"] = auth_data
+        # self.cache.redis.set(user_id, json.dumps(user_data))
         layer = get_channel_layer()
         group_name = f"notification_{user_id}"
         await layer.group_send(group_name, {
@@ -181,7 +181,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         group_name = f"notification_{user_id}"
         await layer.group_send(group_name, {
             "type" : "invite",
-            "from" : data.get("from")
+            "from" : data.get("from"),
+            "from_id" : data.get("from_id")
         })
 
     async def update_status(self, data : dict):

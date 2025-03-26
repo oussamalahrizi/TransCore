@@ -157,7 +157,7 @@ addEventListener("navbar-profile", async (e) => {
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		var img = data.auth.icon_url
+		var img = data.auth.icon_url || "/public/assets/icon-placeholder.svg"
 		if (!img.startsWith("https"))
 			img += `?nocache=${Date.now()}`
 		console.log("image url navbar: ", img);

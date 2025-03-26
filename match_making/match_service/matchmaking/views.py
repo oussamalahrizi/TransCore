@@ -224,6 +224,7 @@ class InviteGame(APIView):
         except APIException as e:
             return Response(status=e.code, data={"detail" : e.detail})
 
+import uuid, json
 
 class AcceptInvite(APIView):
     permission_classes = [IsAuthenticated]
@@ -238,17 +239,67 @@ class AcceptInvite(APIView):
                 raise serializers.ValidationError("desicion is not valid")
             return value
 
+        async def fetch_user_data(self, user_id):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(f"http://api-service/api/main/user/{user_id}/")
+                    response.raise_for_status()
+                    return response.json()
+            except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
+                raise APIException(code=500, detail="Failed to reach API Service")
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    return None
+                detail = e.response.json()
+                raise APIException(code=e.response.status_code, detail=detail)
+            except Exception as e:
+                raise APIException(detail='Internal Server Error')
+
         def validate_user_id(self, value):
             try:
-                    
-            except http
+                data = async_to_sync(self.fetch_user_data)(value)
+                return value
+            except APIException as e:
+                raise serializers.ValidationError(e.detail)
+
+    def generate_game(self, players : list):
+        id = uuid.uuid4()
+        data = {
+            'players' : players,
+            'match_type' : "regular"
+        }
+        self.cache.redis.set(f"pong:{id}", json.dumps(data))
+        for p in players:
+            notif = publishers[1]
+            body = {
+                'type' : "update_status",
+                "data": {
+                    'user_id' : id,
+                    'status' : "ingame"
+                }
+            }
+            async_to_sync(notif.publish)(body)
+        return str(id)
 
     def post(self, request : Request, *args, **kwargs):
-        id = kwargs.get("id")
-        if not id:
+        try:
+            # current is the one who will accept
+            # data["user_id"] is the one who sent the invite
+            current :ProxyUser = request.user
+            current : dict = current.to_dict()
+            current_id = current["id"]
+            ser = self.AcceptSerializer(data=request.data)
+            ser.is_valid(raise_exception=True)
+            data = ser.validated_data
+            check = self.cache.check_invite(data["user_id"] ,current_id, "pong")
+            if not check:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : "Invalid Invite"})
+            game_id = self.generate_game([current_id, data["user_id"]])
+            return Response(data={
+                "detail" : "Redirecting",
+                "game_id" : game_id
+                })
+        except serializers.ValidationError as e:
             return Response(status=status.HTTP_400_BAD_REQUEST,
-                            data={"detail": "Missing invite id"})
-        current :ProxyUser = request.user
-        current = current.to_dict()
-        current_id = current["id"]
-        self.cache.check_invite(id, current, )
+                            data={"detail" : ser.error_messages})

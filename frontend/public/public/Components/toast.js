@@ -39,12 +39,12 @@ const createToastContainer = () => {
 /**
  * Shows a toast notification with accept and decline buttons.
  *
- * @param {string} message - The message to display in the toast
  * @param {string} color - The color of the toast (default is 'blue')
- * @param {string} acceptBtnId - ID for the accept button
- * @param {string} declineBtnId - ID for the decline button
+ * @param {object} event_data - event data containing username and his id
+ * @param {String} event_data.from - username
+ * @param {String} event_data.from_id user id
  */
-export const showConfirmToast = (message, color = 'green', acceptBtnId, declineBtnId) => {
+export const showConfirmToast = (color = 'green', event_data) => {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     const toast = document.createElement('div');
     toast.className = `toast bg-${color}-100 border-l-4 border-${color}-500 text-${color}-700 p-4 mt-14 mb-4 relative transition 0.3s ease-in-out`;
@@ -55,22 +55,25 @@ export const showConfirmToast = (message, color = 'green', acceptBtnId, declineB
     
     const messageDiv = document.createElement('div');
     messageDiv.className = 'flex-grow mr-4';
-    messageDiv.textContent = message;
+    messageDiv.textContent = `You received a new Invite to Ping Pong from ${event_data.from}`;
     
     const buttonsDiv = document.createElement('div');
     buttonsDiv.className = 'flex flex-col space-y-2 mt-2';
     
     // Create accept button
     const acceptButton = document.createElement('button');
-    acceptButton.id = acceptBtnId;
+    acceptButton.id = "accept-invite-" + event_data.from_id;
     acceptButton.className = `px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors`;
     acceptButton.textContent = "Accept";
+    acceptButton.addEventListener("click", () => handleAccept(toast, remove))
     
     // Create decline button
     const declineButton = document.createElement('button');
-    declineButton.id = declineBtnId;
+    declineButton.id = "decline-invite-" + event_data.from_id;
     declineButton.className = `px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors`;
     declineButton.textContent = 'Decline';
+    declineButton.addEventListener("click", () => handleDecline(toast, remove))
+
     
     // Add buttons to the button container
     buttonsDiv.appendChild(acceptButton);
@@ -80,6 +83,49 @@ export const showConfirmToast = (message, color = 'green', acceptBtnId, declineB
     content.appendChild(messageDiv);
     content.appendChild(buttonsDiv);
     toast.appendChild(content);
-    
+    const remove = () => {
+        if (toast)
+            toast.remove()
+        if (toastContainer.children.length == 0)
+            toastContainer.remove()
+        clearTimeout(timeout)
+    }
+    const timeout = setTimeout(async () => {
+        if (toast)
+            await handleDecline(toast, timeout)
+        if (toastContainer.children.length == 0)
+            toastContainer.remove()
+    }, 10000);
     toastContainer.insertBefore(toast, toastContainer.firstChild);    
 };
+
+
+const handleAccept = async () => {
+    try {
+        
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+            return
+        console.error("error in accepting invite : ", error);
+        
+    }
+}
+
+/**
+ * 
+ * @param {HTMLElement} toast 
+ * @returns 
+ */
+const handleDecline = async (toast) => {
+    try {
+        if (toast)
+            toast.remove()
+
+
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+            return
+        console.error("error in declining invite : ", error);
+        
+    }
+}

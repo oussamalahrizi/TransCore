@@ -278,13 +278,17 @@ export default async () => {
         
             const chatUserImage = document.getElementById('chat-user-image');
             if (chatUserImage) {
-                chatUserImage.src = user.auth.icon_url || 'default-profile.png';
+                chatUserImage.src = user.auth.icon_url || '/public/assets/icon-placeholder.svg';
+                if (user.auth.icon_url && !user.auth.icon_url.startsWith("https"))
+                    chatUserImage.src += `?nocache=${Date.now()}` 
                 chatUserImage.style = "object-fit : cover;"
             }
 
             const profileImage = document.querySelector('#profile-section .profile-header img');
             if (profileImage) {
-                profileImage.src = user.auth.icon_url || 'default-profile.png';
+                profileImage.src = user.auth.icon_url || '/public/assets/icon-placeholder.svg';
+                if (user.auth.icon_url && !user.auth.icon_url.startsWith("https"))
+                    profileImage.src += `?nocache=${Date.now()}` 
             }
 
             const chatWithUser = document.getElementById('chat-with-user');
@@ -365,7 +369,11 @@ export default async () => {
 
             const token = app.utils.getCookie("access_token");
             socket = new WebSocket(`ws://localhost:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
-
+            setTimeout(() => {
+                if (socket.readyState === WebSocket.CONNECTING)
+                    socket.close()
+            }, 2000);
+            
             socket.onopen = () => {
                 scrollToBottom();
             };
@@ -388,9 +396,13 @@ export default async () => {
             };
 
             socket.onclose = (e) => {
-                console.log('WebSocket closed:', e.reason);
-                // localStorage.removeItem('unreadMessages');
-                // localStorage.removeItem('lastMessages');
+                resetChatBox()
+                var str = "Failed to connect to Chat Server"
+                e.reason ?? str + e.reason
+                app.utils.showToast(str);
+                localStorage.removeItem('unreadMessages');
+                localStorage.removeItem('lastMessages');
+                
             };
 
             socket.onerror = (error) => {

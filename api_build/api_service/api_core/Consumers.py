@@ -113,5 +113,6 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		from_user = event["from"]
 		await self.send(json.dumps({
 			"type" : "invite",
-			"from" : from_user
+			"from" : from_user,
+			'from_id' : event["from_id"]
 		}))
