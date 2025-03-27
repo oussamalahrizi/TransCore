@@ -17,9 +17,10 @@ const addModal = (number) => {
         modal.remove()
     modal = document.createElement('div')
     modal.id = 'waiting-tr'
-    modal.className = 'absolute top-0 left-0 z-25 w-full h-full min-h-screen flex justify-center items-center text-2xl text-white bg-black/50'
+    modal.className = 'absolute top-0 left-0 z-500 w-full h-full min-h-screen flex justify-center items-center text-2xl text-white bg-black/75'
     modal.innerHTML = /*html*/`<h1>Waiting for ${number} players<h1>`
-    document.body.appendChild(modal)
+    const page = document.getElementById('tr_view')
+    page.appendChild(modal)
 }
 
 const fetchUserData = async (user_id) => {
@@ -118,6 +119,7 @@ const handleTournamentEvents = async (e) => {
         console.error('error in tr listerner', error);
     }
 }
+
 
 /**
  * 

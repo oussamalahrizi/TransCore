@@ -100,7 +100,17 @@ async def send_tr_update(players : list):
         }
     }
     await notifspub.publish(body)
-    
+
+async def remove_loser(user_id : str, tr_id : str):
+    body = {
+        'type' : 'remove_tournament',
+        'data' : {
+            'user_id' : user_id,
+            'tr_id' : tr_id
+        }
+    }
+    await notifspub.publish(body)
+
 
 class QueueConsumer(AsyncRabbitMQConsumer):
 
@@ -172,12 +182,13 @@ class QueueConsumer(AsyncRabbitMQConsumer):
                 g_id = data['game_id']
                 semis : list[dict] = tr_data['semis']
                 which = 0 if semis[0]['game_id'] == g_id else 1
-                print('INDEX OF GAME BEFORE: ', g_id, 'IS : ', which)
                 tr_data['semis'][which]['result'] = data['result']
-                print('INDEX OF GAME AFTER: ', g_id, 'IS : ', which)
                 final : dict = tr_data['final']
                 final['players'].append(data['winner'])
-                
+                loser = tr_data['semis'][which]['players'][0]
+                if loser == data['winner']:
+                    loser = tr_data['semis'][which]['players'][1]
+                await remove_loser(loser, data['tournament_id'])
                 if len(final['players']) < 2:
                     self.tr_cache.redis.set(f"ongoing:{data['tournament_id']}",
                                         json.dumps(tr_data))
@@ -211,7 +222,9 @@ class QueueConsumer(AsyncRabbitMQConsumer):
                         'result' : data['result']
                     }
                 })
-            
+            await remove_loser(winner, data['tournament_id'])
+            await remove_loser(loser, data['tournament_id'])
+            self.tr_cache.redis.delete(f'ongoing:{data['tournament_id']}')
             return
         # send status update to both players
         game_data = self.cache.get_game_info(game_id, game_type)

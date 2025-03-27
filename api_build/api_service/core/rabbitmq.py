@@ -124,6 +124,7 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         user_data = self.cache.get_user_data(user_id)
         if user_data.get("tournament_id"):
             user_data.pop("tournament_id")
+        user_data['status'] = 'online'
         self.cache.redis.set(user_id, json.dumps(user_data))
 
     async def invite_accepted(self, data : dict):
