@@ -2,7 +2,7 @@
 
 const handleLocation = async (url) => {
     try {
-        const response = await fetch("http://localhost:8000" + url, {
+        const response = await fetch(url, {
             headers : {
                 "Accept" : "application/json"
             }
@@ -30,7 +30,7 @@ const handleLocation = async (url) => {
 */
 const handleVerify = async (code, user_id) => {
     try {
-        const response = await fetch("http://localhost:8000/api/auth/users/verify-2fa/", {
+        const response = await fetch("/api/auth/users/verify-2fa/", {
             method : "POST",
             headers : {
                 "Content-Type" : "application/json",

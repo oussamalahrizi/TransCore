@@ -142,7 +142,7 @@ services:
     container_name: "nginx_reverse"
     hostname: "nginx"
     ports:
-      - 8000:80
+      - 8000:443
     depends_on:
       - auth-service
       - adminer
