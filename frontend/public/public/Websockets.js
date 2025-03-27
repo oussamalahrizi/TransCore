@@ -64,6 +64,17 @@ export const SetOnline = () => {
                     }
                 }
                 break;
+            case 'tr_update':
+                var tr_view = document.getElementById('tr_view')
+                if (tr_view)
+                    tr_view.dispatchEvent(new CustomEvent('refresh'))
+                break
+            case 'tr_end':
+                var tr_view = document.getElementById('tr_view')
+                const {winner, result, loser} = data
+                if (tr_view)
+                    tr_view.dispatchEvent(new CustomEvent('tr_end', {detail : {winner, result, loser}}))
+                break
             case "refresh_friends":
                 friendsContainer = document.getElementById("friend-list-items")    
                 if (friendsContainer)
@@ -103,6 +114,8 @@ export const SetOnline = () => {
             case 'match_found':
                 const game_id = data.game_id
                 matchCallback = await MatchFound(game_id)
+                if (typeof matchCallback === "function")
+                    matchCallback()
                 break
             case 'cancel_game':
                 modalContainer = document.getElementById("match-found-modal")

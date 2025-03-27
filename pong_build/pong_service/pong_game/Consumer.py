@@ -26,7 +26,7 @@ def record_match_async(player1_id, player2_id, winner_id, p1_score, p2_score):
     return GameService.record_match(player1_id, player2_id, winner_id, p1_score, p2_score)
 
 
-async def broadcast(Game : GameState):
+async def broadcast(Game : GameState, tr_id=None):
     try:
         lasttime = time.time()
         while not Game.gameover:
@@ -57,15 +57,21 @@ async def broadcast(Game : GameState):
             'type' : 'game_end',
             'winner' : Game.winner
         })
+        result = [Game.p1_score, Game.p2_score]
+        if Game.winner == Game.players[1]:
+            result.reverse()
         body = {
                 'type' : "game_over",
                 'data' : {
                     'game_id' : Game.game_id,
                     'match_type' :Game.match_type,
                     'game_type' : "pong",
-                    'winner' : Game.winner
+                    'winner' : Game.winner,
+                    'result' : result,
                 }
             }
+        if tr_id:
+            body['data']['tournament_id'] = tr_id
         await publishQueue(body)
         
 from pprint import pprint
@@ -203,9 +209,12 @@ class Consumer(AsyncWebsocketConsumer):
         }))
 
     async def start_game(self):
-        instance = GameState(players=self.players_ids, game_id=self.game_id)
+        instance = GameState(players=self.players_ids, game_id=self.game_id, match_type=self.game_info['match_type'])
         Game[self.game_id] = instance
         await self.channel_layer.group_send(self.game_id, {
             'type' : 'send_init_data',
         })
-        game_task[self.game_id] = asyncio.create_task(broadcast(instance))
+        tr_id = None
+        if self.game_info.get('tournament_id'):
+            tr_id = self.game_info.get('tournament_id')
+        game_task[self.game_id] = asyncio.create_task(broadcast(instance, tr_id=tr_id))

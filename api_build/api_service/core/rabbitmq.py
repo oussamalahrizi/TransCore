@@ -81,11 +81,50 @@ class NotifConsumer(AsyncRabbitMQConsumer):
             'invite' : self.invite,
             'update_info' : self.update_info,
             'refresh_friends' : self.refresh_friends,
-            'invite_accepted' : self.invite_accepted
+            'invite_accepted' : self.invite_accepted,
+            'set_tournament' : self.set_tournament,
+            'remove_tournament' : self.remove_tournament,
+            'tr_update' : self.tr_update,
+            'tr_end' : self.tr_end
         }
         super().__init__(host, port, queue_name)
 
+    async def tr_end(self, data : dict):
+        user_id = data['user_id']
+        winner = data['winner']
+        loser = data['loser']
+        result = data['result']
+        layer = get_channel_layer()
+        group = f'notification_{user_id}'
+        await layer.group_send(group, {
+            'type' : 'tr_end',
+            'winner' : winner,
+            'loser' : loser,
+            'result' : result
+        })
 
+    async def tr_update(self, data : dict):
+        players = data['players']
+        layer = get_channel_layer()
+        for p in players:
+            group = f'notification_{p}'
+            await layer.group_send(group, {
+                'type' : 'tr_update'
+            })
+
+
+    async def set_tournament(self, data : dict):
+        user_id = data['user_id']
+        user_data = self.cache.get_user_data(user_id)
+        user_data['tournament_id'] = data['tournament_id']
+        self.cache.redis.set(user_id, json.dumps(user_data))
+
+    async def remove_tournament(self, data : dict):
+        user_id = data['user_id']
+        user_data = self.cache.get_user_data(user_id)
+        if user_data.get("tournament_id"):
+            user_data.pop("tournament_id")
+        self.cache.redis.set(user_id, json.dumps(user_data))
 
     async def invite_accepted(self, data : dict):
         user_id = data["user_id"]

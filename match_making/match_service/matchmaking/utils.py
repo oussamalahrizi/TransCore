@@ -140,17 +140,20 @@ class Cache:
 Queue = Cache()
 
 
+from random import shuffle
+from pprint import pprint
 
 class Tournament:
     
     def __init__(self):
         self.redis = Redis(host="redis-queue", decode_responses=True, retry_on_timeout=True)
 
-    def generate_game(self, players : list[str]):
-        id = uuid.uuid4()
+    def generate_game(self, players : list[str], tr_id): 
+        id = str(uuid.uuid4())
         data = {
             'players' : players,
-            'match_type' : "tournament"
+            'match_type' : "tournament",
+            'tournament_id' : tr_id
         }
         self.redis.set(f"pong:{id}", json.dumps(data))
         for p in players:
@@ -158,49 +161,106 @@ class Tournament:
                 'type' : "match_found",
                 'data' : {
                     "user_id" : p,
-                    'game_id' : str(id)
+                    'game_id' : id
                 }
             }
             async_to_sync(notif.publish)(body)
-    
+        return id
+
 
     def store_player(self, user_id : str):
         tr = self.set_tournament(user_id)
-        players : list[str] = tr.get("players")
-        if user_id in players:
-            return "You are already in this tournament"
+        players : list[str] = tr.get('players')
+        if  user_id in players:
+            return players
         players.append(user_id)
-        self.redis.set("tournament", json.dumps(players))
+        self.redis.set("tournament", json.dumps({'players' : players}))
         # update user status in notification
         # care to update playe button as well
         if len(players) == 4:
-            self.match()
-            return None
-        else:
-            return players
+            return self.match()
+        others = list(filter(lambda x : x != user_id, players))
+        body = {
+            'type' : 'tr_update',
+            'data' : {
+                'players' : others
+            }
+        }
+        async_to_sync(notif.publish)(body)
+        return players
+
+    def send_tournament_status(self, players : list[str], tr_id : str):
+        for p in players:
+            body = {
+                'type' : 'set_tournament',
+                'data' : {
+                    'user_id' : p,
+                    'tournament_id' : tr_id
+                }
+            }
+            async_to_sync(notif.publish)(body)
 
     def match(self):
         tr = self.redis.get("tournament")
         if not tr:
             return
         tr = json.loads(tr)
-        players = tr.get("players")
+        players : list[str] = tr.get("players")
         # Split players into two groups for tournament matches
+        shuffle(players)
         half1 = players[:len(players)//2]
         half2 = players[len(players)//2:]
         
+        # generate tournament id
+        id = str(uuid.uuid4())
         # Create tournament matches with each half
-        self.generate_game(half1)
-        self.generate_game(half2)
+        game1 = self.generate_game(half1, id)
+        game2 = self.generate_game(half2, id) # stop generating for now to debug
+        games = [game1, game2]
+        halfs = [half1, half2]
         self.redis.delete('tournament')
+        semis = []
+        for i in range(0, len(games)):
+            semis.append({
+                'game_id' : games[i],
+                'players' : halfs[i],
+                'result' : [ 0, 0 ]
+            })
+        tr_data = {
+            'semis' : semis,
+            'final' : {
+                'game_id' : None,
+                'players' : [],
+                'result' : [ 0, 0 ]
+            },
+            'winner' : None,
+            'status' : 'semis',
+            'tournament_id' : id
+        }
+        self.redis.set(f"ongoing:{id}", json.dumps(tr_data))
+        # handle set tournament id in api
+        self.send_tournament_status(players, id)
+        body = {
+            'type' : 'tr_update',
+            'data' : {
+                'players' : players
+            }
+        }
+        async_to_sync(notif.publish)(body)
+        return tr_data
+
 
     def set_tournament(self, user_id):
         tr = self.redis.get("tournament")
         if not tr:
            self.redis.set("tournament", json.dumps({
                "players" : [user_id]
-           })) 
+           }))
+           tr = self.redis.get('tournament')
         return json.loads(tr)
 
+    def fetch_ongoing(self, tournament_id : str):
+        tr = self.redis.get(f'ongoing:{tournament_id}')
+        return json.loads(tr)
 
 tournament = Tournament()

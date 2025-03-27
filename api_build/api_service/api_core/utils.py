@@ -27,6 +27,11 @@ class Cache:
             return json.loads(value)
         return None
 
+    def get_tournament_id(self, user_id : str):
+        user_data = self.get_user_data(user_id)
+        if not user_data or not user_data.get("tournament_id"):
+            return None
+        return user_data['tournament_id']
 
     def set_user_online(self, user_id: str):
         user_data = self.get_user_data(user_id)

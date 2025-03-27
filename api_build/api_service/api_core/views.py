@@ -77,6 +77,9 @@ class GetUserService(APIView):
             if not user:
                 return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : "User Not Found."})
             user["status"] = self.cache.get_user_status(id)
+            tr_id = self.cache.get_tournament_id(id)
+            if tr_id:
+                user["tournament_id"] = tr_id 
             return Response(data=user)
         except ApiException as e:
             return Response(status=e.code, data={"detail": e.detail})
@@ -118,6 +121,9 @@ class GetUserData(APIView):
                 return Response(status=status.HTTP_404_NOT_FOUND,
                                 data={"detail" : "User Not Found."})
             user["status"] = self.cache.get_user_status(id)
+            tr_id = self.cache.get_tournament_id(id)
+            if tr_id:
+                user["tournament_id"] = tr_id 
             return Response(data=user)
         except ApiException as e:
             return Response(status=e.code, data={"detail" : e.detail})

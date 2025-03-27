@@ -3,7 +3,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .utils import Queue
+from .utils import Queue, tournament
 from .Middleware import ProxyUser
 import httpx
 from asgiref.sync import async_to_sync
@@ -21,6 +21,7 @@ class APIException(Exception):
 
 
 
+# checks here
 class FindMatchPong(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -171,7 +172,7 @@ class AcceptMatchPong(APIView):
         generate game for single player
 """
 
-
+# checks here
 class InviteGame(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -206,6 +207,10 @@ class InviteGame(APIView):
             if other_data["status"] != "online":
                 return Response(status=status.HTTP_400_BAD_REQUEST,
                                 data={"detail" : "User is not online"})
+            if other_data.get('tournament_id'):
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : "User is not online"})
+
             res, state = self.cache.invite_player(id, other, "pong")
             if not state:
                 return Response(status=status.HTTP_400_BAD_REQUEST,
@@ -313,17 +318,49 @@ class AcceptInvite(APIView):
             "game_id" : game_id
             })  
 
-from .utils import tournament
 
-class Tournament(APIView):
+from pprint import pprint
+
+class TournamentAPI(APIView):
     permission_classes = [IsAuthenticated]
     cache = tournament
 
+    async def get_status(self, user_id : str):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"http://api-service/api/main/user/{user_id}/")
+                response.raise_for_status()
+                return response.json()
+        except (httpx.HTTPError, httpx.ConnectError, httpx.ConnectTimeout):
+            raise APIException(code=500, detail="Cant reach Api server")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                raise APIException(code=404, detail="User Not Found")
+            raise APIException(code=e.response.status_code,
+                               detail=e.response.json())
+        except APIException as e:
+            raise APIException(detail=e.detail)
+
+
     def get(self, request : Request, *args, **kwargs):
+        # check player satus
         current : ProxyUser = request.user
         current_id = current.to_dict()["id"]
-        res = self.cache.store_player(current_id)
-        if isinstance(res, str):
-            return Response(status=status.HTTP_400_BAD_REQUEST,
-                            data={"detail" : res})
-        return Response(data=[])
+        try:
+            user_data = async_to_sync(self.get_status)(current_id)
+            print("user data in tournament api")
+            pprint(user_data)
+            if user_data['status'] != 'online':
+                print("user status : ", user_data)
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={"detail" : "You are not online"})
+            if user_data.get("tournament_id"):
+                tr_data = self.cache.fetch_ongoing(user_data['tournament_id'])
+                if not tr_data:
+                    return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    data={'detail' : 'something went wrong getting your tr data'})
+                return Response(data=tr_data)
+            players = self.cache.store_player(current_id)
+            return Response(data=players)
+        except APIException as e:
+            return Response(status=e.code , data={'detail' : e.detail})

@@ -1,7 +1,7 @@
 
 export default /*html*/ `
     <div class="tournament-body">
-        <div class="tournament-container">
+        <div id="tr_view" class="tournament-container">
                 <h1 class="tournament-title">Ultimate Ping Pang Worlds 2025<br><span class="tournament-title">TOURNAMENT</span></h1>
                 <div class="tournament-bracket">
                     <!-- Round 1 - Semifinals -->
@@ -12,24 +12,24 @@ export default /*html*/ `
                             <div class="match-container">
                                 <div class="player" data-player-id="1">
                                     <span id="player1" class="player-name">Player 1</span>
-                                    <span class="player-score">0</span>
+                                    <span id='player1-score' class="player-score">0</span>
                                 </div>
-                                <div id="player2" class="player" data-player-id="2">
-                                    <span class="player-name">Player 2</span>
-                                    <span class="player-score">0</span>
+                                <div class="player" data-player-id="2">
+                                    <span id="player2" class="player-name">Player 2</span>
+                                    <span id='player2-score' class="player-score">0</span>
                                 </div>
                             </div>
                         </div>
                         
                         <div id="semifinal2" class="match match-bottom">
                             <div class="match-container">
-                                <div id="player3" class="player" data-player-id="3">
-                                    <span class="player-name">Player 3</span>
-                                    <span class="player-score">0</span>
+                                <div  class="player" data-player-id="3">
+                                    <span id="player3" class="player-name">Player 3</span>
+                                    <span id='player3-score' class="player-score">0</span>
                                 </div>
-                                <div id="player4" class="player" data-player-id="4">
-                                    <span class="player-name">Player 4</span>
-                                    <span class="player-score">0</span>
+                                <div class="player" data-player-id="4">
+                                    <span id="player4" class="player-name">Player 4</span>
+                                    <span id='player4-score' class="player-score">0</span>
                                 </div>
                             </div>
                         </div>
@@ -41,11 +41,11 @@ export default /*html*/ `
                             <div class="match-container">
                                 <div class="player empty">
                                     <span id="winner1" class="player-name">TBD</span>
-                                    <span class="player-score">0</span>
+                                    <span id='winner1-score' class="player-score">0</span>
                                 </div>
-                                <div id="winner2" class="player empty">
-                                    <span class="player-name">TBD</span>
-                                    <span class="player-score">0</span>
+                                <div  class="player empty">
+                                    <span id="winner2" class="player-name">TBD</span>
+                                    <span id='winner2-score' class="player-score">0</span>
                                 </div>
                             </div>
                         </div>
