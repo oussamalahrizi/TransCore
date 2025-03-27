@@ -14,7 +14,7 @@ let modalContainer = null
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
     
-    const ws = new WebSocket("wss://10.14.8.10:8000/api/main/ws/?token=" + token)
+    const ws = new WebSocket("wss://10.14.9.9:8000/api/main/ws/?token=" + token)
     ws.onopen = (e) => {
         console.log("websocket connected");
     }
