@@ -24,14 +24,33 @@ export default class LocalGame extends HTMLElement {
 
     /*Append Element*/
     this.appendChild(this.frame);
+    
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
+    const token = app.utils.getCookie("access_token"); // Assuming you store JWT in localStorage
+    
+    if (!token) {
+      console.error("No authentication token found");
+      app.utils.showToast("Please log in to play");
+      return null;
+    }
+
+    const wsUrl = `${protocol}//${window.location.host}/api/game/tictac/ws/local?token=${token}`;
+
+    
     this.gameSocket = new WebSocket(
-      'ws://' + window.location.host + '/api/game/tictac/ws/local'
+      wsUrl
     );
     // console.log("Error connecting to server");
     this.gameSocket.onerror = (error) => {
       console.log("Error connecting to server", error);
     }
+
+    this.gameSocket.onclose = (event) => {
+      console.log("Disconnected from game server:", event.reason);
+      if (event.code == 4001) app.utils.showToast(event.reason);
+    };
+
     this.gameSocket.onmessage = this.messageHandler.bind(this);
 
     // this.createBoard();

@@ -19,10 +19,11 @@ class Consumer(AsyncWebsocketConsumer):
         if error:
             await self.close(code=4001, reason=error)
             return
-        
+        # send event to matchmaking
+
         self.user = self.scope['user']
-        self.user_id = self.user['auth']['id']
-        self.username = self.user['auth']['username']
+        self.user_id = self.user['id']
+        self.username = self.user['username']
         self.game_id = self.scope['game_id']
 
         print(f"Room ID: {self.game_id}")
@@ -64,9 +65,14 @@ class Consumer(AsyncWebsocketConsumer):
             )
             self.cache.set(self.game_id, game_data)
 
+
     async def disconnect(self, code):
 
         print(f"Disconnect code: {code}")
+        # if (code != 4001):
+        #     # send event to matchmaking
+        #     pass
+        
 
         if hasattr(self, "room_group_name"):
             await self.channel_layer.group_discard(
@@ -146,7 +152,6 @@ class Consumer(AsyncWebsocketConsumer):
 
     async def start_game(self, event):
         game_data = self.cache.get(self.game_id)
-        # send event to matchmaking 
         if not game_data:
             await self.close()
             return

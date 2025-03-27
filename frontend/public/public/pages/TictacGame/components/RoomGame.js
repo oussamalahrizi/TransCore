@@ -4,6 +4,14 @@ export default class RoomGame extends HTMLElement {
     super();
 
     /*Declare Element*/
+    this.waitingContainer = document.createElement("div");
+    this.waitingText = document.createElement("div");
+    this.waitingLogo = document.createElement("img");
+    this.waitingDots = document.createElement("div");
+    this.waitingDot1 = document.createElement("div");
+    this.waitingDot2 = document.createElement("div");
+    this.waitingDot3 = document.createElement("div");
+
     this.frame = document.createElement("div");
     this.header = document.createElement("header");
     this.meImg = document.createElement("img");
@@ -14,7 +22,14 @@ export default class RoomGame extends HTMLElement {
     this.text_turn = document.createElement("span");
     this.back = document.createElement("button");
 
+
     /*Class Name*/
+    this.waitingContainer.className = "waiting-container";
+    this.waitingLogo.className = "waiting-logo";
+    this.waitingText.classList.add("waiting-text");
+    this.waitingDots.className = "waiting-dots";
+    this.waitingDot1.className = this.waitingDot2.className = this.waitingDot3.className = "waiting-dot";
+
     this.frame.className = "framee";
     this.header.className = "header";
     this.meImg.className = this.oppImg.className = "players-img";
@@ -23,7 +38,7 @@ export default class RoomGame extends HTMLElement {
     this.manageTurn.className = "manage-turn";
     this.text_turn.className = "text-turn";
     this.back.className = "back";
-
+    
     /*ID Name*/
     this.meImg.id = "me-img";
     this.oppImg.id = "opp-img";
@@ -33,9 +48,20 @@ export default class RoomGame extends HTMLElement {
   connectedCallback() {
     this.turn = false;
 
-    /*Append Element*/
-    this.appendChild(this.frame);
+    /*Append Waiting Elements*/
+    this.waitingLogo.src = "/public/pages/TictacGame/assets/images/logo.png";
+    this.waitingLogo.alt = "xoxo";
+    this.appendChild(this.waitingContainer);
+    this.waitingContainer.appendChild(this.waitingLogo);
+    this.waitingContainer.appendChild(this.waitingText);
+    this.waitingText.textContent = "WAITING  ";
+    this.waitingText.appendChild(this.waitingDots);
+    this.waitingDots.appendChild(this.waitingDot1);
+    this.waitingDots.appendChild(this.waitingDot2);
+    this.waitingDots.appendChild(this.waitingDot3);
+
     this.vsIcon.src = "/public/pages/TictacGame/assets/images/vs.png";
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     console.log(protocol);
     const gameId = new URLSearchParams(window.location.search).get("game_id");
@@ -68,17 +94,21 @@ export default class RoomGame extends HTMLElement {
       app.utils.showToast(error?.message || "An error occurred");
       app.Router.navigate("/");
     };
+    // display waiting for opponent message and when the opponent is found, remove the waiting message
     this.gameSocket.onmessage = this.messageHandler.bind(this);
   }
 
-  
-    
 
   messageHandler(event) {
     try {
       const message = JSON.parse(event.data);
       
       if (message.action === "start_game") {
+        this.waitingContainer.innerHTML = "";
+        this.waitingContainer.remove();
+
+        this.appendChild(this.frame);
+
         this.turn = message.turn;
         
         if (this.turn)

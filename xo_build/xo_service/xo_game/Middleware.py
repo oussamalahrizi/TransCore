@@ -18,6 +18,43 @@ class jwtMiddleware(BaseMiddleware):
             query_string = scope.get("query_string", b"").decode("utf-8")
             query_params = parse_qs(query_string)
             token = query_params.get("token")
+
+            
+            if (scope['path'] == '/api/game/tictac/ws/local'):
+                
+                if not token:
+                    raise DenyConnection("Missing token in query")
+                
+                token = token[0]
+                
+                jwk_data = await self.fetch_jwk_data()
+                if not jwk_data:
+                    raise DenyConnection("Unable to retrieve JWK from Auth Service")
+                
+                public_key = jwk_data.get("public_key")
+                algorithm = jwk_data.get("algorithm")
+
+                try:
+                    payload = jwt.decode(token, key=public_key, algorithms=algorithm)
+                    type = payload["typ"]
+                    if type is None or type != "Bearer":
+                        raise jwt.InvalidTokenError()
+                except jwt.ExpiredSignatureError:
+                    raise DenyConnection("Token expired")
+                except jwt.InvalidSignatureError:
+                    raise DenyConnection("Invalid signature token")
+                except jwt.InvalidTokenError:
+                    raise DenyConnection("Invalid token")
+                user_id = payload.get("user_id")
+
+                user_info = await self.fetch_user_info(user_id)
+
+                scope["user"] = user_info
+
+                await super().__call__(scope, receive, send)
+                return
+
+
             game_id = query_params.get("game_id")
 
             if not game_id:
@@ -49,6 +86,7 @@ class jwtMiddleware(BaseMiddleware):
             user_id = payload.get("user_id")
 
             user_info = await self.fetch_user_info(user_id)
+            
             game_info = await self.check_game_id(game_id, user_id)
             scope["game_info"] = game_info["game_info"]
             scope["user"] = user_info
@@ -66,7 +104,7 @@ class jwtMiddleware(BaseMiddleware):
         except DenyConnection as e:
             scope["error_message"] = str(e)
         
-        await super().__call__(scope, receive, send)
+        return await super().__call__(scope, receive, send)
 
     async def fetch_jwk_data(self):
         """
@@ -111,7 +149,7 @@ class jwtMiddleware(BaseMiddleware):
                 post_data = {
                     'game_id' : game_id,
                     'user_id' : user_id,
-                    'game_type' : 'pong'
+                    'game_type' : 'tictac'
                 }
                 response = await client.post(CHECK_GAME_URL, json=post_data)
                 response.raise_for_status()
