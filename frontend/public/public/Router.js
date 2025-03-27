@@ -66,16 +66,13 @@ const Router = {
 		};
 		// start fresh
 		app.utils.removeCookie("access_token");
-		await Router.navigate(location.href);
-		if (!app.utils.getCookie("access_token"))
-		{
-			const res = await refresh_init()
-			console.log("refreshed token router");
-			if (res)
-				app.utils.setCookie("access_token", res.access_token)
-		}
-		dispatchEvent(new CustomEvent("navbar-profile"));
+		const res = await refresh_init()
+		console.log("refreshed token router init");
+		if (res)
+			app.utils.setCookie("access_token", res.access_token)
 		dispatchEvent(new CustomEvent("websocket", { detail: { type: "open" } }));
+		await Router.navigate(location.href);		
+		dispatchEvent(new CustomEvent("navbar-profile"));
 	},
 	navigate: async (url, useHistory = true) => {
 		const route = new URL(url, window.location.origin).pathname;

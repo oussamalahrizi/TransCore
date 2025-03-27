@@ -131,14 +131,7 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 				"type" :  "notification",
 				'message' : "Error fetching friends"
 			}))
-		# for f in friends:
-		# 	data = self.cache.get_user_status(f)
-		# 	if data == "offline":
-		# 		continue
-		# 	group_name = f"notification_{f}"
-		# 	await self.channel_layer.group_send(group_name, {
-		# 		'type': 'refresh_friends'
-		# 	})
+		
 
 	async def invite(self, event):
 		from_user = event["from"]
@@ -146,4 +139,17 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 			"type" : "invite",
 			"from" : from_user,
 			'from_id' : event["from_id"]
+		}))
+	
+
+	async def tr_update(self, event):
+		await self.send(json.dumps({
+			'type' : 'tr_update'
+		}))
+	
+	async def tr_end(self, event):
+		await self.send(json.dumps({
+			'type' : 'tr_end',
+			'winner' : event['winner'],
+			'loser' : event['loser']
 		}))

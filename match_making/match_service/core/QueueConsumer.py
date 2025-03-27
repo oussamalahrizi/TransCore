@@ -65,16 +65,48 @@ class AsyncRabbitMQConsumer:
             print(f"Stopped {self.queue_name}")
 
 
-from matchmaking.utils import Queue
+from matchmaking.utils import Queue, tournament
 
 from pprint import pprint
 
 from asgiref.sync import async_to_sync
 
+import uuid
+
+async def generate_game( players : list[str], tr_id): 
+        id = str(uuid.uuid4())
+        data = {
+            'players' : players,
+            'match_type' : "tournament",
+            'tournament_id' : tr_id
+        }
+        tournament.redis.set(f"pong:{id}", json.dumps(data))
+        for p in players:
+            body = {
+                'type' : "match_found",
+                'data' : {
+                    "user_id" : p,
+                    'game_id' : id
+                }
+            }
+            await notifspub.publish(body)
+        return id
+
+async def send_tr_update(players : list):
+    body = {
+        'type' : 'tr_update',
+        'data' : {
+            'players' : players
+        }
+    }
+    await notifspub.publish(body)
+    
+
 class QueueConsumer(AsyncRabbitMQConsumer):
 
     actions = {}
     cache = Queue
+    tr_cache = tournament
 
     def __init__(self, host, port, queue_name):
         self.actions = {
@@ -89,13 +121,98 @@ class QueueConsumer(AsyncRabbitMQConsumer):
     
     async def game_over(self, data : dict):
         print("received game over :")
-        pprint(data)
         match_type = data.get("match_type")
         game_type = data.get("game_type")
         game_id =  data.get("game_id")
         if match_type == "tournament":
             print("HANDLE TOURNAMENT RESULTS")
             print(data)
+            """
+                {
+                    'game_id': 'f3b2ef83-cadb-4f19-ac39-57a048710f30',
+                    'match_type': 'tournament',
+                    'game_type': 'pong', 
+                    'winner': '20aefb2a-453b-4a2d-afaf-5a1ae69fcc7c',
+                    'result': [5, 3],
+                    'tournament_id' : id
+                }
+            """
+            tr_data = self.tr_cache.fetch_ongoing(data['tournament_id'])
+            if tr_data is None:
+                raise Exception("Tournament data is None")
+            """
+                tr_data = {
+                    'semis' : 
+                    [
+                        'game_id' : games[i],
+                        'players' : halfs[i],
+                        'result' : [ 0, 0 ]
+                    ],
+                    'final' : {
+                        'game_id' : None,
+                        'players' : [],
+                        'result' : [0 , 0]
+                    },
+                    'winner' : None,
+                    'status' : 'ongoing',
+                    'tournament_id' : id
+                }
+            """
+            # print('tournament data from game')
+            # pprint(tr_data)
+            # print('-----------------')
+            # pprint(data)
+            status = tr_data["status"]
+            semis : list[dict] = tr_data['semis']
+            all = []
+            all.extend(semis[0]['players'])
+            all.extend(semis[1]['players'])
+            await send_tr_update(all)
+            if status == 'semis':
+                g_id = data['game_id']
+                semis : list[dict] = tr_data['semis']
+                which = 0 if semis[0]['game_id'] == g_id else 1
+                print('INDEX OF GAME BEFORE: ', g_id, 'IS : ', which)
+                tr_data['semis'][which]['result'] = data['result']
+                print('INDEX OF GAME AFTER: ', g_id, 'IS : ', which)
+                final : dict = tr_data['final']
+                final['players'].append(data['winner'])
+                
+                if len(final['players']) < 2:
+                    self.tr_cache.redis.set(f"ongoing:{data['tournament_id']}",
+                                        json.dumps(tr_data))
+                    return
+                tr_data['status'] = 'final'
+                game_id = await generate_game(
+                    final['players'],
+                    data['tournament_id'])
+                final['game_id'] = game_id
+                tr_data['final'] = final
+                self.tr_cache.redis.set(f"ongoing:{data['tournament_id']}",
+                                        json.dumps(tr_data))
+                return
+            # handle final, send all players the winner
+            # combine players
+            players = []
+            semis = tr_data['semis']
+            for s in semis:
+                players.extend(s['players'])
+            winner = data['winner']
+            loser = tr_data['final']['players'][0]
+            if loser == winner:
+                loser = tr_data['final']['players'][1]
+            for p in players:
+                await notifspub.publish({
+                    'type' : 'tr_end',
+                    'data' : {
+                        'user_id' : p,
+                        'winner' : winner,
+                        'loser' : loser,
+                        'result' : data['result']
+                    }
+                })
+            
+            return
         # send status update to both players
         game_data = self.cache.get_game_info(game_id, game_type)
         players = game_data.get("players")
@@ -115,7 +232,6 @@ class QueueConsumer(AsyncRabbitMQConsumer):
     async def on_message(self, message):
         try:
             body : dict = json.loads(message.body.decode())
-            print(f"{self.queue_name} : received message : {body}")
             type = body.get('type')
             if type not in self.actions:
                 print("type is not in actions")
@@ -125,6 +241,6 @@ class QueueConsumer(AsyncRabbitMQConsumer):
             await message.ack()
         except json.JSONDecodeError:
             print(f"{self.queue_name} : invalid json data")
-        except Exception as e:
-            print(f"{self.queue_name} : Error processing the message : {e}")
-            await message.reject()
+        # except Exception as e:
+        #     print(f"{self.queue_name} : Error processing the message : {e}")
+        #     await message.reject()
