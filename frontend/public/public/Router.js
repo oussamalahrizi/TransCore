@@ -6,7 +6,7 @@ export const checkAccessToken = () => {
 };
 
 export const refreshLocal = async () => {
-	const response = await fetch("http://localhost:8000/api/auth/refresh/", {
+	const response = await fetch("/api/auth/refresh/", {
 		credentials: "include",
 		method: "GET",
 	});

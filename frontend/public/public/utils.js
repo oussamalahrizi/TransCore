@@ -36,7 +36,7 @@ class AuthError extends Error
 }
 
 const refreshToken = async () => {
-    const res = await fetch("http://localhost:8000/api/auth/refresh/", {
+    const res = await fetch("/api/auth/refresh/", {
         headers: {
             "Accept": "application/json"
         },

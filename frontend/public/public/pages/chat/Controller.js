@@ -397,7 +397,7 @@ function startChat(chatWith, chatWithId) {
             }
 
             try {
-                const response = await fetch(`http://localhost:8000/api/chat/${roomName}/`);
+                const response = await fetch(`/api/chat/${roomName}/`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch messages: ${response.statusText}`);
                 }
@@ -415,7 +415,7 @@ function startChat(chatWith, chatWithId) {
             if (socket?.readyState === WebSocket.OPEN) return;
 
             const token = app.utils.getCookie("access_token");
-            socket = new WebSocket(`ws://localhost:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
+            socket = new WebSocket(`wss://10.14.8.10:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
             
             socket.onopen = () => {
                 scrollToBottom();
