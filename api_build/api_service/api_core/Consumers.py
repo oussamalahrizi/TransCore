@@ -151,5 +151,6 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 		await self.send(json.dumps({
 			'type' : 'tr_end',
 			'winner' : event['winner'],
-			'loser' : event['loser']
+			'loser' : event['loser'],
+			'result' : event['result'],
 		}))

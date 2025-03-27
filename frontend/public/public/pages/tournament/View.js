@@ -53,14 +53,7 @@ export default /*html*/ `
                 </div>
             </div>
             
-            <div id="winner-modal" class="winner-display">
-                <div class="winner-container">
-                    <div class="trophy-icon">🏆</div>
-                    <div id="final-winner" class="winner-name">TBD</div>
-                    <div class="winner-label">Tournament Champion</div>
-                    <button id="close-winner" class="close-winner-btn">Close</button>
-                </div>
-            </div>
+            
         </div>
     </div>
 `

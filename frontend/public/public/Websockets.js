@@ -72,8 +72,9 @@ export const SetOnline = () => {
             case 'tr_end':
                 var tr_view = document.getElementById('tr_view')
                 const {winner, result, loser} = data
-                if (tr_view)
-                    tr_view.dispatchEvent(new CustomEvent('tr_end', {detail : {winner, result, loser}}))
+                handletrEnd(data)
+                // if (tr_view)
+                //     tr_view.dispatchEvent(new CustomEvent('tr_end', {detail : {winner, result, loser}}))
                 break
             case "refresh_friends":
                 friendsContainer = document.getElementById("friend-list-items")    
@@ -145,4 +146,34 @@ const Notification = (message, color) => {
 function saveStateToLocalStorage() {
     localStorage.setItem('unreadMessages', JSON.stringify(unreadMessages));
     localStorage.setItem('lastMessages', JSON.stringify(lastMessages));
+}
+
+const handletrEnd = async (data) => {
+    const {winner, result, loser} =  data
+    console.log('winner is : ', winner);
+    console.log('result is : ', result);
+    
+    // const winner_data = await fetchUserData(winner) || 'TBD'
+    // const loser_data = await fetchUserData(loser) || 'TBD'
+    // const winner_modal = document.getElementById('winner-modal')
+    // const winner_text = winner_modal.querySelector('#final-winner')
+    // const close = winner_modal.querySelector('button')
+    // close.addEventListener('click', () => hideModalWithAnimation(winner_modal))
+    // winner_text.innerText = winner_data.username
+    // winner_modal.addEventListener('click', e => {
+    //     if (e.target === winner_modal)
+    //         hideModalWithAnimation(winner_modal)
+    // })
+    // showModalWithAnimation(winner_modal)
+
+    // // get finals and fill scores
+    // const final1 = document.getElementById('winner1')
+    // const final1_score = document.getElementById('winner1-score')
+    // const final2 = document.getElementById('winner2')
+    // const final2_score = document.getElementById('winner2-score')
+
+    // final1_score.innerText = result[0]
+    // final2_score.innerText = result[1]
+    // final1.innerText = winner_data
+    // final2.innerText = loser_data
 }
