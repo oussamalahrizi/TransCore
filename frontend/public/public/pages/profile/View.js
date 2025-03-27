@@ -21,6 +21,7 @@ export default /*html*/ `
                         <p id="user-status"></p>
                     </div>
                 </div>
+                <button id="switch-button" class="pf-switch-button">Tic Tac Toe</button>
             </div>
             
             <div class="pf-profile-stats">

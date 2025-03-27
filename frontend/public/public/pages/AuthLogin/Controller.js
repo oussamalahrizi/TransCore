@@ -45,7 +45,7 @@ export default  () => {
             e.preventDefault()
             button.disabled = true
             const list = button.className
-            button.className = "bg-gray-200 text-white font-semibold py-2 rounded-lg w-full"
+            button.style = "background-color: #e2e8f0; color: white; font-weight: 600; padding-top: 0.5rem; padding-bottom: 0.5rem; border-radius: 0.5rem; width: 100%;"
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             const res = await login(data)
