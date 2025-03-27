@@ -3,7 +3,7 @@ const GoogleCallback = async (code) => {
     try {
 
         let data;
-        const url = new URL("http://10.14.8.10:8000/api/auth/google_callback/")
+        const url = new URL("http://10.14.9.9:8000/api/auth/google_callback/")
         url.searchParams.append("code", code)
         const response = await fetch(url, {credentials : "include"})
         data = await response.json()
