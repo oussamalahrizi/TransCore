@@ -469,7 +469,6 @@ function startChat(chatWith, chatWithId) {
             }
             console.log("render messsage");
             
-            // updateUserList(friends);
             saveStateToLocalStorage();
             const formattedDate = formatDate(new Date(timestamp));
 
@@ -554,7 +553,7 @@ function startChat(chatWith, chatWithId) {
             const inviteToGameButton = document.getElementById('invite-to-game-button');
             if (inviteToGameButton) {
                 inviteToGameButton.addEventListener('click', () => {
-                    inviteToGame(selectedChatUser);
+                    inviteToGame(selectedChatUserId);
                 });
             }
         }
@@ -607,16 +606,20 @@ function startChat(chatWith, chatWithId) {
             
         }
         
-        function inviteToGame(username) {
-            if (username) {
-                console.log(`Inviting ${username} to a game`);
-                const ws = app.websocket;
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                        type: "invite",
-                        username: username,
-                    }));
+        async function inviteToGame(user_id) {
+            try{
+                const  {data, error} = await app.utils.fetchWithAuth(`/api/match/invite/${user_id}/`)
+                if (error)
+                {
+                    app.utils.showToast(error)
+                    return
                 }
+                app.utils.showToast(data.detail, "green")
+             }
+            catch (error) {
+                if (error instanceof app.utils.AuthError)
+                    return
+                console.log("error in invite game chat", error);
             }
         }
         function sendMessage() {
