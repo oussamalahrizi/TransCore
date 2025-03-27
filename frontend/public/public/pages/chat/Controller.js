@@ -60,12 +60,10 @@ export default async () => {
         let currentUserId = null;
         let roomName = null;
 
-        const friends = await fetchUsers();
-        updateUserList(friends);
-
+        
         function filterUsers(users) {
             users = users || [];
-
+            
             let filteredUsers = users;
 
             const searchQuery = searchInput.value.toLowerCase();
@@ -76,7 +74,7 @@ export default async () => {
             if (filterUnreadCheckbox.checked) {
                 filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
             }
-
+            
             return filteredUsers;
         }
 
@@ -89,7 +87,7 @@ export default async () => {
                 console.error('Failed to fetch users');
             }
         });
-
+        
         function toggleProfileSection() {
             const profileSection = document.getElementById('profile-section');
             const chatBox = document.getElementById('chat-box');
@@ -112,8 +110,55 @@ export default async () => {
                 }
             }
         }
+        
+        function resetChatBox() {
+            const messagesContainer = document.getElementById("messages");
+            const chatHeader = document.getElementById("chat-header");
+            const inputArea = document.getElementById("input-area");
+            const selectUserPrompt = document.getElementById("select-user-prompt");
+            const profileSection = document.getElementById("profile-section");
+            const chatBox = document.getElementById("chat-box");
+            const chatContainer = document.querySelector(".chat-container"); 
+            const userListContainer = document.getElementById("user-list-container");
+        
+            if (messagesContainer) messagesContainer.innerHTML = "";
+            if (chatHeader) chatHeader.classList.remove("active");
+            if (inputArea) inputArea.style.display = "none";
+            if (selectUserPrompt) selectUserPrompt.style.display = "flex";
+            
+            selectedChatUser = null;
+            selectedChatUserId = null;
+            isChatActive = false;
+        
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
 
-
+            if (profileSection) {
+                profileSection.classList.add("hidden");
+            }
+            
+            if (chatBox) {
+                chatBox.classList.remove("w-1/2", "w-3/4", "w-full"); 
+                chatBox.classList.add("w-full"); 
+            }
+        
+            if (chatContainer) {
+                chatContainer.classList.remove("grid-cols-2"); 
+                chatContainer.classList.add("grid-cols-1"); 
+            }
+            
+            if (userListContainer) {
+                userListContainer.classList.remove("w-1/4");
+                userListContainer.classList.add("w-full");
+            }
+        }
+        
+        
+        const friends = await fetchUsers();
+        updateUserList(friends);
+        
         function updateUserList(friends = []) {
             console.log("update user list called");
             
@@ -137,7 +182,6 @@ export default async () => {
                     if (!userStillExists) {
                         const previousUser = selectedChatUser;
                         resetChatBox();
-
                     }
                 }
         
@@ -158,108 +202,87 @@ export default async () => {
                 console.error('Error updating user list:', error);
             }
         }
-        
-        function startChat(chatWith, chatWithId) {
-            const messagesContainer = document.getElementById("messages");
-            const chatHeader = document.getElementById("chat-header");
-            const inputArea = document.getElementById("input-area");
-            const selectUserPrompt = document.getElementById("select-user-prompt");
-            const chatWithUserElement = document.getElementById("chat-with-user");
-            const profileUserName = document.getElementById("profile-user-name");
-            const profileSection = document.getElementById("profile-section");
-            const chatBox = document.getElementById("chat-box");
-        
-            if (!messagesContainer || !chatHeader || !inputArea || !selectUserPrompt || 
-                !chatWithUserElement || !profileUserName || !profileSection || !chatBox) {
-                console.error("Required chat elements not found");
-                return;
-            }
-        
-            selectedChatUser = chatWith;
-            selectedChatUserId = chatWithId;
-            isChatActive = true;
-        
-            unreadMessages[chatWith] = 0;
-            saveStateToLocalStorage();
-        
-            messagesContainer.innerHTML = "";
-            console.log("chat with :", chatWith);
-            
-            chatWithUserElement.textContent = chatWith;
-            chatHeader.classList.add("active");
-            inputArea.style.display = "flex";
-            selectUserPrompt.style.display = "none";
-        
-            const userItems = document.querySelectorAll('.user-item');
-            userItems.forEach(item => {                
-                item.classList.remove('active');
-                const usernameElement = item.querySelector('.username');
-                if (usernameElement && usernameElement.textContent === chatWith) {
-                    item.classList.add('active');
-                }
-            });
-        
-            if (socket) {
-                socket.close();
-            }
-            connectChatSocket();
-        
-            profileUserName.textContent = chatWith;
-            profileSection.classList.add("hidden");
-            chatBox.classList.remove("w-1/2");
-            chatBox.classList.add("w-3/4");
-        }
-        
-        function resetChatBox() {
-            const messagesContainer = document.getElementById("messages");
-            const chatHeader = document.getElementById("chat-header");
-            const inputArea = document.getElementById("input-area");
-            const selectUserPrompt = document.getElementById("select-user-prompt");
-            const profileSection = document.getElementById("profile-section");
-            const chatBox = document.getElementById("chat-box");
-            const chatContainer = document.querySelector(".chat-container"); 
-            const userListContainer = document.getElementById("user-list-container");
-        
-            if (messagesContainer) messagesContainer.innerHTML = "";
-            if (chatHeader) chatHeader.classList.remove("active");
-            if (inputArea) inputArea.style.display = "none";
-            if (selectUserPrompt) selectUserPrompt.style.display = "flex";
-        
-            selectedChatUser = null;
-            selectedChatUserId = null;
-            isChatActive = false;
-        
-            if (    socket
-                    && socket.readyState !== WebSocket.CLOSED
-                    && socket.readyState !== WebSocket.CLOSING
-                ) {
-                socket.close();
-                socket = null;
-                var str = "Failed to connect to Chat Server"
-                e.reason ?? str + e.reason
-                app.utils.showToast(str);
-            }
 
-        
-            if (profileSection) {
-                profileSection.classList.add("hidden");
+function startChat(chatWith, chatWithId) {
+    const messagesContainer = document.getElementById("messages");
+    const chatHeader = document.getElementById("chat-header");
+    const inputArea = document.getElementById("input-area");
+    const selectUserPrompt = document.getElementById("select-user-prompt");
+    const chatWithUserElement = document.getElementById("chat-with-user");
+    const profileUserName = document.getElementById("profile-user-name");
+    const profileSection = document.getElementById("profile-section");
+    const chatBox = document.getElementById("chat-box");
+
+    if (!messagesContainer || !chatHeader || !inputArea || !selectUserPrompt || 
+        !chatWithUserElement || !profileUserName || !profileSection || !chatBox) {
+        console.error("Required chat elements not found");
+        return;
+    }
+
+    unreadMessages[chatWith] = 0;
+    saveStateToLocalStorage();
+
+    selectedChatUser = chatWith;
+    selectedChatUserId = chatWithId;
+    isChatActive = true;
+
+    messagesContainer.innerHTML = "";
+    console.log("chat with :", chatWith);
+    
+    chatWithUserElement.textContent = chatWith;
+    chatHeader.classList.add("active");
+    inputArea.style.display = "flex";
+    selectUserPrompt.style.display = "none";
+
+    const userItems = document.querySelectorAll('.user-item');
+    userItems.forEach(item => {
+        item.classList.remove('active');
+        const usernameElement = item.querySelector('.username');
+        if (usernameElement && usernameElement.textContent === chatWith) {
+            item.classList.add('active');
+            
+            const unreadCountElement = item.querySelector('.unread-count');
+            if (unreadCountElement) {
+                unreadCountElement.remove();
             }
             
-            if (chatBox) {
-                chatBox.classList.remove("w-1/2", "w-3/4", "w-full"); 
-                chatBox.classList.add("w-full"); 
+            const lastMessage = lastMessages[chatWith]?.message || "";
+            const lastMessageElement = item.querySelector('.last-message');
+            if (lastMessageElement && lastMessage) {
+                lastMessageElement.textContent = lastMessage;
             }
-        
-            if (chatContainer) {
-                chatContainer.classList.remove("grid-cols-2"); 
-                chatContainer.classList.add("grid-cols-1"); 
-            }
-        
-            if (userListContainer) {
-                userListContainer.classList.remove("w-1/4");
-                userListContainer.classList.add("w-full");
+            
+            const lastMessageTimestamp = lastMessages[chatWith]?.timestamp || "";
+            const timestampElement = item.querySelector('.last-message-timestamp');
+            if (timestampElement && lastMessageTimestamp) {
+                timestampElement.textContent = lastMessageTimestamp;
             }
         }
+    });
+
+    if (socket) {
+        socket.close();
+    }
+    connectChatSocket();
+    
+    profileUserName.textContent = chatWith;
+    profileSection.classList.add("hidden");
+    chatBox.classList.remove("w-1/2");
+    chatBox.classList.add("w-3/4");
+
+    const user = friends.find(f => f.username === chatWith);
+    if (user) {
+        updateUserImages(user);
+        const statusColors = {
+            'online': { indicator: '#029F5B', text: '#029F5B' },
+            'inqueue': { indicator: '#FF9F1C', text: '#FF9F1C' },
+            'ingame': { indicator: '#2EC4B6', text: '#2EC4B6' },
+            'offline': { indicator: '#A9A9A9', text: '#A9A9A9' }
+        };
+        const status = user.status.toLowerCase();
+        updateChatHeader(user, statusColors[status] || statusColors.offline);
+    }
+}
 
         function createUserItem(user) {
             console.log("create user item called");
@@ -282,44 +305,14 @@ export default async () => {
             const status = user.status.toLowerCase();
             const { indicator: statusColor, text: textColor } = statusColors[status] || statusColors.offline;
         
-            const chatUserImage = document.getElementById('chat-user-image');
-            if (chatUserImage) {
-                chatUserImage.src = user.icon_url || '/public/assets/icon-placeholder.svg';
-                if (user.icon_url && !user.icon_url.startsWith("https"))
-                    chatUserImage.src += `?nocache=${Date.now()}` 
-                chatUserImage.style = "object-fit : cover;"
-            }
-
-            const profileImage = document.querySelector('#profile-section .profile-header img');
-            if (profileImage) {
-                profileImage.src = user.icon_url || '/public/assets/icon-placeholder.svg';
-                if (user.icon_url && !user.icon_url.startsWith("https"))
-                    profileImage.src += `?nocache=${Date.now()}` 
-            }
-            console.log("user chat override ");
-            
-            const chatWithUser = document.getElementById('chat-with-user');
-            if (chatWithUser) {
-                console.log("override with :", user.username);
-                
-                chatWithUser.textContent = user.username;
-            }
-            updateElement('profile-user-name', el => el.textContent = user.username);
-            
-            const chatUserStatus = document.getElementById('chat-user-status');
-            if (chatUserStatus) {
-                const statusIndicator = chatUserStatus.querySelector('.status-indicator');
-                const statusText = chatUserStatus.querySelector('.status-text');
-                if (statusIndicator) statusIndicator.style.backgroundColor = statusColor;
-                if (statusText) {
-                    statusText.textContent = user.status;
-                    statusText.style.color = textColor;
-                }
+            if (selectedChatUser === user.username) {
+                updateUserImages(user);
+                updateChatHeader(user, statusColor, textColor);
             }
         
             userItem.innerHTML = `
                 <div class="user-avatar-container">
-                    <img src="${user.icon_url || 'default-profile.png'}" 
+                    <img src="${getImageUrlWithCacheBust(user.icon_url)}" 
                          alt="${user.username}" 
                          class="user-avatar">
                     <span class="active-status" style="background-color: ${statusColor};"></span>
@@ -335,18 +328,61 @@ export default async () => {
             `;
         
             userItem.onclick = () => {
-                console.log("staring with user :", user.username);
-                
+                console.log("starting with user :", user.username);
                 startChat(user.username, user.id);
                 userItem.classList.add('active');
                 toggleProfileSection();
                 unreadMessages[user.username] = 0;
-                // updateUserList(friends);
+                updateUserImages(user);
+                updateChatHeader(user, statusColor, textColor);
             };
         
             return userItem;
         }
         
+        function updateUserImages(user) {
+            const chatUserImage = document.getElementById('chat-user-image');
+            const profileImage = document.querySelector('#profile-section .profile-header img');
+            
+            const imageUrl = getImageUrlWithCacheBust(user.icon_url);
+            
+            if (chatUserImage) {
+                chatUserImage.src = imageUrl;
+                chatUserImage.style = "object-fit: cover;";
+            }
+            
+            if (profileImage) {
+                profileImage.src = imageUrl;
+            }
+        }
+        
+        function updateChatHeader(user, statusColor, textColor) {
+            const chatWithUser = document.getElementById('chat-with-user');
+            if (chatWithUser) {
+                console.log("override with :", user.username);
+                chatWithUser.textContent = user.username;
+            }
+            
+            updateElement('profile-user-name', el => el.textContent = user.username);
+            
+            const chatUserStatus = document.getElementById('chat-user-status');
+            if (chatUserStatus) {
+                const statusIndicator = chatUserStatus.querySelector('.status-indicator');
+                const statusText = chatUserStatus.querySelector('.status-text');
+                if (statusIndicator) statusIndicator.style.backgroundColor = statusColor;
+                if (statusText) {
+                    statusText.textContent = user.status;
+                    statusText.style.color = textColor;
+                }
+            }
+        }
+        
+        function getImageUrlWithCacheBust(url) {
+            if (!url) return '/public/assets/icon-placeholder.svg';
+            
+            const separator = url.includes('?') ? '&' : '?';
+            return url.startsWith('http') ? url : `${url}${separator}nocache=${Date.now()}`;
+        }
         function updateElement(selector, callback) {
             const element = document.querySelector(selector);
             if (element) callback(element);
