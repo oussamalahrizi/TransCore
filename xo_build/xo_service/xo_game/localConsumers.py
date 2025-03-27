@@ -7,6 +7,21 @@ from .cache import Game_Cache
 class Consumer(AsyncWebsocketConsumer):
     cache = Game_Cache
     async def connect(self):
+        await self.accept()
+        error = self.scope.get('error_message')
+        print(f"Error: {error}")
+        if error:
+            await self.close(code=4001, reason=error)
+            return
+        
+        self.user = self.scope['user']
+        self.user_id = self.user['id']
+        self.username = self.user['username']
+
+        print(f"username -> {self.username}")
+
+        # match making
+        
         self.room_id = str(uuid.uuid4())  # Generate unique room ID
         self.user_id = "me"
         self.cache.set(
@@ -20,12 +35,16 @@ class Consumer(AsyncWebsocketConsumer):
             
         )
 
-        await self.accept()
 
         await self.start_game({})
 
     async def disconnect(self, code):
-        self.cache.delete(self.room_id)
+        if (code == 4001):
+            return
+
+        # match making
+        if hasattr(self, "room_id"):
+            self.cache.delete(self.room_id)
 
     async def receive(self, text_data):
         game_data = self.cache.get(self.room_id)
