@@ -7,7 +7,6 @@ import MatchFound from "./Components/matchfound/Controller.js"
 import MatchFoundView from "./Components/matchfound/matchfound.js"
 import { hideModalWithAnimation } from './modalAnimations.js';
 import { sleep } from './pages/game/websockets.js';
-import utils from './utils.js';
 
 let matchCallback = null
 let modalContainer = null
@@ -15,7 +14,7 @@ let modalContainer = null
 export const SetOnline = () => {
     const token = app.utils.getCookie("access_token")
     
-    const ws = new WebSocket(`wss://${location.host}/api/main/ws/?token=` + token)
+    const ws = new WebSocket("wss://10.14.9.9:8000/api/main/ws/?token=" + token)
     ws.onopen = (e) => {
         console.log("websocket connected");
     }
@@ -69,11 +68,10 @@ export const SetOnline = () => {
                 var tr_view = document.getElementById('tr_view')
                 if (tr_view)
                     tr_view.dispatchEvent(new CustomEvent('refresh'))
-                console.log('TR UPDATE ', location.pathname);
                 break
             case 'tr_end':
                 var tr_view = document.getElementById('tr_view')
-                data
+                const {winner, result, loser} = data
                 handletrEnd(data)
                 // if (tr_view)
                 //     tr_view.dispatchEvent(new CustomEvent('tr_end', {detail : {winner, result, loser}}))
@@ -116,8 +114,7 @@ export const SetOnline = () => {
                 break
             case 'match_found':
                 const game_id = data.game_id
-                const game = data.game
-                matchCallback = await MatchFound(game_id, game)
+                matchCallback = await MatchFound(game_id)
                 if (typeof matchCallback === "function")
                     matchCallback()
                 break
@@ -151,26 +148,32 @@ function saveStateToLocalStorage() {
     localStorage.setItem('lastMessages', JSON.stringify(lastMessages));
 }
 
-import { fetchUserData } from './pages/tournament/Controller.js';
-
 const handletrEnd = async (data) => {
     const {winner, result, loser} =  data
     console.log('winner is : ', winner);
     console.log('result is : ', result);
-    const winner_data = await fetchUserData(winner) || 'TBD'
-    const loser_data = await fetchUserData(loser) || 'TBD'
-    if (location.pathname === '/tournament')
-    {
-        const final1 = document.getElementById('winner1')
-        const final1_score = document.getElementById('winner1-score')
-        const final2 = document.getElementById('winner2')
-        const final2_score = document.getElementById('winner2-score')
+    
+    // const winner_data = await fetchUserData(winner) || 'TBD'
+    // const loser_data = await fetchUserData(loser) || 'TBD'
+    // const winner_modal = document.getElementById('winner-modal')
+    // const winner_text = winner_modal.querySelector('#final-winner')
+    // const close = winner_modal.querySelector('button')
+    // close.addEventListener('click', () => hideModalWithAnimation(winner_modal))
+    // winner_text.innerText = winner_data.username
+    // winner_modal.addEventListener('click', e => {
+    //     if (e.target === winner_modal)
+    //         hideModalWithAnimation(winner_modal)
+    // })
+    // showModalWithAnimation(winner_modal)
 
-        final1_score.innerText = result[0]
-        final2_score.innerText = result[1]
-        final1.innerText = winner_data
-        final2.innerText = loser_data
-    }
-    // if (location.pathname !== '/game')
-    app.utils.showToast(`Tournament Ended, Winner is : ${winner_data}`, 'green')
+    // // get finals and fill scores
+    // const final1 = document.getElementById('winner1')
+    // const final1_score = document.getElementById('winner1-score')
+    // const final2 = document.getElementById('winner2')
+    // const final2_score = document.getElementById('winner2-score')
+
+    // final1_score.innerText = result[0]
+    // final2_score.innerText = result[1]
+    // final1.innerText = winner_data
+    // final2.innerText = loser_data
 }

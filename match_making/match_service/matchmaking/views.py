@@ -63,142 +63,6 @@ class FindMatchPong(APIView):
             return Response(status=e.code, data={"detail" : e.detail})
 
 
-class FindMatchTic(APIView):
-
-    permission_classes = [IsAuthenticated]
-    cache = Queue
-    
-    @async_to_sync
-    async def get_status(self, user_id : str):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{API_DATA}{user_id}/")
-                response.raise_for_status()
-                data = response.json()
-                return data
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
-            raise APIException(code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                               detail="Failed to reach API Service")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return None
-            detail = e.response.json()
-            raise APIException(code=e.response.status_code, detail=detail)
-        except Exception as e:
-            raise APIException(detail='Internal Server Error', code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def get(self, request : Request, *args, **kwargs):
-        current_user = {'id' : request.user.id}
-        try:
-            user_data = self.get_status(user_id=current_user["id"])
-            if not user_data:
-                return Response(status=status.HTTP_404_NOT_FOUND,
-                                data={"detail" : "User Not Found."})
-            if user_data["status"] != "online":
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : f'It appears that you are {user_data["status"]}'})
-            self.cache.store_player(current_user['id'], "tic")
-            return Response(data={"detail" : "We are looking for a match."})
-            
-        except APIException as e:
-            return Response(status=e.code, data={"detail" : e.detail})
-
-
-class SingleMatch(APIView):
-    permission_classes = [IsAuthenticated]
-    Cache = Queue
-
-    @async_to_sync
-    async def get_status(self, user_id : str):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{API_DATA}{user_id}/")
-                response.raise_for_status()
-                data = response.json()
-                return data
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
-            raise APIException(code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                               detail="Failed to reach API Service")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return None
-            detail = e.response.json()
-            raise APIException(code=e.response.status_code, detail=detail)
-        except Exception as e:
-            raise APIException(detail='Internal Server Error', code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def get(self, request : Request, *args, **kwargs):
-        current_user = {'id' : request.user.id}
-        try:
-            user_data = self.get_status(user_id=current_user["id"])
-            if not user_data:
-                return Response(status=status.HTTP_404_NOT_FOUND,
-                                data={"detail" : "User Not Found."})
-            if user_data["status"] != "online":
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : f'It appears that you are {user_data["status"]}'})
-            id = str(uuid.uuid4())
-            self.Cache.redis.set(f'pong:{id}', json.dumps({
-                "match_type" : "regular",
-                "players" : [current_user["id"]],
-                "type" : "single",
-                "game_type" : "pong"
-            }))
-            
-
-            return Response(data={"detail" : "Redirecting to the game", "game_id" : id})
-            
-        except APIException as e:
-            return Response(status=e.code, data={"detail" : e.detail})
-        
-class SingleMatchTic(APIView):
-    permission_classes = [IsAuthenticated]
-    Cache = Queue
-
-    @async_to_sync
-    async def get_status(self, user_id : str):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{API_DATA}{user_id}/")
-                response.raise_for_status()
-                data = response.json()
-                return data
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
-            raise APIException(code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                               detail="Failed to reach API Service")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return None
-            detail = e.response.json()
-            raise APIException(code=e.response.status_code, detail=detail)
-        except Exception as e:
-            raise APIException(detail='Internal Server Error', code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def get(self, request : Request, *args, **kwargs):
-        current_user = {'id' : request.user.id}
-        try:
-            user_data = self.get_status(user_id=current_user["id"])
-            if not user_data:
-                return Response(status=status.HTTP_404_NOT_FOUND,
-                                data={"detail" : "User Not Found."})
-            if user_data["status"] != "online":
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : f'It appears that you are {user_data["status"]}'})
-            id = str(uuid.uuid4())
-            self.Cache.redis.set(f'tic:{id}', json.dumps({
-                "match_type" : "regular",
-                "players" : [current_user["id"]],
-                "type" : "single",
-                "game_type" : "tic"
-            }))
-            
-
-            return Response(data={"detail" : "Redirecting to the game", "game_id" : id})
-            
-        except APIException as e:
-            return Response(status=e.code, data={"detail" : e.detail})
-
-
 from rest_framework import serializers, status
 
 from .utils import Queue
@@ -268,138 +132,40 @@ class CancelQueue(APIView):
 class AcceptMatchPong(APIView):
     permission_classes = [IsAuthenticated]
     cache = Queue
-    tr_cache = tournament
     class GIDSerialier(serializers.Serializer):
         game_id = serializers.CharField(required=True)
         state = serializers.BooleanField(required=True)
 
-    async def fetch_user_data(self, user_id):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"http://api-service/api/main/user/{user_id}/")
-                response.raise_for_status()
-                return response.json()
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
-            raise APIException(code=500, detail="Failed to reach API Service")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return None
-            detail = e.response.json()
-            raise APIException(code=e.response.status_code, detail=detail)
-        except Exception as e:
-            raise APIException(detail='Internal Server Error')
-
     def post(self, request : Request, *args, **kwargs):
-        try:
-
-            current : ProxyUser = request.user
-            id = current.to_dict()["id"]
-            current_status = async_to_sync(self.fetch_user_data)(id)
-            if current_status['status'] != 'online' and not current_status.get('tournament_id') and current_status['status'] != 'inqueue':
-                raise APIException(code=400, detail='You are not Online')
-            print("accept data")
-            pprint(current_status)
-            ser = self.GIDSerialier(data=request.data)
-            ser.is_valid(raise_exception=True)
-            game_id = ser.validated_data["game_id"]
-            game_info = self.cache.get_game_info(game_id=game_id, type="pong")
-            if not game_info:
-                if current_status.get('tournament_id'):
-                    print('User advancing')
-                    return Response(status=status.HTTP_400_BAD_REQUEST,
-                                    data={'detail' : 'Advanced to next stage'})
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : "Game Not Found Or Canceled"})
-            players = game_info["players"]
-            if id not in players:
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : "You are not in this game"})
-            state = ser.validated_data["state"]
-            if not state:
-                tr_id = None
-                if current_status.get('tournament_id'):
-                    tr_id = current_status['tournament_id']
-                    print('USER DECLINED', current_status['username'])
-                    self.tr_cache.handle_decline(game_id, id, tr_id)
-                else:
-                    self.cache.handle_decline(game_id, "pong", id, tr_id)
-                return Response(data={"detail" : "You declined"})
-            notif = publishers[1]
-            body = {
-                'type' : "update_status",
-                "data": {
-                    'user_id' : id,
-                    'status' : "ingame"
-                }
+        current : ProxyUser = request.user
+        id = current.to_dict()["id"]
+        ser = self.GIDSerialier(data=request.data)
+        ser.is_valid(raise_exception=True)
+        game_id = ser.validated_data["game_id"]
+        game_info = self.cache.get_game_info(game_id=game_id, type="pong")
+        if not game_info:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "Game Not Found Or"
+                            "Canceled"})
+        players = game_info["players"]
+        if id not in players:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={"detail" : "You are not in this game"})
+        state = ser.validated_data["state"]
+        if not state:
+            self.cache.handle_decline(game_id, "pong", id)
+            return Response(data={"detail" : "You declined"})
+        notif = publishers[1]
+        body = {
+            'type' : "update_status",
+            "data": {
+                'user_id' : id,
+                'status' : "ingame"
             }
-            async_to_sync(notif.publish)(body)
-            return Response(data={'detail' : "Redirecting to the game"})
-        except APIException as e:
-            return Response(status=e.code,
-                            data=e.detail)
+        }
+        async_to_sync(notif.publish)(body)
+        return Response(data={'detail' : "Redirecting to the game"})
 
-
-
-class AcceptMatchTic(APIView):
-    permission_classes = [IsAuthenticated]
-    cache = Queue
-    tr_cache = tournament
-    class GIDSerialier(serializers.Serializer):
-        game_id = serializers.CharField(required=True)
-        state = serializers.BooleanField(required=True)
-
-    async def fetch_user_data(self, user_id):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"http://api-service/api/main/user/{user_id}/")
-                response.raise_for_status()
-                return response.json()
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
-            raise APIException(code=500, detail="Failed to reach API Service")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return None
-            detail = e.response.json()
-            raise APIException(code=e.response.status_code, detail=detail)
-        except Exception as e:
-            raise APIException(detail='Internal Server Error')
-
-    def post(self, request : Request, *args, **kwargs):
-        try:
-
-            current : ProxyUser = request.user
-            id = current.to_dict()["id"]
-            current_status = async_to_sync(self.fetch_user_data)(id)
-            if current_status["status"] != "online" and current_status['status'] != 'inqueue':
-                raise APIException(code=400, detail="You are not online!")
-            ser = self.GIDSerialier(data=request.data)
-            ser.is_valid(raise_exception=True)
-            game_id = ser.validated_data["game_id"]
-            game_info = self.cache.get_game_info(game_id=game_id, type="tic")
-            if not game_info:
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : "Game Not Found Or Canceled"})
-            players = game_info["players"]
-            if id not in players:
-                return Response(status=status.HTTP_400_BAD_REQUEST,
-                                data={"detail" : "You are not in this game"})
-            state = ser.validated_data["state"]
-            if not state:
-                self.cache.handle_decline(game_id, "tic", id, None)
-                return Response(data={"detail" : "You declined"})
-            notif = publishers[1]
-            body = {
-                'type' : "update_status",
-                "data": {
-                    'user_id' : id,
-                    'status' : "ingame"
-                }
-            }
-            async_to_sync(notif.publish)(body)
-            return Response(data={'detail' : "Redirecting to the game"})
-        except APIException as e: 
-            return Response(status=e.code,
-                            data=e.detail)
 
 """
     TODO :
@@ -583,20 +349,17 @@ class TournamentAPI(APIView):
         try:
             user_data = async_to_sync(self.get_status)(current_id)
             print("user data in tournament api")
-            if user_data.get("tournament_id") is not None:
-                print('User already in tournament')
-                print(user_data['username'])
-                tr_data = self.cache.fetch_ongoing(user_data['tournament_id'])
-                if not tr_data:
-                    return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                    data={'detail' : 'something went wrong getting your tr data'})
-                print('sending tournament data to :', user_data['username'])
-                pprint(tr_data)
-                return Response(data=tr_data)
+            pprint(user_data)
             if user_data['status'] != 'online':
                 print("user status : ", user_data)
                 return Response(status=status.HTTP_400_BAD_REQUEST,
                                 data={"detail" : "You are not online"})
+            if user_data.get("tournament_id"):
+                tr_data = self.cache.fetch_ongoing(user_data['tournament_id'])
+                if not tr_data:
+                    return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    data={'detail' : 'something went wrong getting your tr data'})
+                return Response(data=tr_data)
             players = self.cache.store_player(current_id)
             return Response(data=players)
         except APIException as e:

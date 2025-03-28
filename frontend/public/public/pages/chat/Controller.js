@@ -415,7 +415,7 @@ function startChat(chatWith, chatWithId) {
             if (socket?.readyState === WebSocket.OPEN) return;
 
             const token = app.utils.getCookie("access_token");
-            socket = new WebSocket(`wss://${location.host}/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
+            socket = new WebSocket(`wss://10.14.9.9:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
             
             socket.onopen = () => {
                 scrollToBottom();

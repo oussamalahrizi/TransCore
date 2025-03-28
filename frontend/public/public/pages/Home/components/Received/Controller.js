@@ -9,11 +9,6 @@ const getReceived = async () => {
         return
     }
     data.forEach(async user => {
-        if (!user.icon_url)
-        {
-            user.icon_url = '/public/assets/icon-placeholder.svg'
-            return
-        }
         if (user.icon_url && !user.icon_url.startsWith("/"))
             return
         user.icon_url += `?nocache=${Date.now()}`

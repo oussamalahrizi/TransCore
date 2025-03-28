@@ -8,8 +8,6 @@ const fetchTournamentData = async () => {
         app.utils.showToast(error)
         return null
     }
-    console.log(data);
-    
     return data
 }
 
@@ -20,12 +18,12 @@ const addModal = (number) => {
     modal = document.createElement('div')
     modal.id = 'waiting-tr'
     modal.className = 'absolute top-0 left-0 z-500 w-full h-full min-h-screen flex justify-center items-center text-2xl text-white bg-black/75'
-    modal.innerHTML = /*html*/`<h1>Waiting for ${number} players</h1>`
+    modal.innerHTML = /*html*/`<h1>Waiting for ${number} players<h1>`
     const page = document.getElementById('tr_view')
     page.appendChild(modal)
 }
 
-export const fetchUserData = async (user_id) => {
+const fetchUserData = async (user_id) => {
     const {data, error} = await app.utils.fetchWithAuth(`/api/main/user/${user_id}/`)
     if (error)
     {
@@ -123,12 +121,47 @@ const handleTournamentEvents = async (e) => {
 }
 
 
+/**
+ * 
+ * @param {CustomEvent} e 
+ */
+const handletrEnd = async (e) => {
+    const {winner, result, loser} =  e.detail
+    console.log('winner is : ', winner);
+    console.log('result is : ', result);
+    
+    const winner_data = await fetchUserData(winner) || 'TBD'
+    const loser_data = await fetchUserData(loser) || 'TBD'
+    const winner_modal = document.getElementById('winner-modal')
+    const winner_text = winner_modal.querySelector('#final-winner')
+    const close = winner_modal.querySelector('button')
+    close.addEventListener('click', () => hideModalWithAnimation(winner_modal))
+    winner_text.innerText = winner_data.username
+    winner_modal.addEventListener('click', e => {
+        if (e.target === winner_modal)
+            hideModalWithAnimation(winner_modal)
+    })
+    showModalWithAnimation(winner_modal)
+
+    // get finals and fill scores
+    const final1 = document.getElementById('winner1')
+    const final1_score = document.getElementById('winner1-score')
+    const final2 = document.getElementById('winner2')
+    const final2_score = document.getElementById('winner2-score')
+
+    final1_score.innerText = result[0]
+    final2_score.innerText = result[1]
+    final1.innerText = winner_data
+    final2.innerText = loser_data
+}
+
 export default async () => {
     try {
         // setup tournament listener
         const view = document.getElementById("tr_view")
         view.addEventListener('refresh', handleTournamentEvents)
         view.dispatchEvent(new CustomEvent('refresh'))
+        view.addEventListener('tr_end', handletrEnd)
     } catch (error) {
         if (error instanceof app.utils.AuthError)
             return

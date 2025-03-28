@@ -70,7 +70,7 @@ export const IntraLogin = async () => {
     
     const url = new URL("https://api.intra.42.fr/oauth/authorize");
     url.searchParams.append("client_id", "u-s4t2ud-18f8278d214900868a7d2706fc12e3de85389d73c1b7bdc246e3590e477d423f");
-    url.searchParams.append("redirect_uri", "https://localhost:8000/auth/intra_callback");
+    url.searchParams.append("redirect_uri", "https://10.14.9.9:8000/auth/intra_callback");
     url.searchParams.append("response_type", "code");
     window.location.href = url.toString()
 }
