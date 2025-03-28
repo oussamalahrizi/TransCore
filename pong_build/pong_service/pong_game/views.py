@@ -23,7 +23,7 @@ class GetData(APIView):
             return Response(data=serializer.data)
 
         except Http404:
-            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "Not found."})
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "PLayer Data Not found."})
         
 class GetDataID(APIView):
     permission_classes = [IsAuthenticated]
@@ -39,7 +39,7 @@ class GetDataID(APIView):
             return Response(data=serializer.data)
 
         except Http404:
-            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "Not found."})
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "PLayer Data Not found."})
         
 
 class GetMatchHistory(APIView):
@@ -84,7 +84,7 @@ class GetMatchHistory(APIView):
             return Response(data=serializer.data)
 
         except Http404:
-            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "Not found."})
+            return Response(status=status.HTTP_404_NOT_FOUND, data={'detail' : 'Player Data Not Found'})
         
 class LeaderBoard(APIView):
     permission_classes = [IsAuthenticated]
