@@ -7,6 +7,8 @@ class Player(models.Model):
     player_id = models.CharField(max_length=100, unique=True, primary_key=True)
     matches_won = models.IntegerField(default=0)
     matches_lost = models.IntegerField(default=0)
+    score = models.IntegerField(default=400)
+
 
 
 class Match(models.Model):
