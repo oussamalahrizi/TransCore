@@ -131,7 +131,6 @@ class Consumer(AsyncWebsocketConsumer):
         if code == 4003:
             return
         # first send result if not game over
-        await self.channel_layer.group_discard(self.game_id, self.channel_name)
         print(f"{self.username} removed")
         if Game.get(self.game_id):
             print("setting winner")
@@ -140,14 +139,17 @@ class Consumer(AsyncWebsocketConsumer):
             if len(players):
                 Game.get(self.game_id).winner = self.cache.get_players(self.game_id)[0] ## work around
             Game.get(self.game_id).gameover = True
-            # print(f'{self.username} game over ? ', Game.get(self.game_id).gameover)
-            
-        if game_task.get(self.game_id):
             game_task.get(self.game_id).cancel()
             game_task.pop(self.game_id)
-        if Game.get(self.game_id):
             Game.pop(self.game_id)
-     
+            # print(f'{self.username} game over ? ', Game.get(self.game_id).gameover)
+            
+        # if game_task.get(self.game_id):
+        #     game_task.get(self.game_id).cancel()
+        #     game_task.pop(self.game_id)
+        # if Game.get(self.game_id):
+        #     Game.pop(self.game_id)
+        await self.channel_layer.group_discard(self.game_id, self.channel_name)
 
 
     async def close_user(self, event):
@@ -182,12 +184,11 @@ class Consumer(AsyncWebsocketConsumer):
         if self.user_id != winner_id:
             winner = 'You Lost!'
         
-        
         await self.send(json.dumps({
             'type': 'gameEnd',
             'winner': winner
         }))
-    
+
         await self.channel_layer.group_send(self.game_id, {
             'type': 'close_user'
         })
