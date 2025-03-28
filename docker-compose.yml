@@ -93,16 +93,6 @@ services:
     volumes:
       - ./chat_service:/chatco
 
-  api-db:
-    image: postgres:17
-    container_name: api_db
-    networks:
-      - TransNetwork
-    volumes:
-      - /var/lib/postgresql/data
-    env_file:
-      - "api_build/build/conf/.env"
-
   api-service:
     build: "api_build/."
     pull_policy: build
@@ -112,12 +102,9 @@ services:
       - TransNetwork
     depends_on:
       - rabbitmq
-      - api-db
       - api-redis
     volumes:
       - "api-service-code:/var/app/"
-    env_file:
-      - "api_build/build/conf/.env"
 
   api-redis:
     build: "api_redis"
