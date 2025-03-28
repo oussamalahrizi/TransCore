@@ -90,6 +90,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         super().__init__(host, port, queue_name)
 
     async def tr_end(self, data : dict):
+        print('received tr end ')
+        pprint(data)
         user_id = data['user_id']
         winner = data['winner']
         loser = data['loser']
@@ -126,6 +128,12 @@ class NotifConsumer(AsyncRabbitMQConsumer):
             user_data.pop("tournament_id")
         user_data['status'] = 'online'
         self.cache.redis.set(user_id, json.dumps(user_data))
+        layer = get_channel_layer()
+        group = f'notification_{user_id}'
+        await layer.group_send(group, {
+            'type' : 'status_update',
+            'status' : 'online'
+        })
 
     async def invite_accepted(self, data : dict):
         user_id = data["user_id"]
@@ -201,7 +209,8 @@ class NotifConsumer(AsyncRabbitMQConsumer):
         layer =  get_channel_layer()
         await layer.group_send(group_name,{
             'type' : "match_found",
-            'game_id' : game_id
+            'game_id' : game_id,
+            'game' : data.get('type')
         })
     
     async def cancel_game(self, data : dict):
@@ -231,13 +240,11 @@ class NotifConsumer(AsyncRabbitMQConsumer):
     async def on_message(self, message : IncomingMessage):
         try:
             body : dict = json.loads(message.body.decode())
-            print(f"{self.queue_name} : received message : {body}")
             type = body.get("type")
             if type not in self.actions:
                 print("type is not in avalaible actions")
                 await message.reject()
                 return
-            print("body in notification", body)
             await self.actions[type](body.get('data'))
             await message.ack()
         except json.JSONDecodeError:

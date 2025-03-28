@@ -72,7 +72,8 @@ class OnlineConsumer(AsyncWebsocketConsumer):
 	async def match_found(self, event):
 		data =  {
 			"type" : "match_found",
-			'game_id' : event["game_id"]
+			'game_id' : event["game_id"],
+			'game' : event['game']
 		}
 		await self.send(json.dumps(data))
 
