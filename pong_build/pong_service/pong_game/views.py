@@ -6,6 +6,7 @@ from django.db.models import Q, F, Count, Sum
 from .models import Player, Match, MatchSingle
 from .serializers import PlayerSerializer, MatchSerializer, MatchSingleSerializer
 from datetime import datetime, timedelta
+from django.http import JsonResponse
 
 # ViewSets for the main models
 class PlayerViewSet(viewsets.ReadOnlyModelViewSet):
@@ -49,6 +50,40 @@ class MatchSingleViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(player1__player_id=player_id)
             
         return queryset
+
+
+
+# API endpoints for main models
+@api_view(['GET'])
+def get_matches(request):
+    matches = Match.objects.all().order_by('-played_at')
+    serializer = MatchSerializer(matches, many=True)
+    smatches = MatchSingle.objects.all().order_by('-played_at')
+    sserializer = MatchSingleSerializer(smatches, many=True)
+    combined_data = serializer.data + sserializer.data
+    return Response(sorted(combined_data, key=lambda x: x['played_at'], reverse=True))
+
+
+@api_view(['GET'])
+def get_players(request):
+    players = Player.objects.all()
+    serializer = PlayerSerializer(players, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def get_player(request, player_id):
+    try:
+        player = Player.objects.get(player_id=player_id)
+        serializer = PlayerSerializer(player)
+        return Response(serializer.data)
+    except Player.DoesNotExist:
+        return JsonResponse({'error': 'Player not found'}, status=404)
+
+
+
+
+
+
 
 # API endpoints for specific game features
 @api_view(['GET'])

@@ -63,11 +63,11 @@ def get_player(request, player_id):
         return JsonResponse({'error': 'Player not found'}, status=404)
     
 
-@api_view(['GET'])
-def get_match(request, match_id):
-    try:
-        match = Match.objects.get(id=match_id)
-        serializer = MatchSerializer(match)
-        return Response(serializer.data)
-    except Match.DoesNotExist:
-        return JsonResponse({'error': 'Match not found'}, status=404)
+# @api_view(['GET'])
+# def get_match(request, match_id):
+#     try:
+#         match = Match.objects.get(id=match_id)
+#         serializer = MatchSerializer(match)
+#         return Response(serializer.data)
+#     except Match.DoesNotExist:
+#         return JsonResponse({'error': 'Match not found'}, status=404)
