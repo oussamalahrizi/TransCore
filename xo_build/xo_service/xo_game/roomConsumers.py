@@ -6,6 +6,26 @@ from .cache import Game_Cache
 import uuid
 from .models import Player, Match
 import asyncio
+from core.publisher import publishers
+
+queue = publishers[0]
+
+async def publishQueue(data : dict):
+    await queue.publish(data)
+
+async def send_game_over(game_id, winner):
+    body = {
+            'type' : "game_over",
+            'data' : {
+                'game_id' : game_id,
+                'match_type' : "regular",
+                'game_type' : "tic",
+                'winner' : winner
+
+            }
+        }
+    await publishQueue(body)
+    print("GAME SENT GAME OVER")
 
 
 class Consumer(AsyncWebsocketConsumer):
@@ -108,6 +128,7 @@ class Consumer(AsyncWebsocketConsumer):
                     )
 
                     await self.save_resault(winner_id, self.user_id)
+                    asyncio.create_task(send_game_over(self.game_id, winner_id))
 
     async def receive(self, text_data):
         game_data = self.cache.get(self.game_id)

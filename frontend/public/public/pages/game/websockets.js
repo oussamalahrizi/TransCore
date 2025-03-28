@@ -118,7 +118,9 @@ async function handleGameEnd(winner) {
     "absolute w-full min-h-screen top-0 left-0 z-50 flex justify-center items-center text-white text-2xl bg-black/40";
   view.textContent = `${winner}`;
   gameContainer.appendChild(view);
+  await sleep(2)
   view.remove();
+  gameContainer.dispatchEvent(new CustomEvent('end'))
 }
 
 function updateScoreDisplay() {
@@ -213,7 +215,6 @@ export const onmessage = (event) => {
 
     case "gameEnd":
       handleGameEnd(winner);  
-      gameContainer.dispatchEvent(new CustomEvent("end"))   
       break;
 
     case "send_init_data":
