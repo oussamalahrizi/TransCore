@@ -95,7 +95,8 @@ class Cache:
                 'type' : "match_found",
                 'data' : {
                     "user_id" : p,
-                    'game_id' : str(id)
+                    'game_id' : str(id),
+                    'type' : game
                 }
             }
             async_to_sync(notif.publish)(body)
@@ -106,7 +107,7 @@ class Cache:
             return json.loads(data)
         return None
 
-    def handle_decline(self, game_id, type, user_id):
+    def handle_decline(self, game_id, type, user_id, tr_id=None):
         game = self.get_game_info(game_id, type)
         players : list = game["players"]
         from pprint import pprint
@@ -142,6 +143,8 @@ Queue = Cache()
 
 from random import shuffle
 from pprint import pprint
+
+
 
 class Tournament:
     
@@ -262,5 +265,44 @@ class Tournament:
     def fetch_ongoing(self, tournament_id : str):
         tr = self.redis.get(f'ongoing:{tournament_id}')
         return json.loads(tr)
+    
+    def handle_decline(self, game_id, id, tr_id):
+        game = Queue.get_game_info(game_id, 'pong')
+        players : list = game["players"]
+        other = players[0]
+        if other == id:
+            other = players[1]
+        tr_data = self.fetch_ongoing(tr_id)
+        if tr_data['status'] == 'semis':
+
+            semis = tr_data['semis']
+            which = 0 if semis[0]['game_id'] == game_id else 1
+            semis[which]['result'] = [5, 0]
+            final : dict = tr_data['final']
+            if other not in final['players']:
+                final['players'].append(other)
+            self.redis.set(f"ongoing:{tr_id}",
+                                    json.dumps(tr_data))
+            Queue.redis.delete(f'pong:{game_id}')
+            return
+        final = tr_data['final']
+        final['result'] = [5, 0]
+        final['winner'] = id
+        final['loser'] = id
+        tr_data['final'] = final
+        tr_data['status'] = 'final'
+        self.redis.set(f"ongoing:{tr_id}",
+                                    json.dumps(tr_data))
+        # loser = id
+        # body = {
+        #     'type' : 'remove_tournament',
+        #     'data' : {
+        #         'user_id' : loser,
+        #         'tr_id' : tr_id
+        #     }
+        # }
+        # async_to_sync(notif.publish)(body)
+
+
 
 tournament = Tournament()
