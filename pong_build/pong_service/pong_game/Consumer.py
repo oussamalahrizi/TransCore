@@ -26,6 +26,26 @@ def record_match_async(player1_id, player2_id, winner_id, p1_score, p2_score):
     return GameService.record_match(player1_id, player2_id, winner_id, p1_score, p2_score)
 
 
+async def send_game_over(instance, tr_id=None):
+    result = [instance.p1_score, instance.p2_score]
+    if instance.winner == instance.players[1]:
+        result.reverse()
+    body = {
+            'type' : "game_over",
+            'data' : {
+                'game_id' : instance.game_id,
+                'match_type' :instance.match_type,
+                'game_type' : "pong",
+                'winner' : instance.winner,
+                'result' : result
+            }
+        }
+    if tr_id:
+        body['data']['tournament_id'] = tr_id
+        await asyncio.sleep(1.5)
+    await publishQueue(body)
+    print("GAME SENT GAME OVER")
+
 async def broadcast(Game : GameState, tr_id=None):
     try:
         lasttime = time.time()
@@ -45,6 +65,7 @@ async def broadcast(Game : GameState, tr_id=None):
         # print("task was cancelled success")
         pass
     finally:
+        print("FINALLY ")
         p1_score = Game.p1_score
         p2_score = Game.p2_score
         player1_id = Game.players[0]
@@ -57,22 +78,9 @@ async def broadcast(Game : GameState, tr_id=None):
             'type' : 'game_end',
             'winner' : Game.winner
         })
-        result = [Game.p1_score, Game.p2_score]
-        if Game.winner == Game.players[1]:
-            result.reverse()
-        body = {
-                'type' : "game_over",
-                'data' : {
-                    'game_id' : Game.game_id,
-                    'match_type' :Game.match_type,
-                    'game_type' : "pong",
-                    'winner' : Game.winner,
-                    'result' : result,
-                }
-            }
-        if tr_id:
-            body['data']['tournament_id'] = tr_id
-        await publishQueue(body)
+        asyncio.create_task(send_game_over(Game, tr_id))
+
+        
         
 from pprint import pprint
 
@@ -120,10 +128,24 @@ class Consumer(AsyncWebsocketConsumer):
             'type' : 'waiting',
             'player_id' : self.user_id
         }))
+        await asyncio.sleep(3)
+        player_count =  self.cache.get_player_count(self.game_id)
+        if player_count < 2:
+            instance = GameState([self.user_id, self.user_id], self.game_id, self.game_info['match_type'])
+            await self.game_end({'winner' : self.user_id})
+            tr_id = None
+            if self.game_info.get('tournament_id'):
+                tr_id = self.game_info.get('tournament_id')
+            instance.winner = self.user_id
+            instance.game_id = self.game_id
+            instance.match_type = self.game_info['match_type']
+            instance.p1_score = 5
+            instance.p2_score = 0
+            asyncio.create_task(send_game_over(instance, tr_id))
 
     async def disconnect(self, code):
         # in case middleware error
-        if self.username:
+        if hasattr(self, 'username'):
             print(f"{self.username} disconnected, code : ", code)
         if code == 4001:
             return
@@ -142,13 +164,7 @@ class Consumer(AsyncWebsocketConsumer):
             game_task.get(self.game_id).cancel()
             game_task.pop(self.game_id)
             Game.pop(self.game_id)
-            # print(f'{self.username} game over ? ', Game.get(self.game_id).gameover)
-            
-        # if game_task.get(self.game_id):
-        #     game_task.get(self.game_id).cancel()
-        #     game_task.pop(self.game_id)
-        # if Game.get(self.game_id):
-        #     Game.pop(self.game_id)
+
         await self.channel_layer.group_discard(self.game_id, self.channel_name)
 
 
@@ -173,7 +189,8 @@ class Consumer(AsyncWebsocketConsumer):
         key = data.get('key')
         player_id = data.get('player_id')
         instance =  Game.get(self.game_id)
-        instance.update_player_move(player_id, key)
+        if instance:
+            instance.update_player_move(player_id, key)
 
     
     async def game_end(self, event):
