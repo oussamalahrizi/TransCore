@@ -1,8 +1,10 @@
 import { sleep } from "../game/websockets.js";
 
 const createMatchHistoryItem = (match) => {
-    const resultClass = match.result === 'win' ? 'pf-match-win' : 'pf-match-loss';
-    const resultIcon = match.result === 'win' ? '🏆' : '❌';
+    console.log('create match', match);
+    
+    const resultClass = match.result === 'Win' ? 'pf-match-win' : 'pf-match-loss';
+    const resultIcon = match.result === 'Win' ? '🏆' : '❌';
     
     return `
         <div class="pf-match-item ${resultClass}">
@@ -37,7 +39,7 @@ const USER_STATS = {
     ]
 }
 
-const fetchUserData = async (user) => {
+export const fetchUserData = async (user) => {
     var url = "/api/main/user/me/"
     if (user)
         url = "/api/main/user/" + user.id
@@ -62,18 +64,106 @@ const fetchStats = async (game) => {
         return USER_STATS.game_stats;
 };
 
-const fetchMatchHistory = async (game) => {
-    if (game === "pong")
-        return USER_STATS.matchHistory;
-    else
-        return USER_STATS.matchHistory;
+function timeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+    const intervals = {
+        year: 31536000,
+        month: 2592000,
+        week: 604800,
+        day: 86400,
+        hour: 3600,
+        minute: 60,
+        second: 1,
+    };
+
+    for (const [unit, seconds] of Object.entries(intervals)) {
+        const delta = Math.floor(diffInSeconds / seconds);
+        if (delta !== 0) {
+            return rtf.format(-delta, unit);
+        }
+    }
+    return 'Just now';
+}
+
+// Example usage
+console.log(timeAgo("2025-03-28T08:12:54.829899Z"));
+
+
+const fetchMatchHistory = async (game, user) => {
+
+    const matches =  await fetchMatchHistoryUser(game, user)
+
+    USER_STATS.matchHistory = []
+    await Promise.all(matches.map(async match => {
+        try {
+            const { username } = await fetchUserData({ id: match.opponent });
+    
+            USER_STATS.matchHistory.push({
+                opponent: username,
+                result: match.result,
+                score: `${match.current_player_score} - ${match.opponent_score}`,
+                date: timeAgo(match.played_at)
+            });
+    
+        } catch (error) {
+            console.error(error);
+        }
+    }));
+    return USER_STATS.matchHistory
+    
 };
+
+
+
+const fetchPlayerStats = async (game, user=null) => {
+    var url = `/api/game/${game}/players/`
+    if (user)
+        url += user.id + "/"
+    try {
+        const {data, error} = await app.utils.fetchWithAuth(url)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return
+        }
+        console.log(data)
+        console.log("error : ", error)
+        return data
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+            return
+    }
+}
+
+const fetchMatchHistoryUser = async (game, user=null) => {
+    var url = `/api/game/${game}/matches/`
+    if (user)
+        url += user.id + "/"
+    try {
+        const {data, error} = await app.utils.fetchWithAuth(url)
+        if (error)
+        {
+            app.utils.showToast(error)
+            return []
+        }
+        console.log('MATCHES, ', data);
+        
+        return data
+    } catch (error) {
+        if (error instanceof app.utils.AuthError)
+            return []
+    }
+}
 
 export default async (user) => {
     try {
         setTimeout(async () => {
             const userData = await fetchUserData(user);
-            
             document.getElementById('username').textContent = userData.username;
             var statustext = document.getElementById('user-status');
             const temp = {
@@ -83,24 +173,73 @@ export default async (user) => {
                 "offline" : "Offline",
             }
             var button = document.getElementById('switch-button')
-            button.addEventListener("click", function () {
-                if (USER_STATS.game === "xo")
+            button.addEventListener("click", async function () {
+                console.log('selected game', USER_STATS.game);
+                
+                if (USER_STATS.game === "pong")
                 {
-                    USER_STATS.matchHistory = fetchMatchHistory(USER_STATS.game);
-                    USER_STATS.game = "pong"
-                    button.innerHTML = 'Ping Pong'
+                    USER_STATS.matchHistory = await fetchMatchHistory('pong',user);
+                    button.innerHTML =  'Tic Tac Toe'
+                    
+                    const matchHistoryContainer = document.getElementById('match-history');
+                    const matchHistory = USER_STATS.matchHistory
+                    if (matchHistory.length > 0) {
+                        const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
+                        console.log('html : ', matchHistoryHTML);
+                        
+                        matchHistoryContainer.innerHTML = matchHistoryHTML;
+                    } else
+                    matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
+                    const data = await fetchPlayerStats(USER_STATS.game, user)
+                    USER_STATS.game_stats.gamesWon = data.matches_won
+                    USER_STATS.game_stats.gamesLost = data.matches_lost
+                    USER_STATS.game_stats.score = data.score
+                    const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                    document.getElementById('games-won').textContent = gamesWon;
+                    document.getElementById('games-lost').textContent = gamesLost;
+                    document.getElementById('score').textContent = score;
+                    const totalGames = gamesWon + gamesLost;
+                    const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                    document.getElementById('win-rate').textContent = `${winRate}%`;
+                    document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    USER_STATS.game = "tictac"
                 }
                 else
                 {
-                    USER_STATS.matchHistory = fetchMatchHistory(USER_STATS.game);
-                    USER_STATS.game = "xo"
-                    button.innerHTML = 'Tic Tac Toe'
+                    USER_STATS.matchHistory = await fetchMatchHistory('tictac', user);
+                    button.innerHTML = 'Ping Pong'
+                    const matchHistoryContainer = document.getElementById('match-history');
+                    const matchHistory = USER_STATS.matchHistory
+                    if (matchHistory.length > 0) {
+                        const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
+                        console.log('html : ', matchHistoryHTML);
+                        
+                        matchHistoryContainer.innerHTML = matchHistoryHTML;
+                    } else 
+                    matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
+                    const data = await fetchPlayerStats(USER_STATS.game, user)
+                    USER_STATS.game_stats.gamesWon = data.matches_won
+                    USER_STATS.game_stats.gamesLost = data.matches_lost
+                    USER_STATS.game_stats.score = data.score
+                    const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                    document.getElementById('games-won').textContent = gamesWon;
+                    document.getElementById('games-lost').textContent = gamesLost;
+                    document.getElementById('score').textContent = score;
+                    const totalGames = gamesWon + gamesLost;
+                    const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                    document.getElementById('win-rate').textContent = `${winRate}%`;
+                    document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    USER_STATS.game = "pong"
                 }
             })
             statustext.textContent = temp[userData.status];
             statustext.className = "pf-profile-" + userData.status + "-status";
             document.getElementById('status-circle').className = "pf-" + userData.status + "-status";
             document.getElementById('user-avatar').src = userData.avatar ? userData.avatar : "/public/assets/icon-placeholder.svg";
+            const data = await fetchPlayerStats(USER_STATS.game, user)
+            USER_STATS.game_stats.gamesWon = data.matches_won
+            USER_STATS.game_stats.gamesLost = data.matches_lost
+            USER_STATS.game_stats.score = data.score
             const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
             document.getElementById('games-won').textContent = gamesWon;
             document.getElementById('games-lost').textContent = gamesLost;
@@ -109,11 +248,14 @@ export default async (user) => {
             const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
             document.getElementById('win-rate').textContent = `${winRate}%`;
             document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
-            const matchHistory = await fetchMatchHistory();
-            const matchHistoryContainer = document.getElementById('match-history');
             
+            const matchHistory = await fetchMatchHistory('pong', user);
+            
+            const matchHistoryContainer = document.getElementById('match-history');
             if (matchHistory.length > 0) {
                 const matchHistoryHTML = matchHistory.map(createMatchHistoryItem).join('');
+                console.log('html : ', matchHistoryHTML);
+                
                 matchHistoryContainer.innerHTML = matchHistoryHTML;
             } else {
                 matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';

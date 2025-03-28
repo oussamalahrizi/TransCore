@@ -119,7 +119,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/api/game/tictac/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -129,9 +128,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ASGI_APPLICATION = "core.asgi.application"
 
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
 
 CHANNEL_LAYERS = {
     "default": {
@@ -141,8 +137,14 @@ CHANNEL_LAYERS = {
         },
     },
 }
-
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+
+    'DEFAULT_RENDERER_CLASSES': [
+            'rest_framework.renderers.JSONRenderer',
+        ],
+    'DEFAULT_AUTHENTICATION_CLASSES' : [
+		'xo_game.jwtMiddleware.JWTAuthentication'
+	],
+    'EXCEPTION_HANDLER': 'xo_game.exception_handlers.custom_exception_handler'
+
 }

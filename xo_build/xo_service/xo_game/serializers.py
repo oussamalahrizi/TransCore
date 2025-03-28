@@ -7,7 +7,7 @@ class PlayerSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Player
-        fields = ['player_id', 'matches_won', 'matches_lost', 'win_rate', 'total_matches']
+        fields = '__all__'
     
     def get_win_rate(self, obj):
         total = obj.matches_won + obj.matches_lost

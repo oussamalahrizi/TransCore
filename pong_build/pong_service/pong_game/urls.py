@@ -8,10 +8,12 @@ from . import views
 # router.register(r'singleplayer-matches', views.MatchSingleViewSet)
 
 urlpatterns = [
-    path('matches/', views.get_matches, name='get_matches'),  # Retrieve all matches
-    path('players/', views.get_players, name='get_players'),  # Retrieve all players
-    path('players/<str:player_id>/', views.get_player, name='get_player'),  # Retrieve a specific player by ID
-
+    # path('matches/', views.get_matches, name='get_matches'),  # Retrieve all matches
+    path('players/', views.GetData.as_view(), name='get-player'),
+    path('players/<str:player_id>/', views.GetDataID.as_view(), name='get-player-id'),  # Retrieve a specific player by ID
+    path('matches/', views.GetMatchHistory.as_view(), name='get-matches'),  # Retrieve a specific player by ID
+    path('matches/<str:player_id>/', views.GetMatchHistory.as_view(), name='get-matches-id'),  # Retrieve a specific player by ID
+    path('leaderboard/', views.LeaderBoard.as_view(), name='leaders')
     # path('api/', include(router.urls)),
     # path('api/leaderboard/', views.leaderboard, name='leaderboard'),
     # path('api/player-stats/', views.player_stats, name='player-stats'),

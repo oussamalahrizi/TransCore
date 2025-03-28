@@ -93,6 +93,18 @@ CHANNEL_LAYERS = {
 }
 
 
+REST_FRAMEWORK = {
+
+    'DEFAULT_RENDERER_CLASSES': [
+            'rest_framework.renderers.JSONRenderer',
+        ],
+    'DEFAULT_AUTHENTICATION_CLASSES' : [
+		'pong_game.jwtMiddleware.JWTAuthentication'
+	],
+    'EXCEPTION_HANDLER': 'pong_game.exception_handlers.custom_exception_handler'
+
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

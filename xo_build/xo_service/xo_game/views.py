@@ -1,73 +1,96 @@
+from rest_framework.request import Request
 
-from django.shortcuts import render
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from django.http import JsonResponse
-from django.db.models import Q, F, Count, Sum
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from .jwtMiddleware import ProxyUser
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 from .models import Player, Match
-from .serializers import PlayerSerializer, MatchSerializer
-from datetime import datetime, timedelta
+from .serializers import PlayerSerializer
+from rest_framework import serializers
 
-# ViewSets for the main models
-class PlayerViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Player.objects.all()
-    serializer_class = PlayerSerializer
-    
-    def get_queryset(self):
-        queryset = Player.objects.all()
-        player_id = self.request.query_params.get('player_id', None)
+class GetData(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request : Request, *args, **kwargs):
+        current : ProxyUser = request.user
+        current_id = current.to_dict()["id"]
+        try:
+            player = get_object_or_404(Player, player_id=current_id)
+            serializer = PlayerSerializer(instance=player)
+            return Response(data=serializer.data)
+
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "Not found."})
         
-        if player_id:
-            queryset = queryset.filter(player_id=player_id)
-            
-        return queryset
+class GetDataID(APIView):
+    permission_classes = [IsAuthenticated]
 
-class MatchViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Match.objects.all().order_by('-played_at')
-    serializer_class = MatchSerializer
+    def get(self, request : Request, *args, **kwargs):
     
-    def get_queryset(self):
-        queryset = Match.objects.all().order_by('-played_at')
-        player_id = self.request.query_params.get('player_id', None)
+        current_id = kwargs.get("player_id")
+        if not current_id:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail" : "Missing ID"})
+        try:
+            player = get_object_or_404(Player, player_id=current_id)
+            serializer = PlayerSerializer(instance=player)
+            return Response(data=serializer.data)
+
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "Not found."})
         
-        if player_id:
-            queryset = queryset.filter(
-                Q(player1__player_id=player_id) | 
-                Q(player2__player_id=player_id)
-            )
-            
-        return queryset
 
+class GetMatchHistory(APIView):
+    permission_classes = [IsAuthenticated]
 
+    class MatchSerializer(serializers.ModelSerializer):
+        opponent = serializers.SerializerMethodField()
+        result = serializers.SerializerMethodField()
+        current_player_score = serializers.SerializerMethodField()
+        opponent_score = serializers.SerializerMethodField()
 
-@api_view(['GET'])
-def get_matches(request):
-    matches = Match.objects.all().order_by('-played_at')
-    serializer = MatchSerializer(matches, many=True)
-    return Response(serializer.data)
+        class Meta:
+            model = Match
+            fields = ['id', 'result', 'current_player_score', 'opponent_score', 'opponent', 'played_at']
 
-@api_view(['GET'])
-def get_players(request):
-    players = Player.objects.all()
-    serializer = PlayerSerializer(players, many=True)
-    return Response(serializer.data)
-
-@api_view(['GET'])
-def get_player(request, player_id):
-    try:
-        player = Player.objects.get(player_id=player_id)
-        serializer = PlayerSerializer(player)
-        return Response(serializer.data)
-    except Player.DoesNotExist:
-        return JsonResponse({'error': 'Player not found'}, status=404)
+        def get_result(self, obj):
+            current_id = self.context.get('current_id')
+            if obj.player1.player_id == current_id:
+                return 'Win' if obj.winner == current_id else 'Loss'
+            return 'Loss' if obj.winner == obj.player2.player_id else 'Win'
+        def get_opponent(self, obj):
+            current_id = self.context.get('current_id')
+            return obj.player2.player_id if obj.player1.player_id == current_id else obj.player1.player_id
+        
+        def get_opponent_score(self, obj):
+            current_id = self.context.get('current_id')
+            return 1 if current_id != obj.winner else 0
+        
+        def get_current_player_score(self, obj):
+            current_id = self.context.get('current_id')
+            return 1 if current_id == obj.winner else 0
     
+    
+    def get(self, request: Request, *args, **kwargs):
+        current : ProxyUser = request.user
+        current_id = current.to_dict()["id"]
+        id =  kwargs.get('player_id')
+        if id:
+            current_id = id
+        try:
+            player = get_object_or_404(Player, player_id=current_id)
+            player1Match = Match.objects.filter(player1=player) \
+                .all() \
+                .values_list('player1', flat=True)
+            player2Match = Match.objects.filter(player2=player) \
+                .all() \
+                .values_list('player2', flat=True)
+            matches = Match.objects.filter(player1=player) | Match.objects.filter(player2=player)
+            serializer = self.MatchSerializer(matches, many=True, context={'current_id': current_id})
+            return Response(data=serializer.data)
 
-# @api_view(['GET'])
-# def get_match(request, match_id):
-#     try:
-#         match = Match.objects.get(id=match_id)
-#         serializer = MatchSerializer(match)
-#         return Response(serializer.data)
-#     except Match.DoesNotExist:
-#         return JsonResponse({'error': 'Match not found'}, status=404)
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "Not found."})
+        

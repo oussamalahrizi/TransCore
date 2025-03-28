@@ -38,6 +38,7 @@ async def broadcastSingle(instance: GameState):
     except BaseException as e:
         print(e)
     finally:
+        print("finally")
         await layer.group_send(instance.game_id, {
             'type' : 'game_end',
             'winner' : instance.winner
@@ -49,7 +50,7 @@ async def broadcastSingle(instance: GameState):
             p2_score = instance.p2_score
             
             # Check if the player won (winner is not "loser")
-            is_win = instance.winner == "CPU"
+            is_win = instance.winner != "CPU"
 
             # Record the single player match in the database
             await record_single_match_async(player_id, is_win, p1_score, p2_score)

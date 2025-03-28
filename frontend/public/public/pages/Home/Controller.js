@@ -2,6 +2,7 @@ import { showModalWithAnimation, hideModalWithAnimation } from '../../modalAnima
 import receivedComp from "./components/Received/index.js"
 import showfriend from "./components/showfriend/index.js"
 import AddFriendModal from "./components/AddFriendModal/index.js"
+import { fetchUserData } from '../profile/Controller.js';
 
 /**
  * 
@@ -62,50 +63,7 @@ const renderFriendsList = async (container) => {
 	}
 
 
-const leaderboardData = [
-	{
-	  rank: 1,
-	  name: "Player One",
-	  photoUrl: "/public/assets/dog.png",
-	  score: 2000
-	},
-	{
-	  rank: 2,
-	  name: "Player Two",
-	  photoUrl: "/public/assets/dog.png",
-	  score: 1800
-	},
-	{
-	  rank: 3,
-	  name: "Player Three",
-	  photoUrl: "/public/assets/dog.png",
-	  score: 1600
-	},
-	{
-	  rank: 4,
-	  name: "Player Four",
-	  photoUrl: "/public/assets/dog.png",
-	  score: 1400
-	},
-	{
-	  rank: 5,
-	  name: "Player Five",
-	  photoUrl: "/public/assets/dog.png",
-	  score: 1200
-	},
-	{
-		rank: 6,
-		name: "Player Six",
-		photoUrl: "/public/assets/dog.png",
-		score: 1000
-	},
-	{
-		rank: 7,
-		name: "Player Seven",
-		photoUrl: "/public/assets/dog.png",
-		score: 800
-	}
-];
+var leaderboardData = [];
 
 
 /**
@@ -135,7 +93,7 @@ export default async () => {
 		
 		const leaderboardContainer = container.querySelector('.left-side');
 		if (leaderboardContainer) {
-			renderLeaderboard(leaderboardData, leaderboardContainer);
+			await renderLeaderboard(leaderboardData, leaderboardContainer);
 		}
 	} catch (error) {
 		if (error instanceof app.utils.AuthError)
@@ -146,8 +104,53 @@ export default async () => {
 }
 
 
+const fetchLeaderBoard = async () => {
+	try {
+		const {data, error} = await app.utils.fetchWithAuth('/api/game/pong/leaderboard/')
+		if (error)
+		{
+			app.utils.showToast(error)
+			return []
+		}
+		var count = 1
+		leaderboardData = []
+		
+		await Promise.all(data.map(async player => {
+            try {
+				
+                var { username, avatar } = await fetchUserData({ id: player.player_id });
+				console.log('avatar',avatar);
+				
+				if (!avatar)
+					avatar = '/public/assets/icon-placeholder.svg'
+				else if (!avatar.startsWith('https'))
+					avatar += `?nocache=${Date.now()}`
+				const to_add = {
+					rank: count,
+					name: username,
+					photoUrl: avatar,
+					score: player.score
+				}
+				count++
+               leaderboardData.push(to_add);
+            } catch (error) {
+                console.error(error);
+            }
+        }));
 
-const renderLeaderboard = (leaderboardData, container) => {
+		return leaderboardData
+	} catch (error) {
+		console.log('error', error);
+		
+		return []
+	}
+}
+
+
+const renderLeaderboard = async (leaderboardData, container) => {
+	leaderboardData = await fetchLeaderBoard()
+	console.log('LEADERS', leaderboardData);
+	
 	if (!Array.isArray(leaderboardData) || !container) return;
 	
 	const leaderboardList = container.querySelector('#leader-preview');
