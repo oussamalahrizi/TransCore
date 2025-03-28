@@ -17,4 +17,4 @@ RUN apt-get clean && apt-get update --fix-missing && apt-get install -y netcat
 
 ENTRYPOINT ["../init.sh"]
 
-CMD ["uvicorn", "--host", "0.0.0.0", "--port", "80" ,"core.asgi:application", "--lifespan", "on", "--reload"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "80" ,"core.asgi:application", "--reload"]

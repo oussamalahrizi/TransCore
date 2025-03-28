@@ -1,7 +1,7 @@
 const IntraCallback = async (code) => {
   try {
     let data;
-    const url = new URL(`${location.protocol}${location.host}/api/auth/intra_callback/`);
+    const url = new URL("https://10.14.9.9:8000/api/auth/intra_callback/");
     url.searchParams.append("code", code);
     const response = await fetch(url, { credentials: "include" });
     data = await response.json();

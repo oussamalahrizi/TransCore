@@ -8,12 +8,12 @@ import { showModalWithAnimation, hideModalWithAnimation } from '../../modalAnima
  */
 
 let countdownInterval = null
-export default async  (game_id, game,  timeoutSeconds = 15) => {
+export default async  (game_id, timeoutSeconds = 15) => {
     // Create modal container if it doesn't exist
     const {loaded, element} = await app.utils.LoadCompCss("/public/Components/matchfound/matchfound-modal.css")
     if (!loaded)
     {
-        await handleDecline(game_id, game)
+        await handleDecline(game_id)
         element.remove()
         return
     }
@@ -43,14 +43,13 @@ export default async  (game_id, game,  timeoutSeconds = 15) => {
     modalContainer.addEventListener("click", async (e) => {
         if (e.target === modalContainer)
         {
-            await handleDecline(game_id, game)
+            await handleDecline(game_id)
             clearInterval(countdownInterval)
         }
     })
 
     // Setup countdown timer
      countdownInterval = setInterval(async () => {
-        
         remainingTime--;
         timerText.textContent = remainingTime;
         
@@ -61,7 +60,7 @@ export default async  (game_id, game,  timeoutSeconds = 15) => {
         // Auto-decline when timer reaches 0
         if (remainingTime <= 0) {
             clearInterval(countdownInterval);
-            await handleDecline(game_id, game);
+            await handleDecline(game_id);
             hideModalWithAnimation(modalContainer, ()=> modalContainer.remove())
         }
         
@@ -76,31 +75,33 @@ export default async  (game_id, game,  timeoutSeconds = 15) => {
     const acceptBtn = modalContainer.querySelector('#accept-match');
     const declineBtn = modalContainer.querySelector('#decline-match');
     
-    acceptBtn.addEventListener('click', ()=> handleAccept(game_id, game));
-    declineBtn.addEventListener('click', () => handleDecline(game_id, game));
+    acceptBtn.addEventListener('click', ()=> handleAccept(game_id));
+    declineBtn.addEventListener('click', () => handleDecline(game_id));
+    return () => {
+        clearInterval(countdownInterval)
+    }
+    
 };
 
-const handleDecline = async (game_id, game) => {
+const handleDecline = async (game_id) => {
     try {
         const body = {
             game_id,
             state : false
         }
 
-        const modalContainer = document.getElementById("match-found-modal")
         const {data, error} = await app.utils.fetchWithAuth(
-            `/api/match/accept/${game}/`,
+            "/api/match/accept/pong/",
             'POST',
             JSON.stringify(body)
         )
         if (error)
         {
             app.utils.showToast(error)
-            hideModalWithAnimation(modalContainer)
-            modalContainer.remove()
             return
         }
         app.utils.showToast(data.detail)
+        const modalContainer = document.getElementById("match-found-modal")
         if (modalContainer)
             hideModalWithAnimation(modalContainer, ()=> modalContainer.remove())
         clearInterval(countdownInterval)
@@ -111,37 +112,31 @@ const handleDecline = async (game_id, game) => {
         
     }
 }
-const handleAccept = async (game_id, game) => {
+const handleAccept = async (game_id) => {
     try {
         const body = {
             game_id,
             state : true
         }
-        const modalContainer = document.getElementById("match-found-modal")
+
         const {data, error} = await app.utils.fetchWithAuth(
-            `/api/match/accept/${game}/`,
+            "/api/match/accept/pong/",
             'POST',
             JSON.stringify(body)
         )
         if (error)
         {
             app.utils.showToast(error)
-            hideModalWithAnimation(modalContainer)
-            modalContainer.remove()
-            console.error('YOU ARE ADVANCING');
             return
         }
         app.utils.showToast(data.detail)
-        
+        const modalContainer = document.getElementById("match-found-modal")
         if (modalContainer)
         {
             hideModalWithAnimation(modalContainer)
             modalContainer.remove()
         }
-        if (game === "tic")
-            app.Router.navigate(`/tictac/remote?game_id=${game_id}`)
-        else
-            app.Router.navigate(`/game?game_id=${game_id}`)
+        app.Router.navigate(`/game?game_id=${game_id}`)
         clearInterval(countdownInterval)
     } catch (error) {
         if (error instanceof app.utils.AuthError)

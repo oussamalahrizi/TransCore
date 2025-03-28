@@ -149,12 +149,12 @@ class jwtMiddleware(BaseMiddleware):
                 post_data = {
                     'game_id' : game_id,
                     'user_id' : user_id,
-                    'game_type' : 'tic'
+                    'game_type' : 'tictac'
                 }
                 response = await client.post(CHECK_GAME_URL, json=post_data)
                 response.raise_for_status()
                 return response.json()
-        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError) as e:
+        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.HTTPError):
             raise DenyConnection("Failed to get Game info From Match Making Service")
         except httpx.HTTPStatusError as e:
             if e.response.status_code in range(400, 500):

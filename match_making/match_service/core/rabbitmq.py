@@ -71,6 +71,7 @@ class NotificationPub(RabbitmqBase):
             delivery_mode=1,
             content_type="application/json")
         await self.channel.default_exchange.publish(message=message, routing_key=self.queue.name)
+        print("notification publisher : pusblished!")
 
 
 

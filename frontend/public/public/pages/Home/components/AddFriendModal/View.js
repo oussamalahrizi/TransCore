@@ -26,7 +26,7 @@ export default (pendingRequests) => /*html*/`
                     pendingRequests.map(request => `
                         <div class="pending-request-item">
                             <div class="pending-request-info">
-                                <img src="${request.icon_url}" class="pending-avatar">
+                                <img src="${request.icon_url}" class="pending-avatar" alt="${request.username}">
                                 <span class="pending-username">${request.username}</span>
                             </div>
                             <span class="pending-status">Pending</span>

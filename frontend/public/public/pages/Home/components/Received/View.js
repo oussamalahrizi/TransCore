@@ -10,7 +10,11 @@ export default (receivedRequests) =>  /*html*/`
             receivedRequests.map(request => `
                 <div class="received-request-item">
                     <div class="received-request-info">
-                        <img src="${request.icon_url}" class="received-avatar"/>
+                    ${!request.icon_url ?
+                        '<img src="/public/assets/icon-placeholder.svg" class="received-avatar"/>' 
+                        :
+                        `<img src="${request.icon_url}" class="received-avatar"/>`
+                    }
                         <span class="received-username">${request.username}</span>
                     </div>
                     <div class="received-request-actions">

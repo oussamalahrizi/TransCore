@@ -112,83 +112,11 @@ async def remove_loser(user_id : str, tr_id : str):
     await notifspub.publish(body)
 
 
-async def handle_tournament(data : dict):
-    print("HANDLE TOURNAMENT RESULTS")
-    tr_data = tournament.fetch_ongoing(data['tournament_id'])
-    if tr_data is None:
-        raise Exception("Tournament data is None")
-
-
-    pprint(tr_data)
-    pprint(data)
-    status = tr_data["status"]
-    semis : list[dict] = tr_data['semis']
-    # all = []
-    # all.extend(semis[0]['players'])
-    # all.extend(semis[1]['players'])
-    # await send_tr_update(all)
-    if status == 'semis':
-        g_id = data['game_id']
-        semis : list[dict] = tr_data['semis']
-        which = 0 if semis[0]['game_id'] == g_id else 1
-        tr_data['semis'][which]['result'] = data['result']
-        final : dict = tr_data['final']
-        final['players'].append(data['winner'])
-        loser = tr_data['semis'][which]['players'][0]
-        if loser == data['winner']:
-            loser = tr_data['semis'][which]['players'][1]
-        # await remove_loser(loser, data['tournament_id'])
-        await send_tr_update([loser, data['winner']])
-        if len(final['players']) < 2:
-            tournament.redis.set(f"ongoing:{data['tournament_id']}",
-                                json.dumps(tr_data))
-            Queue.redis.delete(f'pong:{data['game_id']}')
-            return
-        await send_tr_update([semis[0]['players'], semis[1]['players']])
-        print('HANDLING FINAL')
-        tr_data['status'] = 'final'
-        game_id = await generate_game(
-            final['players'],
-            data['tournament_id'])
-        final['game_id'] = game_id
-        tr_data['final'] = final
-        tournament.redis.set(f"ongoing:{data['tournament_id']}",
-                                json.dumps(tr_data))
-        Queue.redis.delete(f'pong:{data['game_id']}')
-        return
-    # handle final, send all players the winner
-    # combine players
-    print('data final :')
-    pprint(data)
-    pprint(tr_data)
-    players = []
-    semis = tr_data['semis']
-    for s in semis:
-        players.extend(s['players'])
-    winner = data['winner']
-    loser = tr_data['final']['players'][0]
-    if loser == winner:
-        loser = tr_data['final']['players'][1]
-    print('players : ', players)
-    for p in players:
-        print('publishing to : ', p)
-        await notifspub.publish({
-            'type' : 'tr_end',
-            'data' : {
-                'user_id' : p,
-                'winner' : winner,
-                'loser' : loser,
-                'result' : data['result']
-            }
-        })
-        await remove_loser(p, data['tournament_id'])
-    Queue.redis.delete(f'pong:{data['game_id']}')
-    tournament.redis.delete(f'ongoing:{data['tournament_id']}')
-
 class QueueConsumer(AsyncRabbitMQConsumer):
 
     actions = {}
     cache = Queue
+    tr_cache = tournament
 
     def __init__(self, host, port, queue_name):
         self.actions = {
@@ -207,14 +135,99 @@ class QueueConsumer(AsyncRabbitMQConsumer):
         game_type = data.get("game_type")
         game_id =  data.get("game_id")
         if match_type == "tournament":
-            await handle_tournament(data)
+            print("HANDLE TOURNAMENT RESULTS")
+            print(data)
+            """
+                {
+                    'game_id': 'f3b2ef83-cadb-4f19-ac39-57a048710f30',
+                    'match_type': 'tournament',
+                    'game_type': 'pong', 
+                    'winner': '20aefb2a-453b-4a2d-afaf-5a1ae69fcc7c',
+                    'result': [5, 3],
+                    'tournament_id' : id
+                }
+            """
+            tr_data = self.tr_cache.fetch_ongoing(data['tournament_id'])
+            if tr_data is None:
+                raise Exception("Tournament data is None")
+            """
+                tr_data = {
+                    'semis' : 
+                    [
+                        'game_id' : games[i],
+                        'players' : halfs[i],
+                        'result' : [ 0, 0 ]
+                    ],
+                    'final' : {
+                        'game_id' : None,
+                        'players' : [],
+                        'result' : [0 , 0]
+                    },
+                    'winner' : None,
+                    'status' : 'ongoing',
+                    'tournament_id' : id
+                }
+            """
+            # print('tournament data from game')
+            # pprint(tr_data)
+            # print('-----------------')
+            # pprint(data)
+            status = tr_data["status"]
+            semis : list[dict] = tr_data['semis']
+            all = []
+            all.extend(semis[0]['players'])
+            all.extend(semis[1]['players'])
+            await send_tr_update(all)
+            if status == 'semis':
+                g_id = data['game_id']
+                semis : list[dict] = tr_data['semis']
+                which = 0 if semis[0]['game_id'] == g_id else 1
+                tr_data['semis'][which]['result'] = data['result']
+                final : dict = tr_data['final']
+                final['players'].append(data['winner'])
+                loser = tr_data['semis'][which]['players'][0]
+                if loser == data['winner']:
+                    loser = tr_data['semis'][which]['players'][1]
+                await remove_loser(loser, data['tournament_id'])
+                if len(final['players']) < 2:
+                    self.tr_cache.redis.set(f"ongoing:{data['tournament_id']}",
+                                        json.dumps(tr_data))
+                    return
+                tr_data['status'] = 'final'
+                game_id = await generate_game(
+                    final['players'],
+                    data['tournament_id'])
+                final['game_id'] = game_id
+                tr_data['final'] = final
+                self.tr_cache.redis.set(f"ongoing:{data['tournament_id']}",
+                                        json.dumps(tr_data))
+                return
+            # handle final, send all players the winner
+            # combine players
+            players = []
+            semis = tr_data['semis']
+            for s in semis:
+                players.extend(s['players'])
+            winner = data['winner']
+            loser = tr_data['final']['players'][0]
+            if loser == winner:
+                loser = tr_data['final']['players'][1]
+            for p in players:
+                await notifspub.publish({
+                    'type' : 'tr_end',
+                    'data' : {
+                        'user_id' : p,
+                        'winner' : winner,
+                        'loser' : loser,
+                        'result' : data['result']
+                    }
+                })
+            await remove_loser(winner, data['tournament_id'])
+            await remove_loser(loser, data['tournament_id'])
+            self.tr_cache.redis.delete(f'ongoing:{data['tournament_id']}')
             return
-        print("NORMAL GAME : ", game_id, game_type)
+        # send status update to both players
         game_data = self.cache.get_game_info(game_id, game_type)
-        if not game_data:
-            return
-        print("DATA : ", game_data)
-
         players = game_data.get("players")
         for p in players:
             body = {
