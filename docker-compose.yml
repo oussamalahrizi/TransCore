@@ -30,6 +30,9 @@ volumes:
       o: "bind"
       type: "none"
       device: "./match_making/match_service"
+  
+  xo-db:
+  pong-db:
 
 services:
   users-db:
@@ -244,7 +247,7 @@ services:
     networks:
       - TransNetwork
     volumes:
-      - /var/lib/postgresql/data
+      - "pong-db:/var/lib/postgresql/data"
     env_file:
       - "pong_build/build/conf/.env"
   xo-game:
@@ -274,6 +277,6 @@ services:
     networks:
       - TransNetwork
     volumes:
-      - /var/lib/postgresql/data
+      - "xo-db:/var/lib/postgresql/data"
     env_file:
       - "xo_build/build/conf/.env"
