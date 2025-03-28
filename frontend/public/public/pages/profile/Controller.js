@@ -48,7 +48,7 @@ export const fetchUserData = async (user) => {
     );
     if (error) {
         app.utils.showToast('Error loading profile data. Please try again later.');
-        return;
+        return null;
     }
     return {
         username: data.username,
@@ -125,9 +125,11 @@ const fetchPlayerStats = async (game, user=null) => {
     if (user)
         url += user.id + "/"
     try {
-        const {data, error} = await app.utils.fetchWithAuth(url)
+        const {data, error, status} = await app.utils.fetchWithAuth(url)
         if (error)
         {
+            if (status === 404 && !user)
+                return
             app.utils.showToast(error)
             return
         }
@@ -145,9 +147,11 @@ const fetchMatchHistoryUser = async (game, user=null) => {
     if (user)
         url += user.id + "/"
     try {
-        const {data, error} = await app.utils.fetchWithAuth(url)
+        const {data, error, status} = await app.utils.fetchWithAuth(url)
         if (error)
         {
+            if (status === 404 && !user)
+                return []
             app.utils.showToast(error)
             return []
         }
@@ -160,9 +164,11 @@ const fetchMatchHistoryUser = async (game, user=null) => {
     }
 }
 
+
+
 export default async (user) => {
     try {
-        setTimeout(async () => {
+            setTimeout(async () => {
             const userData = await fetchUserData(user);
             document.getElementById('username').textContent = userData.username;
             var statustext = document.getElementById('user-status');
@@ -174,8 +180,6 @@ export default async (user) => {
             }
             var button = document.getElementById('switch-button')
             button.addEventListener("click", async function () {
-                console.log('selected game', USER_STATS.game);
-                
                 if (USER_STATS.game === "pong")
                 {
                     USER_STATS.matchHistory = await fetchMatchHistory('pong',user);
@@ -190,18 +194,35 @@ export default async (user) => {
                         matchHistoryContainer.innerHTML = matchHistoryHTML;
                     } else
                     matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
-                    const data = await fetchPlayerStats(USER_STATS.game, user)
-                    USER_STATS.game_stats.gamesWon = data.matches_won
-                    USER_STATS.game_stats.gamesLost = data.matches_lost
-                    USER_STATS.game_stats.score = data.score
-                    const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
-                    document.getElementById('games-won').textContent = gamesWon;
-                    document.getElementById('games-lost').textContent = gamesLost;
-                    document.getElementById('score').textContent = score;
-                    const totalGames = gamesWon + gamesLost;
-                    const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
-                    document.getElementById('win-rate').textContent = `${winRate}%`;
-                    document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    const data = await fetchPlayerStats("tic", user)
+                    if (data)
+                    {
+                        USER_STATS.game_stats.gamesWon = data.matches_won
+                        USER_STATS.game_stats.gamesLost = data.matches_lost
+                        USER_STATS.game_stats.score = data.score
+                        const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                        document.getElementById('games-won').textContent = gamesWon;
+                        document.getElementById('games-lost').textContent = gamesLost;
+                        document.getElementById('score').textContent = score;
+                        const totalGames = gamesWon + gamesLost;
+                        const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                        document.getElementById('win-rate').textContent = `${winRate}%`;
+                        document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    }
+                    else
+                    {
+                        USER_STATS.game_stats.gamesWon = 0
+                        USER_STATS.game_stats.gamesLost = 0
+                        USER_STATS.game_stats.score = 400
+                        const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                        document.getElementById('games-won').textContent = gamesWon;
+                        document.getElementById('games-lost').textContent = gamesLost;
+                        document.getElementById('score').textContent = score;
+                        const totalGames = gamesWon + gamesLost;
+                        const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                        document.getElementById('win-rate').textContent = `${winRate}%`;
+                        document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    }
                     USER_STATS.game = "tictac"
                 }
                 else
@@ -218,17 +239,34 @@ export default async (user) => {
                     } else 
                     matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
                     const data = await fetchPlayerStats(USER_STATS.game, user)
-                    USER_STATS.game_stats.gamesWon = data.matches_won
-                    USER_STATS.game_stats.gamesLost = data.matches_lost
-                    USER_STATS.game_stats.score = data.score
-                    const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
-                    document.getElementById('games-won').textContent = gamesWon;
-                    document.getElementById('games-lost').textContent = gamesLost;
-                    document.getElementById('score').textContent = score;
-                    const totalGames = gamesWon + gamesLost;
-                    const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
-                    document.getElementById('win-rate').textContent = `${winRate}%`;
-                    document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    if (data)
+                    {
+                        USER_STATS.game_stats.gamesWon = data.matches_won
+                        USER_STATS.game_stats.gamesLost = data.matches_lost
+                        USER_STATS.game_stats.score = data.score
+                        const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                        document.getElementById('games-won').textContent = gamesWon;
+                        document.getElementById('games-lost').textContent = gamesLost;
+                        document.getElementById('score').textContent = score;
+                        const totalGames = gamesWon + gamesLost;
+                        const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                        document.getElementById('win-rate').textContent = `${winRate}%`;
+                        document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    }
+                    else
+                    {
+                        USER_STATS.game_stats.gamesWon = 0
+                        USER_STATS.game_stats.gamesLost = 0
+                        USER_STATS.game_stats.score = 400
+                        const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                        document.getElementById('games-won').textContent = gamesWon;
+                        document.getElementById('games-lost').textContent = gamesLost;
+                        document.getElementById('score').textContent = score;
+                        const totalGames = gamesWon + gamesLost;
+                        const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                        document.getElementById('win-rate').textContent = `${winRate}%`;
+                        document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+                    }
                     USER_STATS.game = "pong"
                 }
             })
@@ -236,19 +274,35 @@ export default async (user) => {
             statustext.className = "pf-profile-" + userData.status + "-status";
             document.getElementById('status-circle').className = "pf-" + userData.status + "-status";
             document.getElementById('user-avatar').src = userData.avatar ? userData.avatar : "/public/assets/icon-placeholder.svg";
-            const data = await fetchPlayerStats(USER_STATS.game, user)
-            USER_STATS.game_stats.gamesWon = data.matches_won
-            USER_STATS.game_stats.gamesLost = data.matches_lost
-            USER_STATS.game_stats.score = data.score
-            const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
-            document.getElementById('games-won').textContent = gamesWon;
-            document.getElementById('games-lost').textContent = gamesLost;
-            document.getElementById('score').textContent = score;
-            const totalGames = gamesWon + gamesLost;
-            const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
-            document.getElementById('win-rate').textContent = `${winRate}%`;
-            document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
-            
+            const data = await fetchPlayerStats("pong", user)
+            if (data)
+            {
+                USER_STATS.game_stats.gamesWon = data.matches_won
+                USER_STATS.game_stats.gamesLost = data.matches_lost
+                USER_STATS.game_stats.score = data.score
+                const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                document.getElementById('games-won').textContent = gamesWon;
+                document.getElementById('games-lost').textContent = gamesLost;
+                document.getElementById('score').textContent = score;
+                const totalGames = gamesWon + gamesLost;
+                const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                document.getElementById('win-rate').textContent = `${winRate}%`;
+                document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+            }
+            else
+            {
+                USER_STATS.game_stats.gamesWon = 0
+                USER_STATS.game_stats.gamesLost = 0
+                USER_STATS.game_stats.score = 400
+                const { gamesWon, gamesLost, score } = USER_STATS.game_stats;
+                document.getElementById('games-won').textContent = gamesWon;
+                document.getElementById('games-lost').textContent = gamesLost;
+                document.getElementById('score').textContent = score;
+                const totalGames = gamesWon + gamesLost;
+                const winRate = totalGames > 0 ? Math.round((gamesWon / totalGames) * 100) : 0;
+                document.getElementById('win-rate').textContent = `${winRate}%`;
+                document.getElementById('win-rate').className = "pf-win-rate-" + (winRate >= 50 ? "positive" : "negative");
+            }
             const matchHistory = await fetchMatchHistory('pong', user);
             
             const matchHistoryContainer = document.getElementById('match-history');
@@ -260,6 +314,7 @@ export default async (user) => {
             } else {
                 matchHistoryContainer.innerHTML = '<p class="pf-no-matches">No recent matches</p>';
             }
+            USER_STATS.game = "tictac"
         }, 100);
         
     } catch (error) {

@@ -106,6 +106,7 @@ export default async () => {
 
 const fetchLeaderBoard = async () => {
 	try {
+		leaderboardData = []
 		const {data, error} = await app.utils.fetchWithAuth('/api/game/pong/leaderboard/')
 		if (error)
 		{
@@ -113,7 +114,6 @@ const fetchLeaderBoard = async () => {
 			return []
 		}
 		var count = 1
-		leaderboardData = []
 		
 		await Promise.all(data.map(async player => {
             try {
@@ -162,7 +162,7 @@ const renderLeaderboard = async (leaderboardData, container) => {
 	leaderboardTitle.innerHTML = '<h1 class="leaderboard-title">Leaderboard</h1>';
 	leaderboardList.appendChild(leaderboardTitle);
 	
-	leaderboardData.forEach(entry => {
+	leaderboardData.forEach( entry => {
 		const leaderboardItem = document.createElement('div');
 		leaderboardItem.className = 'leaderboard-item';
 		
