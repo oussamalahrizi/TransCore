@@ -35,8 +35,8 @@ class Consumer(AsyncWebsocketConsumer):
 
         await self.accept()
         error = self.scope.get('error_message')
-        print(f"Error: {error}")
         if error:
+            print(f"Error: {error}")
             await self.close(code=4001, reason=error)
             return
         # send event to matchmaking
@@ -128,7 +128,7 @@ class Consumer(AsyncWebsocketConsumer):
                     )
 
                     await self.save_resault(winner_id, self.user_id)
-                    asyncio.create_task(send_game_over(self.game_id, winner_id))
+                    
 
     async def receive(self, text_data):
         game_data = self.cache.get(self.game_id)
@@ -247,8 +247,8 @@ class Consumer(AsyncWebsocketConsumer):
         )
 
         # wait for 5 seconds before closing the connection
-        await asyncio.sleep(5)
-        await self.close()
+        # await asyncio.sleep(5)
+        # await self.close()
 
     async def check_winner(self):
         game_data = self.cache.get(self.game_id)
@@ -306,6 +306,8 @@ class Consumer(AsyncWebsocketConsumer):
             )
 
     async def save_resault(self, winner_id, losser_id):
+        asyncio.create_task(send_game_over(self.game_id, winner_id))
+
         try:
             player1_id = winner_id
             player2_id = losser_id
@@ -318,7 +320,9 @@ class Consumer(AsyncWebsocketConsumer):
 
             # Update player stats (database operations)
             player1[0].matches_won += 1
+            player1[0].score += 20
             player2[0].matches_lost += 1
+            player2[0].score -= 20
 
             # Save player stats
             await sync_to_async(player1[0].save)()

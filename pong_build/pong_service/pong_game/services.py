@@ -58,7 +58,7 @@ class GameService:
         """
         # Get or create player
         player = GameService.get_or_create_player(player_id)
-        
+        print(is_win)
         # Update player stats
         if is_win:
             player.matches_won += 1

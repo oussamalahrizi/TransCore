@@ -8,8 +8,8 @@ from xo_game import views
     
 
 urlpatterns = [
-    path('matches/', views.get_matches, name='get_matches'),  # Retrieve all matches
-    path('players/', views.get_players, name='get_players'),  # Retrieve all players
-    path('players/<str:player_id>/', views.get_player, name='get_player'),  # Retrieve a specific player by ID
-    # path('matches/<int:match_id>/', views.get_match, name='get_match'),  # Retrieve a specific match by ID
+    path('players/', views.GetData.as_view(), name='get-player'),  # Retrieve all players
+    path('players/<str:player_id>/', views.GetDataID.as_view(), name='get-player-id'),  # Retrieve a specific player by ID
+    path('matches/', views.GetMatchHistory.as_view(), name='get-matches'),  # Retrieve a specific player by ID
+    path('matches/<str:player_id>/', views.GetMatchHistory.as_view(), name='get-matches-id'),  # Retrieve a specific player by ID
 ]
