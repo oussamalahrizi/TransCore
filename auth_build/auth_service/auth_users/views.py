@@ -36,7 +36,7 @@ class UpdateUserInfo(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data=serializer.errors)
         serializer.update(instance, serializer.validated_data)
-        async_to_sync(NotifyApi)(instance.id, "clear_cache")
+        async_to_sync(NotifyApi)(instance.id, "update_info")
         return Response(data={ "detail" : f"update successful {instance.username}"})
 
 
@@ -113,7 +113,7 @@ class GetFriends(APIView):
 class SendFriendRequest(APIView):
     permission_classes = [IsAuthenticated]
 
-    notif = publishers[1]
+    notif = publishers[0]
     
     
     def get(self, request :Request, *args, **kwargs):
@@ -175,11 +175,6 @@ class GetBlocked(APIView):
     def get(self, request : Request, *args, **kwargs):
         current = request.user
         blocked = Friends.objects.get_blocked_users(current)
-        final : list[Friends] = []
-        for b in blocked:
-            final.append(Friends.objects.filter(id=b).get())
-        for f in final:
-            print(type(f))
         objects = User.objects.filter(id__in=blocked)
         ser = UserDetailSerializer(objects, many=True)
         return Response(data=ser.data)
@@ -300,9 +295,9 @@ class ChangeFriend(APIView):
             serializer.is_valid(raise_exception=True)
             change = serializer.data["change"]
             res = self.actions[change](user, other)
-            print(f"publishing for user id {user.id} type : refresh")
-            print(f"publishing for other id {other.id} type : refresh")
-            if change not in ["reject", "cancel"]:              
+            print(f"publishing for user id {user.id} type : refresh_friends")
+            print(f"publishing for other id {other.id} type : refresh_friends")
+            if change not in ["reject", "cancel"]:
                 async_to_sync(NotifyApi)(user.id, "refresh_friends")
                 async_to_sync(NotifyApi)(other.id, "refresh_friends")
             return Response(status=status.HTTP_201_CREATED, data={"detail" : res})
@@ -419,7 +414,7 @@ class Upload(APIView):
 
 class sendNotif(APIView):
     permission_classes = [IsAuthenticated]
-    notif = publishers[1]
+    notif = publishers[0]
 
     @async_to_sync
     async def get(self, request : Request, *args, **kwargs):
@@ -549,7 +544,7 @@ class UserImageView(APIView):
         save.save()
         user.icon_url = f'/api/auth/users/image/{user.id}/'
         user.save()
-        async_to_sync(NotifyApi)(user.id, type="clear_cache")
+        async_to_sync(NotifyApi)(user.id, type="update_info")
         return Response({"detail" :"Image changed successfully."})
     
     def delete(self, request : Request, *args, **kwargs):
@@ -558,6 +553,6 @@ class UserImageView(APIView):
         image.delete()
         user.icon_url = None
         user.save()
-        async_to_sync(NotifyApi)(user.id, type="clear_cache")
+        async_to_sync(NotifyApi)(user.id, type="update_info")
         return Response(data={"detail": "Successfully deleted your profile image."})
 

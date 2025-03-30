@@ -21,6 +21,47 @@ const findmatch = async () => {
   }
 }
 
+
+const findMatchSingle = async () => {
+  try {
+    const {error, data} = await app.utils.fetchWithAuth("/api/match/single/pong/")
+    if (error)
+    {
+      app.utils.showToast(error)
+      return
+    }
+    console.log("data find match : ", data);
+    app.utils.showToast(data.detail, "green")
+    await app.Router.navigate(`/game?game_id=${data.game_id}`)
+  
+  } catch (error) {
+    if (error instanceof app.utils.AuthError)
+      return
+    console.log("error in find match: ", error);
+    
+  }
+}
+
+
+const findMatchTic = async () => {
+  try {
+    const {error, data} = await app.utils.fetchWithAuth("/api/match/findmatch/tic/")
+    if (error)
+    {
+      app.utils.showToast(error)
+      return
+    }
+    console.log("data find match : ", data);
+    app.utils.showToast(data.detail, "green")
+  
+  } catch (error) {
+    if (error instanceof app.utils.AuthError)
+      return
+    console.log("error in find match: ", error);
+    
+  }
+}
+
 export default () => {
   // Game mode variables - all initially set to false;
   app.gameInfo = {
@@ -66,7 +107,7 @@ export default () => {
           app.utils.showToast(`Error: you are ${data.status}`)
           break
         }
-        app.Router.navigate(SINGLEPLAYER_URL);
+        await findMatchSingle();
         console.log("Singleplayer mode selected");
         break;
       case 2:
@@ -80,9 +121,10 @@ export default () => {
         }, 50);
         break;
       case 3:
-        app.gameInfo.Tournament = true;
-        redirectURL = TOURNAMENT_URL;
-        console.log("Tournament mode selected");
+        await app.Router.navigate("/tictac/local")
+        break;
+      case 4:
+        await findMatchTic();
         break;
     }
 

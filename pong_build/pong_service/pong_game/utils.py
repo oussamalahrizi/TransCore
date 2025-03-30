@@ -40,7 +40,8 @@ class Cache:
         if not game_data:
             return
         game_data : list = json.loads(game_data)
-        game_data.remove(user_id)
+        if user_id in game_data:
+            game_data.remove(user_id)
         if len(game_data) == 0:
             self.redis.delete(game_id)
             return

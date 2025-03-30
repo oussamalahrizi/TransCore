@@ -22,10 +22,20 @@ class GameService:
         # Update player stats
         if winner_id == player1_id:
             player1.matches_won += 1
+            player1.score += 20
             player2.matches_lost += 1
+            if player2.score - 20 <= 0:
+                player2.score = 0
+            else:
+                player2.score -= 20
         else:
             player2.matches_won += 1
+            player2.score += 20
             player1.matches_lost += 1
+            if player1.score - 20 <= 0:
+                player1.score = 0
+            else:
+                player1.score -= 20
         
         player1.save()
         player2.save()
@@ -48,13 +58,18 @@ class GameService:
         """
         # Get or create player
         player = GameService.get_or_create_player(player_id)
-        
+        print(is_win)
         # Update player stats
         if is_win:
             player.matches_won += 1
+            player.score += 20
             winner_status = "WIN"
         else:
             player.matches_lost += 1
+            if player.score - 20 <= 0:
+                player.score = 0
+            else:
+                player.score -= 20
             winner_status = "LOSS"
         
         player.save()

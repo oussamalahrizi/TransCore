@@ -38,6 +38,7 @@ async def broadcastSingle(instance: GameState):
     except BaseException as e:
         print(e)
     finally:
+        print("finally")
         await layer.group_send(instance.game_id, {
             'type' : 'game_end',
             'winner' : instance.winner
@@ -49,7 +50,7 @@ async def broadcastSingle(instance: GameState):
             p2_score = instance.p2_score
             
             # Check if the player won (winner is not "loser")
-            is_win = instance.winner == "CPU"
+            is_win = instance.winner != "CPU"
 
             # Record the single player match in the database
             await record_single_match_async(player_id, is_win, p1_score, p2_score)
@@ -76,8 +77,8 @@ class SingleConsumer(AsyncWebsocketConsumer):
             return
         
         self.user = self.scope['user']
-        self.user_id = self.user['auth']['id']
-        self.username = self.user['auth']['username']
+        self.user_id = self.user['id']
+        self.username = self.user['username']
         self.game_id = self.scope['game_id']
         # check if both users connected to init fresh game state
         
@@ -141,8 +142,7 @@ class SingleConsumer(AsyncWebsocketConsumer):
             'type' : type,
             'data' : body.get('data')
         })
-        
-    
+
     async def move_paddle(self, event):
         data = event['data']
         key = data.get('key')

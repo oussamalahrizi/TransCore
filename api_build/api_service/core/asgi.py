@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 
 import os
 
-from .rabbitmq import APIConsumer, NotifConsumer, AsyncRabbitMQConsumer, QueuePublisher
+from .rabbitmq import NotifConsumer, AsyncRabbitMQConsumer, QueuePublisher
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from .Middleware import jwtmiddleware
@@ -17,11 +17,10 @@ import asyncio
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
-api_consumer = APIConsumer(host='rabbitmq', port=5672, queue_name='api')
 notifs_consumer = NotifConsumer(host='rabbitmq', port=5672, queue_name='notifications')
 queue_publisher = QueuePublisher(host='rabbitmq', port=5672, queue_name='match_queue')
 
-consumers : list[AsyncRabbitMQConsumer] = [api_consumer, notifs_consumer, queue_publisher]
+consumers : list[AsyncRabbitMQConsumer] = [notifs_consumer, queue_publisher]
 
 async def app(scope, receive, send):
     if scope['type'] == 'lifespan':

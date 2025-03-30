@@ -6,7 +6,7 @@ export const checkAccessToken = () => {
 };
 
 export const refreshLocal = async () => {
-	const response = await fetch("http://localhost:8000/api/auth/refresh/", {
+	const response = await fetch("/api/auth/refresh/", {
 		credentials: "include",
 		method: "GET",
 	});
@@ -66,16 +66,13 @@ const Router = {
 		};
 		// start fresh
 		app.utils.removeCookie("access_token");
-		await Router.navigate(location.href);
-		if (!app.utils.getCookie("access_token"))
-		{
-			const res = await refresh_init()
-			console.log("refreshed token router");
-			if (res)
-				app.utils.setCookie("access_token", res.access_token)
-		}
-		dispatchEvent(new CustomEvent("navbar-profile"));
+		const res = await refresh_init()
+		console.log("refreshed token router init");
+		if (res)
+			app.utils.setCookie("access_token", res.access_token)
 		dispatchEvent(new CustomEvent("websocket", { detail: { type: "open" } }));
+		await Router.navigate(location.href);		
+		dispatchEvent(new CustomEvent("navbar-profile"));
 	},
 	navigate: async (url, useHistory = true) => {
 		const route = new URL(url, window.location.origin).pathname;
@@ -139,25 +136,31 @@ const Router = {
 		if (render === "/game") navbar.hidden = true;
 		else navbar.hidden = false;
 		if (content.controller)
-			{
-				const clean = await content.controller()
-				app.cleanup.push(clean)
-			}
+		{
+			const clean = await content.controller()
+			app.cleanup.push(clean)
+		}
 		Router.disableReload();
 	},
+	Anchor : (e, tag) => {
+		const external = /^(http|https|mailto|ftp):/.test(
+			tag.getAttribute("href")
+		);
+		if (!external) {
+			e.preventDefault();
+			Router.navigate(tag.getAttribute("href"));
+		}
+	},
 	disableReload: () => {
-		const a = document.querySelectorAll("a");
+		var a = document.querySelectorAll("a");
 		if (!a.length) return;
 		a.forEach((tag) => {
-			tag.addEventListener("click", (e) => {
-				const external = /^(http|https|mailto|ftp):/.test(
-					tag.getAttribute("href")
-				);
-				if (!external) {
-					e.preventDefault();
-					Router.navigate(tag.getAttribute("href"));
-				}
-			});
+			const cloneTag = tag.cloneNode(true);
+			const parent = tag.parentNode;
+			if (parent) {
+				parent.replaceChild(cloneTag, tag);
+				cloneTag.addEventListener("click", (e) => Router.Anchor(e, cloneTag));
+			}
 		});
 	},
 };

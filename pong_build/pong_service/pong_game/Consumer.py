@@ -26,7 +26,27 @@ def record_match_async(player1_id, player2_id, winner_id, p1_score, p2_score):
     return GameService.record_match(player1_id, player2_id, winner_id, p1_score, p2_score)
 
 
-async def broadcast(Game : GameState):
+async def send_game_over(instance, tr_id=None):
+    result = [instance.p1_score, instance.p2_score]
+    if instance.winner == instance.players[1]:
+        result.reverse()
+    body = {
+            'type' : "game_over",
+            'data' : {
+                'game_id' : instance.game_id,
+                'match_type' :instance.match_type,
+                'game_type' : "pong",
+                'winner' : instance.winner,
+                'result' : result
+            }
+        }
+    if tr_id:
+        body['data']['tournament_id'] = tr_id
+        await asyncio.sleep(1.5)
+    await publishQueue(body)
+    print("GAME SENT GAME OVER")
+
+async def broadcast(Game : GameState, tr_id=None):
     try:
         lasttime = time.time()
         while not Game.gameover:
@@ -45,6 +65,7 @@ async def broadcast(Game : GameState):
         # print("task was cancelled success")
         pass
     finally:
+        print("FINALLY ")
         p1_score = Game.p1_score
         p2_score = Game.p2_score
         player1_id = Game.players[0]
@@ -57,15 +78,9 @@ async def broadcast(Game : GameState):
             'type' : 'game_end',
             'winner' : Game.winner
         })
-        body = {
-                'type' : "game_over",
-                'data' : {
-                    'game_id' : Game.game_id,
-                    'match_type' :Game.match_type,
-                    'game_type' : "pong"
-                }
-            }
-        await publishQueue(body)
+        asyncio.create_task(send_game_over(Game, tr_id))
+
+        
         
 from pprint import pprint
 
@@ -89,8 +104,8 @@ class Consumer(AsyncWebsocketConsumer):
             return
         
         self.user = self.scope['user']
-        self.user_id = self.user['auth']['id']
-        self.username = self.user['auth']['username']
+        self.user_id = self.user['id']
+        self.username = self.user['username']
         self.game_id = self.scope['game_id']
         # check if both users connected to init fresh game state
         
@@ -113,10 +128,24 @@ class Consumer(AsyncWebsocketConsumer):
             'type' : 'waiting',
             'player_id' : self.user_id
         }))
+        await asyncio.sleep(3)
+        player_count =  self.cache.get_player_count(self.game_id)
+        if player_count < 2:
+            instance = GameState([self.user_id, self.user_id], self.game_id, self.game_info['match_type'])
+            await self.game_end({'winner' : self.user_id})
+            tr_id = None
+            if self.game_info.get('tournament_id'):
+                tr_id = self.game_info.get('tournament_id')
+            instance.winner = self.user_id
+            instance.game_id = self.game_id
+            instance.match_type = self.game_info['match_type']
+            instance.p1_score = 5
+            instance.p2_score = 0
+            asyncio.create_task(send_game_over(instance, tr_id))
 
     async def disconnect(self, code):
         # in case middleware error
-        if self.username:
+        if hasattr(self, 'username'):
             print(f"{self.username} disconnected, code : ", code)
         if code == 4001:
             return
@@ -124,7 +153,6 @@ class Consumer(AsyncWebsocketConsumer):
         if code == 4003:
             return
         # first send result if not game over
-        await self.channel_layer.group_discard(self.game_id, self.channel_name)
         print(f"{self.username} removed")
         if Game.get(self.game_id):
             print("setting winner")
@@ -133,14 +161,11 @@ class Consumer(AsyncWebsocketConsumer):
             if len(players):
                 Game.get(self.game_id).winner = self.cache.get_players(self.game_id)[0] ## work around
             Game.get(self.game_id).gameover = True
-            # print(f'{self.username} game over ? ', Game.get(self.game_id).gameover)
-            
-        if game_task.get(self.game_id):
             game_task.get(self.game_id).cancel()
             game_task.pop(self.game_id)
-        if Game.get(self.game_id):
             Game.pop(self.game_id)
-     
+
+        await self.channel_layer.group_discard(self.game_id, self.channel_name)
 
 
     async def close_user(self, event):
@@ -156,20 +181,16 @@ class Consumer(AsyncWebsocketConsumer):
             }
         '''
         body = json.loads(text_data)
-        type = body.get('type')
-        await self.channel_layer.group_send(self.game_id, {
-            'type' : type,
-            'data' : body.get('data')
-        })
+        data = body.get("data")
+        await self.move_paddle(data)
         
     
-    async def move_paddle(self, event):
-        data = event['data']
+    async def move_paddle(self, data):
         key = data.get('key')
         player_id = data.get('player_id')
         instance =  Game.get(self.game_id)
-        instance.update_player_move(player_id, key)
-    
+        if instance:
+            instance.update_player_move(player_id, key)
 
     
     async def game_end(self, event):
@@ -180,12 +201,11 @@ class Consumer(AsyncWebsocketConsumer):
         if self.user_id != winner_id:
             winner = 'You Lost!'
         
-        
         await self.send(json.dumps({
             'type': 'gameEnd',
             'winner': winner
         }))
-    
+
         await self.channel_layer.group_send(self.game_id, {
             'type': 'close_user'
         })
@@ -207,9 +227,12 @@ class Consumer(AsyncWebsocketConsumer):
         }))
 
     async def start_game(self):
-        instance = GameState(players=self.players_ids, game_id=self.game_id)
+        instance = GameState(players=self.players_ids, game_id=self.game_id, match_type=self.game_info['match_type'])
         Game[self.game_id] = instance
         await self.channel_layer.group_send(self.game_id, {
             'type' : 'send_init_data',
         })
-        game_task[self.game_id] = asyncio.create_task(broadcast(instance))
+        tr_id = None
+        if self.game_info.get('tournament_id'):
+            tr_id = self.game_info.get('tournament_id')
+        game_task[self.game_id] = asyncio.create_task(broadcast(instance, tr_id=tr_id))

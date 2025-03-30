@@ -215,6 +215,7 @@ class AuthCache:
 	def get_access_session(self, user_id):
 		value = self.redis.get(f"auth:{user_id}:access")
 		return value
+
 	def delete_access_session(self, user_id):
 		value = self.redis.delete(f"auth:{user_id}:access")
 		return value
@@ -242,6 +243,7 @@ class AuthCache:
 			return actions[action](email)
 		else:
 			raise Exception("invalid action")
+
 	# enable 2fa
 	def store_2fa(self, user_id: str) -> str:
 		secret = pyotp.random_base32()

@@ -72,8 +72,8 @@ class LoginView(LoginMixin, CreateAPIView):
 			if not user.is_active:
 				return Response(status=status.HTTP_403_FORBIDDEN,
 					data={"detail" : "Your Account has been permanently banned."})
-			self.disconnect_user(user.id)
-			return self.Helper(user)
+			response = self.Helper(user)
+			return response
 		except Http404:
 			return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -136,6 +136,8 @@ class RefreshToken(APIView):
 			response = Response({"detail" : "Missing refresh token."}, status=status.HTTP_400_BAD_REQUEST)
 			return response
 		if self.cache.isTokenBlacklisted(refresh):
+			print("token black listed")
+			print(refresh)
 			response = Response(status=status.HTTP_403_FORBIDDEN,
 				data={
 						"detail": "Cookie token is blacklisted.",
@@ -262,7 +264,7 @@ class DisableOTP(APIView):
 	TODO:
 		- convert this to only api view
 """
-class VerifyOTP(APIView):
+class VerifyOTP(APIView, LoginMixin):
 
 	class OTPSerializer(serializers.Serializer):
 		code = serializers.CharField(required=True)
@@ -288,8 +290,10 @@ class VerifyOTP(APIView):
 			response = Response()
 			response.data = {"Location" : f"/api/auth/login/?id={str(user.id)}&execution={sec}"}
 			if self.cache.isUserLogged(user.id):
-				cache_token = self.cache.get_user_token(user.id)
-				self.cache.blacklist_token(cache_token, user.id)
+				self.cache.BlacklistUserToken(user.id)
+				self.cache.delete_access_session(user.id)
+				print("black listed in verify")
+				self.disconnect_user(user.id)
 			return response
 		except Http404:
 			return Response(status=status.HTTP_404_NOT_FOUND, data={"detail" : "User Not Found."})

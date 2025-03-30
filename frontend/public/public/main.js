@@ -3,6 +3,7 @@ import utils from "./utils.js";
 import routes from "./routes.js";
 import { SetOnline } from "./Websockets.js";
 import NavProfile, { placeholder } from "./Components/NavProfile.js";
+import TicCustomComponents from "./pages/TictacGame/components/defineComponents.js"
 import {
 	showModalWithAnimation,
 	hideModalWithAnimation,
@@ -23,6 +24,7 @@ app.cleanup = []
 */
 
 addEventListener("DOMContentLoaded", () => {
+	TicCustomComponents()
 	app.Router.init();
 });
 
@@ -126,7 +128,6 @@ addEventListener("play-button", async (e)=> {
 })
 
 import { handleLogout } from "./pages/Settings/Controller.js";
-import { rendergame } from "./pages/game/websockets.js";
 
 
 
@@ -134,6 +135,7 @@ addEventListener("navbar-profile", async (e) => {
 	var token = app.utils.getCookie("access_token");
 	const view = document.getElementById("profile-container");
 	if (!token) {
+		
 		while (view.firstChild) view.removeChild(view.firstChild);
 		view.innerHTML = /*html*/ `
 				 <a href="/" class="sign-in-link">
@@ -146,7 +148,6 @@ addEventListener("navbar-profile", async (e) => {
 		return;
 	}
 	try {
-		
 		const { data, error } = await app.utils.fetchWithAuth(
 			"/api/main/user/me/"
 		);
@@ -155,13 +156,15 @@ addEventListener("navbar-profile", async (e) => {
 			app.utils.showToast("Failed to get your data");
 			return;
 		}
-		var img = data.auth.icon_url
+		console.log(data);
+		
+		var img = data.icon_url || "/public/assets/icon-placeholder.svg"
 		if (!img.startsWith("https"))
 			img += `?nocache=${Date.now()}`
 		console.log("image url navbar: ", img);
 		while(view.firstChild)
 			view.removeChild(view.firstChild)
-		view.innerHTML = NavProfile({icon_url : img, username : data.auth.username});
+		view.innerHTML = NavProfile({icon_url : img, username : data.username});
 
 		const existingModal = document.getElementById("profile-modal");
 		if (existingModal) {
@@ -182,6 +185,12 @@ addEventListener("navbar-profile", async (e) => {
 						</div>
 						<div class="menu-item">
 							 <div class="icon-container">
+									<img src="/public/assets/chat.svg" alt="Chat icon" class="menu-icon">
+							 </div>
+							 <a href="/chat" id="chat-link">Open chat</a>
+						</div>
+						<div class="menu-item">
+							 <div class="icon-container">
 									<img src="/public/assets/settings.svg" alt="Settings icon" class="menu-icon">
 							 </div>
 							 <a href="/settings" id="settings-link">Settings</a>
@@ -193,6 +202,7 @@ addEventListener("navbar-profile", async (e) => {
 							 </div>
 							 <button id="logout-link">Sign out</button>
 						</div>
+						
 				 </div>
 			`;
 		document.body.appendChild(profileModal);
@@ -213,19 +223,18 @@ addEventListener("navbar-profile", async (e) => {
 			}
 		});
 
-		document.getElementById("settings-link").addEventListener("click", (e) => {
-			e.preventDefault();
-			hideModalWithAnimation(profileModal);
-			app.Router.navigate("/settings");
-		});
+		profileModal.addEventListener("click", (e) => {
+				hideModalWithAnimation(profileModal);
+		})
 
 		document.addEventListener("click", (e) => {
 			if (
 				profileModal.classList.contains("show") &&
 				!profileModal.contains(e.target) &&
-				e.target !== button
+				(e.target !== button)
 			) {
 				hideModalWithAnimation(profileModal);
+				console.log("clicked outside");
 			}
 		});
 

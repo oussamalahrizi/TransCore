@@ -8,7 +8,7 @@ const login = async ({email, password}) => {
         const body = JSON.stringify({email, password})
         console.log(body);
         
-        const response = await fetch("http://localhost:8000/api/auth/login/", {
+        const response = await fetch("/api/auth/login/", {
             method : "POST",
             headers,
             body 
@@ -45,7 +45,7 @@ export default  () => {
             e.preventDefault()
             button.disabled = true
             const list = button.className
-            button.className = "bg-gray-200 text-white font-semibold py-2 rounded-lg w-full"
+            button.style = "background-color: #e2e8f0; color: white; font-weight: 600; padding-top: 0.5rem; padding-bottom: 0.5rem; border-radius: 0.5rem; width: 100%;"
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             const res = await login(data)
@@ -70,7 +70,7 @@ export const IntraLogin = async () => {
     
     const url = new URL("https://api.intra.42.fr/oauth/authorize");
     url.searchParams.append("client_id", "u-s4t2ud-18f8278d214900868a7d2706fc12e3de85389d73c1b7bdc246e3590e477d423f");
-    url.searchParams.append("redirect_uri", "http://localhost:8000/auth/intra_callback");
+    url.searchParams.append("redirect_uri", "https://localhost:8000/auth/intra_callback");
     url.searchParams.append("response_type", "code");
     window.location.href = url.toString()
 }
@@ -78,7 +78,7 @@ export const IntraLogin = async () => {
 export const GoogleLogin = async () => {
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.searchParams.append("client_id", "497827531703-p9gdfs3jsnjm8hld9ot1uilao6lk1vup.apps.googleusercontent.com");
-    url.searchParams.append("redirect_uri", "http://localhost:8000/auth/google_callback");
+    url.searchParams.append("redirect_uri", "https://localhost:8000/auth/google_callback");
     url.searchParams.append("response_type", "code");
     url.searchParams.append("scope", "email profile");
     window.location.href = url.toString()

@@ -7,7 +7,7 @@ class PlayerSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Player
-        fields = ['player_id', 'matches_won', 'matches_lost', 'win_rate', 'total_matches']
+        fields = "__all__"
     
     def get_win_rate(self, obj):
         total = obj.matches_won + obj.matches_lost
@@ -27,6 +27,8 @@ class MatchSerializer(serializers.ModelSerializer):
         model = Match
         fields = ['id', 'player1_id', 'player2_id', 'winner_id', 
                  'player1_score', 'player2_score', 'played_at']
+    def get_player1(self, obj):
+        pass
 
 class MatchSingleSerializer(serializers.ModelSerializer):
     player_id = serializers.CharField(source='player1.player_id', read_only=True)

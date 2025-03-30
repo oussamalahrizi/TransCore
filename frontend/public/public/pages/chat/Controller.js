@@ -16,7 +16,7 @@ async function fetchUsers() {
         const updatedFriends = await Promise.all(
             friends.map(async (friend) => {
                 try {
-                    const { data, error } = await app.utils.fetchWithAuth(`/api/main/user/${friend.auth.id}`);
+                    const { data, error } = await app.utils.fetchWithAuth(`/api/main/user/${friend.id}`);
                     if (error) {
                         app.utils.showToast(error);
                         return friend;
@@ -60,23 +60,21 @@ export default async () => {
         let currentUserId = null;
         let roomName = null;
 
-        const friends = await fetchUsers();
-        updateUserList(friends);
-
+        
         function filterUsers(users) {
             users = users || [];
-
+            
             let filteredUsers = users;
 
             const searchQuery = searchInput.value.toLowerCase();
             if (searchQuery) {
-                filteredUsers = filteredUsers.filter(user => user.auth.username.toLowerCase().includes(searchQuery));
+                filteredUsers = filteredUsers.filter(user => user.username.toLowerCase().includes(searchQuery));
             }
 
             if (filterUnreadCheckbox.checked) {
-                filteredUsers = filteredUsers.filter(user => (unreadMessages[user.auth.username] || 0) > 0);
+                filteredUsers = filteredUsers.filter(user => (unreadMessages[user.username] || 0) > 0);
             }
-
+            
             return filteredUsers;
         }
 
@@ -89,7 +87,7 @@ export default async () => {
                 console.error('Failed to fetch users');
             }
         });
-
+        
         function toggleProfileSection() {
             const profileSection = document.getElementById('profile-section');
             const chatBox = document.getElementById('chat-box');
@@ -112,9 +110,58 @@ export default async () => {
                 }
             }
         }
+        
+        function resetChatBox() {
+            const messagesContainer = document.getElementById("messages");
+            const chatHeader = document.getElementById("chat-header");
+            const inputArea = document.getElementById("input-area");
+            const selectUserPrompt = document.getElementById("select-user-prompt");
+            const profileSection = document.getElementById("profile-section");
+            const chatBox = document.getElementById("chat-box");
+            const chatContainer = document.querySelector(".chat-container"); 
+            const userListContainer = document.getElementById("user-list-container");
+        
+            if (messagesContainer) messagesContainer.innerHTML = "";
+            if (chatHeader) chatHeader.classList.remove("active");
+            if (inputArea) inputArea.style.display = "none";
+            if (selectUserPrompt) selectUserPrompt.style.display = "flex";
+            
+            selectedChatUser = null;
+            selectedChatUserId = null;
+            isChatActive = false;
+        
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
 
-
+            if (profileSection) {
+                profileSection.classList.add("hidden");
+            }
+            
+            if (chatBox) {
+                chatBox.classList.remove("w-1/2", "w-3/4", "w-full"); 
+                chatBox.classList.add("w-full"); 
+            }
+        
+            if (chatContainer) {
+                chatContainer.classList.remove("grid-cols-2"); 
+                chatContainer.classList.add("grid-cols-1"); 
+            }
+            
+            if (userListContainer) {
+                userListContainer.classList.remove("w-1/4");
+                userListContainer.classList.add("w-full");
+            }
+        }
+        
+        
+        const friends = await fetchUsers();
+        updateUserList(friends);
+        
         function updateUserList(friends = []) {
+            console.log("update user list called");
+            
             try {
                 const userListContainer = document.getElementById('user-list-container');
                 if (!userListContainer) {
@@ -128,21 +175,13 @@ export default async () => {
         
                 if (selectedChatUser) {
                     const userStillExists = filteredUsers.some(user => 
-                        user?.auth?.username === selectedChatUser && 
-                        !blockedUsers.has(user.auth.username)
+                        user.username === selectedChatUser && 
+                        !blockedUsers.has(user.username)
                     );
         
                     if (!userStillExists) {
                         const previousUser = selectedChatUser;
                         resetChatBox();
-                        
-                        setTimeout(() => {
-                            const chatBox = document.getElementById("chat-box");
-                            if (chatBox) {
-                                chatBox.classList.remove("w-1/2", "w-3/4");
-                                chatBox.classList.add("w-full");
-                            }
-                        }, 50);
                     }
                 }
         
@@ -163,101 +202,91 @@ export default async () => {
                 console.error('Error updating user list:', error);
             }
         }
-        
-        function startChat(chatWith, chatWithId) {
-            const messagesContainer = document.getElementById("messages");
-            const chatHeader = document.getElementById("chat-header");
-            const inputArea = document.getElementById("input-area");
-            const selectUserPrompt = document.getElementById("select-user-prompt");
-            const chatWithUserElement = document.getElementById("chat-with-user");
-            const profileUserName = document.getElementById("profile-user-name");
-            const profileSection = document.getElementById("profile-section");
-            const chatBox = document.getElementById("chat-box");
-        
-            if (!messagesContainer || !chatHeader || !inputArea || !selectUserPrompt || 
-                !chatWithUserElement || !profileUserName || !profileSection || !chatBox) {
-                console.error("Required chat elements not found");
-                return;
-            }
-        
-            selectedChatUser = chatWith;
-            selectedChatUserId = chatWithId;
-            isChatActive = true;
-        
-            unreadMessages[chatWith] = 0;
-            saveStateToLocalStorage();
-        
-            messagesContainer.innerHTML = "";
-            chatWithUserElement.textContent = chatWith;
-            chatHeader.classList.add("active");
-            inputArea.style.display = "flex";
-            selectUserPrompt.style.display = "none";
-        
-            const userItems = document.querySelectorAll('.user-item');
-            userItems.forEach(item => {
-                item.classList.remove('active');
-                const usernameElement = item.querySelector('.username');
-                if (usernameElement && usernameElement.textContent === chatWith) {
-                    item.classList.add('active');
-                }
-            });
-        
-            if (socket) {
-                socket.close();
-            }
-            connectChatSocket();
-        
-            profileUserName.textContent = chatWith;
-            profileSection.classList.add("hidden");
-            chatBox.classList.remove("w-1/2");
-            chatBox.classList.add("w-3/4");
-        }
-        
-        function resetChatBox() {
-            const messagesContainer = document.getElementById("messages");
-            const chatHeader = document.getElementById("chat-header");
-            const inputArea = document.getElementById("input-area");
-            const selectUserPrompt = document.getElementById("select-user-prompt");
-            const profileSection = document.getElementById("profile-section");
-            const chatBox = document.getElementById("chat-box");
-            const chatContainer = document.querySelector(".chat-container"); 
-            const userListContainer = document.getElementById("user-list-container");
-        
-            if (messagesContainer) messagesContainer.innerHTML = "";
-            if (chatHeader) chatHeader.classList.remove("active");
-            if (inputArea) inputArea.style.display = "none";
-            if (selectUserPrompt) selectUserPrompt.style.display = "flex";
-        
-            selectedChatUser = null;
-            selectedChatUserId = null;
-            isChatActive = false;
-        
-            if (socket) {
-                socket.close();
-                socket = null;
-            }
-        
-            if (profileSection) {
-                profileSection.classList.add("hidden");
+
+function startChat(chatWith, chatWithId) {
+    const messagesContainer = document.getElementById("messages");
+    const chatHeader = document.getElementById("chat-header");
+    const inputArea = document.getElementById("input-area");
+    const selectUserPrompt = document.getElementById("select-user-prompt");
+    const chatWithUserElement = document.getElementById("chat-with-user");
+    const profileUserName = document.getElementById("profile-user-name");
+    const profileSection = document.getElementById("profile-section");
+    const chatBox = document.getElementById("chat-box");
+
+    if (!messagesContainer || !chatHeader || !inputArea || !selectUserPrompt || 
+        !chatWithUserElement || !profileUserName || !profileSection || !chatBox) {
+        console.error("Required chat elements not found");
+        return;
+    }
+
+    unreadMessages[chatWith] = 0;
+    saveStateToLocalStorage();
+
+    selectedChatUser = chatWith;
+    selectedChatUserId = chatWithId;
+    isChatActive = true;
+
+    messagesContainer.innerHTML = "";
+    console.log("chat with :", chatWith);
+    
+    chatWithUserElement.textContent = chatWith;
+    chatHeader.classList.add("active");
+    inputArea.style.display = "flex";
+    selectUserPrompt.style.display = "none";
+
+    const userItems = document.querySelectorAll('.user-item');
+    userItems.forEach(item => {
+        item.classList.remove('active');
+        const usernameElement = item.querySelector('.username');
+        if (usernameElement && usernameElement.textContent === chatWith) {
+            item.classList.add('active');
+            
+            const unreadCountElement = item.querySelector('.unread-count');
+            if (unreadCountElement) {
+                unreadCountElement.remove();
             }
             
-            if (chatBox) {
-                chatBox.classList.remove("w-1/2", "w-3/4", "w-full"); 
-                chatBox.classList.add("w-full"); 
+            const lastMessage = lastMessages[chatWith]?.message || "";
+            const lastMessageElement = item.querySelector('.last-message');
+            if (lastMessageElement && lastMessage) {
+                lastMessageElement.textContent = lastMessage;
             }
-        
-            if (chatContainer) {
-                chatContainer.classList.remove("grid-cols-2"); 
-                chatContainer.classList.add("grid-cols-1"); 
-            }
-        
-            if (userListContainer) {
-                userListContainer.classList.remove("w-1/4");
-                userListContainer.classList.add("w-full");
+            
+            const lastMessageTimestamp = lastMessages[chatWith]?.timestamp || "";
+            const timestampElement = item.querySelector('.last-message-timestamp');
+            if (timestampElement && lastMessageTimestamp) {
+                timestampElement.textContent = lastMessageTimestamp;
             }
         }
+    });
+
+    if (socket) {
+        socket.close();
+    }
+    connectChatSocket();
+    
+    profileUserName.textContent = chatWith;
+    profileSection.classList.add("hidden");
+    chatBox.classList.remove("w-1/2");
+    chatBox.classList.add("w-3/4");
+
+    const user = friends.find(f => f.username === chatWith);
+    if (user) {
+        updateUserImages(user);
+        const statusColors = {
+            'online': { indicator: '#029F5B', text: '#029F5B' },
+            'inqueue': { indicator: '#FF9F1C', text: '#FF9F1C' },
+            'ingame': { indicator: '#2EC4B6', text: '#2EC4B6' },
+            'offline': { indicator: '#A9A9A9', text: '#A9A9A9' }
+        };
+        const status = user.status.toLowerCase();
+        updateChatHeader(user, statusColors[status] || statusColors.offline);
+    }
+}
 
         function createUserItem(user) {
+            console.log("create user item called");
+            
             const statusColors = {
                 'online': { indicator: '#029F5B', text: '#029F5B' },
                 'inqueue': { indicator: '#FF9F1C', text: '#FF9F1C' },
@@ -265,33 +294,76 @@ export default async () => {
                 'offline': { indicator: '#A9A9A9', text: '#A9A9A9' }
             };
         
-            const isBlocked = blockedUsers.has(user.auth.username);
+            const isBlocked = blockedUsers.has(user.username);
             const userItem = document.createElement('div');
             userItem.className = `user-item ${isBlocked ? 'blocked' : ''} ${user.status}`;
             
-            const unreadCount = unreadMessages[user.auth.username] || 0;
-            const lastMessage = lastMessages[user.auth.username]?.message || "";
-            const lastMessageTimestamp = lastMessages[user.auth.username]?.timestamp || "";
+            const unreadCount = unreadMessages[user.username] || 0;
+            const lastMessage = lastMessages[user.username]?.message || "";
+            const lastMessageTimestamp = lastMessages[user.username]?.timestamp || "";
             
             const status = user.status.toLowerCase();
             const { indicator: statusColor, text: textColor } = statusColors[status] || statusColors.offline;
         
+            if (selectedChatUser === user.username) {
+                updateUserImages(user);
+                updateChatHeader(user, statusColor, textColor);
+            }
+        
+            userItem.innerHTML = `
+                <div class="user-avatar-container">
+                    <img src="${getImageUrlWithCacheBust(user.icon_url)}" 
+                         alt="${user.username}" 
+                         class="user-avatar">
+                    <span class="active-status" style="background-color: ${statusColor};"></span>
+                </div>
+                <div class="user-info">
+                    <div class="username">${user.username}</div>
+                    ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
+                </div>
+                <div class="user-meta">
+                    ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
+                    ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
+                </div>
+            `;
+        
+            userItem.onclick = () => {
+                console.log("starting with user :", user.username);
+                startChat(user.username, user.id);
+                userItem.classList.add('active');
+                toggleProfileSection();
+                unreadMessages[user.username] = 0;
+                updateUserImages(user);
+                updateChatHeader(user, statusColor, textColor);
+            };
+        
+            return userItem;
+        }
+        
+        function updateUserImages(user) {
             const chatUserImage = document.getElementById('chat-user-image');
-            if (chatUserImage) {
-                chatUserImage.src = user.auth.icon_url || 'default-profile.png';
-                chatUserImage.style = "object-fit : cover;"
-            }
-
             const profileImage = document.querySelector('#profile-section .profile-header img');
-            if (profileImage) {
-                profileImage.src = user.auth.icon_url || 'default-profile.png';
+            
+            const imageUrl = getImageUrlWithCacheBust(user.icon_url);
+            
+            if (chatUserImage) {
+                chatUserImage.src = imageUrl;
+                chatUserImage.style = "object-fit: cover;";
             }
-
+            
+            if (profileImage) {
+                profileImage.src = imageUrl;
+            }
+        }
+        
+        function updateChatHeader(user, statusColor, textColor) {
             const chatWithUser = document.getElementById('chat-with-user');
             if (chatWithUser) {
-                chatWithUser.textContent = user.auth.username;
+                console.log("override with :", user.username);
+                chatWithUser.textContent = user.username;
             }
-            updateElement('profile-user-name', el => el.textContent = user.auth.username);
+            
+            updateElement('profile-user-name', el => el.textContent = user.username);
             
             const chatUserStatus = document.getElementById('chat-user-status');
             if (chatUserStatus) {
@@ -303,35 +375,14 @@ export default async () => {
                     statusText.style.color = textColor;
                 }
             }
-        
-            userItem.innerHTML = `
-                <div class="user-avatar-container">
-                    <img src="${user.auth.icon_url || 'default-profile.png'}" 
-                         alt="${user.auth.username}" 
-                         class="user-avatar">
-                    <span class="active-status" style="background-color: ${statusColor};"></span>
-                </div>
-                <div class="user-info">
-                    <div class="username">${user.auth.username}</div>
-                    ${lastMessage ? `<div class="last-message">${lastMessage}</div>` : ""}
-                </div>
-                <div class="user-meta">
-                    ${lastMessageTimestamp ? `<div class="last-message-timestamp">${lastMessageTimestamp}</div>` : ""}
-                    ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ""}
-                </div>
-            `;
-        
-            userItem.onclick = () => {
-                startChat(user.auth.username, user.auth.id);
-                userItem.classList.add('active');
-                toggleProfileSection();
-                unreadMessages[user.auth.username] = 0;
-                updateUserList(friends);
-            };
-        
-            return userItem;
         }
         
+        function getImageUrlWithCacheBust(url) {
+            if (!url) return '/public/assets/icon-placeholder.svg';
+            
+            const separator = url.includes('?') ? '&' : '?';
+            return url.startsWith('http') ? url : `${url}${separator}nocache=${Date.now()}`;
+        }
         function updateElement(selector, callback) {
             const element = document.querySelector(selector);
             if (element) callback(element);
@@ -346,7 +397,7 @@ export default async () => {
             }
 
             try {
-                const response = await fetch(`http://localhost:8000/api/chat/${roomName}/`);
+                const response = await fetch(`/api/chat/${roomName}/`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch messages: ${response.statusText}`);
                 }
@@ -364,8 +415,8 @@ export default async () => {
             if (socket?.readyState === WebSocket.OPEN) return;
 
             const token = app.utils.getCookie("access_token");
-            socket = new WebSocket(`ws://localhost:8000/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
-
+            socket = new WebSocket(`wss://${location.host}/api/chat/ws/chat/${selectedChatUser}/?token=${token}`);
+            
             socket.onopen = () => {
                 scrollToBottom();
             };
@@ -388,9 +439,8 @@ export default async () => {
             };
 
             socket.onclose = (e) => {
-                console.log('WebSocket closed:', e.reason);
-                // localStorage.removeItem('unreadMessages');
-                // localStorage.removeItem('lastMessages');
+                localStorage.removeItem('unreadMessages');
+                localStorage.removeItem('lastMessages');
             };
 
             socket.onerror = (error) => {
@@ -417,7 +467,8 @@ export default async () => {
             if (selectedChatUser) {
                 lastMessages[selectedChatUser] = { message, timestamp: formattedTime };
             }
-            updateUserList(friends);
+            console.log("render messsage");
+            
             saveStateToLocalStorage();
             const formattedDate = formatDate(new Date(timestamp));
 
@@ -502,7 +553,7 @@ export default async () => {
             const inviteToGameButton = document.getElementById('invite-to-game-button');
             if (inviteToGameButton) {
                 inviteToGameButton.addEventListener('click', () => {
-                    inviteToGame(selectedChatUser);
+                    inviteToGame(selectedChatUserId);
                 });
             }
         }
@@ -555,16 +606,20 @@ export default async () => {
             
         }
         
-        function inviteToGame(username) {
-            if (username) {
-                console.log(`Inviting ${username} to a game`);
-                const ws = app.websocket;
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                        type: "invite",
-                        username: username,
-                    }));
+        async function inviteToGame(user_id) {
+            try{
+                const  {data, error} = await app.utils.fetchWithAuth(`/api/match/invite/${user_id}/`)
+                if (error)
+                {
+                    app.utils.showToast(error)
+                    return
                 }
+                app.utils.showToast(data.detail, "green")
+             }
+            catch (error) {
+                if (error instanceof app.utils.AuthError)
+                    return
+                console.log("error in invite game chat", error);
             }
         }
         function sendMessage() {

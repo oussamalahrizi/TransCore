@@ -8,7 +8,7 @@ class IsAllowedHost(BasePermission):
         Custom permission to only allow access from specific hosts.
     """
 
-    SERVICES = ["api-service", "match-service", "chat-service", "pong-game"]
+    SERVICES = ["api-service", "match-service", "chat-service", "pong-game", 'xo-game']
     allowed_hosts = []
     
     def  __init__(self):

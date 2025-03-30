@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
+    'rest_framework',
     'pong_game',
     'channels'
 ]
@@ -91,6 +92,18 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+REST_FRAMEWORK = {
+
+    'DEFAULT_RENDERER_CLASSES': [
+            'rest_framework.renderers.JSONRenderer',
+        ],
+    'DEFAULT_AUTHENTICATION_CLASSES' : [
+		'pong_game.jwtMiddleware.JWTAuthentication'
+	],
+    'EXCEPTION_HANDLER': 'pong_game.exception_handlers.custom_exception_handler'
+
+}
 
 
 # Password validation

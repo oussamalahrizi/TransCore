@@ -3,7 +3,7 @@ import { verifyView } from "./View.js"
 
 const handleSubmit = async (email) => {
     const body = JSON.stringify({email})
-    const {data, status, error} = await app.utils.fetchWithout("http://localhost:8000/api/auth/password_reset/",
+    const {data, status, error} = await app.utils.fetchWithout("/api/auth/password_reset/",
     "POST",body
     )
     
@@ -18,7 +18,7 @@ const handleSubmit = async (email) => {
 
 const handleCodeSubmit = async (code, email) => {
     const body = JSON.stringify({code, email})
-    const {data, status, error} = await app.utils.fetchWithout("http://localhost:8000/api/auth/password_verify/",
+    const {data, status, error} = await app.utils.fetchWithout("/api/auth/password_verify/",
         "POST", body
     )
 

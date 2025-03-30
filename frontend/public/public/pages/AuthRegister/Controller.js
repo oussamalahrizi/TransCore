@@ -13,7 +13,7 @@ const register = async ({username, email, password1, password2}) => {
         }
         const body = JSON.stringify({username, email, password : password1, password2})
         
-        const response = await fetch("http://localhost:8000/api/auth/register/", {
+        const response = await fetch("/api/auth/register/", {
             method : "POST",
             headers,
             body

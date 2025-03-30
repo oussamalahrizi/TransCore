@@ -132,6 +132,30 @@
     justify-content: center;
 }
 
+.pf-switch-button {
+    align-items: center;
+    line-height: 1.5rem;
+    background-color: #029f5b;
+    color: #fff;
+    white-space: nowrap;
+    border-radius: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.5em;
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+    font-weight: 600;
+    transition: 0.25s;
+  }
+  
+  .pf-switch-button:hover {
+    opacity: 1;
+    background-color: #057343;
+    box-shadow: 0 0 10px rgba(94, 255, 0, 0.519);
+    transform: scale(1.03);
+    color: #fff;
+  }
+  
+  
 .pf-profile-avatar {
     width: 154px;
     height: 154px;
